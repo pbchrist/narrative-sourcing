@@ -12,12 +12,22 @@ docs/superpowers/specs/2026-08-19-v1-pipeline-design.md.
 """
 
 import os
+import re
 
 import httpx
 
 DEFAULT_BASE_URL = os.environ.get("NS_LLM_BASE_URL", "http://100.73.250.50:8081")
 DEFAULT_MODEL = os.environ.get("NS_LLM_MODEL", "")
-DEFAULT_TIMEOUT = float(os.environ.get("NS_LLM_TIMEOUT", "120"))
+# A 27B reasoning model spends two to three minutes thinking before it
+# emits a single character of content, so the timeout is generous by
+# default rather than tuned for a hosted API.
+DEFAULT_TIMEOUT = float(os.environ.get("NS_LLM_TIMEOUT", "600"))
+
+# Reasoning tokens are drawn from the same budget as the answer. Too small
+# a budget produces an empty content field rather than a short answer.
+DEFAULT_MAX_TOKENS = int(os.environ.get("NS_LLM_MAX_TOKENS", "8000"))
+
+_THINK = re.compile(r"<think>.*?</think>", re.S | re.I)
 
 
 class LLMError(RuntimeError):
@@ -32,6 +42,7 @@ def complete(
     base_url: str | None = None,
     model: str | None = None,
     temperature: float = 0.2,
+    max_tokens: int | None = None,
     client: httpx.Client | None = None,
 ) -> str:
     """Send a prompt to the configured backend, return the raw text.
@@ -46,7 +57,11 @@ def complete(
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})
 
-    payload = {"messages": messages, "temperature": temperature}
+    payload = {
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens or DEFAULT_MAX_TOKENS,
+    }
     chosen_model = model if model is not None else DEFAULT_MODEL
     if chosen_model:
         payload["model"] = chosen_model
@@ -67,6 +82,24 @@ def complete(
         )
 
     try:
-        return response.json()["choices"][0]["message"]["content"]
+        choice = response.json()["choices"][0]
+        message = choice["message"]
     except (KeyError, IndexError, TypeError, ValueError) as exc:
         raise LLMError(f"unreadable response from backend: {exc}") from exc
+
+    content = _THINK.sub("", message.get("content") or "").strip()
+    if content:
+        return content
+
+    # Reasoning backends fill reasoning_content first and content last, so
+    # an empty content field usually means the token budget ran out before
+    # the model finished thinking. Say that plainly instead of handing an
+    # empty string to a JSON parser three modules downstream.
+    if message.get("reasoning_content"):
+        raise LLMError(
+            f"backend returned reasoning but no content "
+            f"(finish_reason={choice.get('finish_reason')!r}); the model ran "
+            f"out of tokens while thinking. Raise NS_LLM_MAX_TOKENS above "
+            f"{payload['max_tokens']}."
+        )
+    raise LLMError("backend returned an empty completion")

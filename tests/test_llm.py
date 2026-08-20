@@ -73,3 +73,54 @@ def test_complete_raises_on_malformed_payload():
 
     with pytest.raises(llm.LLMError):
         llm.complete("x", client=_client(handler))
+
+
+def test_reasoning_model_truncated_before_content_raises_clearly():
+    # A reasoning backend fills reasoning_content first and content last.
+    # Running out of tokens mid-reasoning yields an empty content field,
+    # which must not be mistaken for a valid empty completion.
+    def handler(request):
+        return httpx.Response(200, json={
+            "choices": [{
+                "finish_reason": "length",
+                "message": {"content": "", "reasoning_content": "thinking..."},
+            }]
+        })
+
+    with pytest.raises(llm.LLMError, match="reasoning"):
+        llm.complete("x", client=_client(handler))
+
+
+def test_inline_think_block_is_stripped_from_content():
+    def handler(request):
+        return httpx.Response(200, json={
+            "choices": [{"message": {
+                "content": "<think>weighing it up</think>\n{\"ok\": true}"
+            }}]
+        })
+
+    assert llm.complete("x", client=_client(handler)) == '{"ok": true}'
+
+
+def test_sends_max_tokens_so_reasoning_has_room():
+    seen = {}
+
+    def handler(request):
+        import json
+        seen.update(json.loads(request.content))
+        return httpx.Response(200, json={
+            "choices": [{"message": {"content": "ok"}}]
+        })
+
+    llm.complete("x", client=_client(handler))
+    assert seen["max_tokens"] >= 4000
+
+
+def test_empty_content_without_reasoning_still_raises():
+    def handler(request):
+        return httpx.Response(200, json={
+            "choices": [{"message": {"content": "   "}}]
+        })
+
+    with pytest.raises(llm.LLMError):
+        llm.complete("x", client=_client(handler))
