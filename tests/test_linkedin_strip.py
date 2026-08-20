@@ -124,3 +124,74 @@ def test_blank_line_ends_a_dropped_section():
     out, _ = strip_furniture(text)
     assert "PostgreSQL" not in out
     assert "Riley Chen" in out
+
+
+REAL_RECOMMENDATIONS = """Experience
+Kepler Health
+Staff Engineer
+Owned the rewrite end to end.
+
+Recommendations
+
+Jane Smith
+Engineering Director at Foo
+
+Riley is the most talented engineer I have ever worked with and would
+excel in any executive role.
+
+Bob Jones
+CTO at Bar
+
+Riley single-handedly transformed our entire platform.
+"""
+
+
+def test_blank_lines_do_not_defeat_recommendation_stripping():
+    # A real Recommendations block is several entries separated by blank
+    # lines. Ending the section at the first blank line lets every one of
+    # them through, and they pass verify_span because they genuinely are
+    # in the document. This is the failure the module exists to prevent.
+    out, _ = strip_furniture(REAL_RECOMMENDATIONS)
+    for leak in ["most talented", "executive role", "single-handedly"]:
+        assert leak not in out, leak
+
+
+def test_recommender_identity_is_stripped_too():
+    # A recommender's name and title are third-party identity, which is
+    # third-party voice by another route.
+    out, _ = strip_furniture(REAL_RECOMMENDATIONS)
+    for leak in ["Jane Smith", "Bob Jones", "Engineering Director at Foo",
+                 "CTO at Bar"]:
+        assert leak not in out, leak
+
+
+def test_content_before_recommendations_survives():
+    out, _ = strip_furniture(REAL_RECOMMENDATIONS)
+    assert "Owned the rewrite end to end." in out
+    assert "Kepler Health" in out
+
+
+def test_a_heading_after_recommendations_resumes_keeping():
+    text = REAL_RECOMMENDATIONS + "\nEducation\nReed College\n"
+    out, _ = strip_furniture(text)
+    assert "Reed College" in out
+    assert "single-handedly" not in out
+
+
+def test_short_headline_is_still_lost_accepted_limitation():
+    # Documented limitation, not an aspiration. After Top Skills a real
+    # export runs name / headline / location, and a one-or-two-word
+    # headline is indistinguishable in shape from a skill tag ("Engineer"
+    # vs "Team Leadership"). The damaging case is a long narrative
+    # headline, which the prose rule protects; short ones are accepted
+    # loss. The name arrives separately via --name.
+    text = "Top Skills\nPostgreSQL\nRiley Chen\nEngineer\nSummary\nReal prose."
+    out, _ = strip_furniture(text)
+    assert "Engineer" not in out          # accepted loss
+    assert "Real prose." in out           # the part that matters survives
+
+    long_headline = ("Top Skills\nPostgreSQL\n"
+                     "Engineering leader who likes the unglamorous half of software\n"
+                     "Summary\nReal prose.")
+    out2, _ = strip_furniture(long_headline)
+    assert "unglamorous half of software" in out2

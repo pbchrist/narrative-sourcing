@@ -41,6 +41,11 @@ self-narrative — a *verifiable* false attribution, which nothing
 downstream can flag. Principle 1 rests on the candidate's own words, so
 third-party voice never reaches the model.
 
+Known limitation: a very short headline ("Engineer") is lost along with
+the skills block, because it is indistinguishable in shape from a skill
+tag. A long narrative headline survives, which is the case that carries
+signal.
+
 Job history is the most important input. Departures and pursuits are
 inferences about transitions, so they only exist in the sequence of
 moves; paste the About section alone and you will get a throughline with

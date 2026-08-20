@@ -40,7 +40,12 @@ _DROP_LIST_SECTIONS = {
 }
 
 # Sections that are prose by nature, so the prose rule above cannot apply.
-# These end only at a heading or a blank line.
+# These end ONLY at a recognised heading, or at end of input. A blank line
+# must not end them: a real Recommendations block is several entries
+# separated by blank lines, each preceded by the recommender's name, and
+# ending at the first blank line lets every one of them through.
+# Recommendations are usually last in an export, so running to EOF is the
+# right default.
 _DROP_PROSE_SECTIONS = {
     "recommendations", "received recommendations", "given recommendations",
 }
@@ -49,6 +54,12 @@ _DROP_SECTIONS = _DROP_LIST_SECTIONS | _DROP_PROSE_SECTIONS
 
 # Eight words is the point where a line stops looking like a skill tag and
 # starts looking like something a person wrote about themselves.
+#
+# Known limitation: a one-or-two-word headline ("Engineer") is
+# indistinguishable in shape from a skill tag ("Team Leadership"), so it is
+# lost along with the skills block. That is accepted — the damaging case is
+# a long narrative headline, which this threshold protects, and the
+# candidate's name arrives separately via --name.
 _PROSE_WORDS = 8
 
 # Every heading we recognise, needed to know where a dropped section ends.
@@ -129,8 +140,11 @@ def strip_furniture(text: str) -> tuple[str, list[str]]:
 
         if dropping:
             if not line.strip():
-                dropping = None
-                kept.append(line)
+                # Only a list section ends at a blank line. See the note on
+                # _DROP_PROSE_SECTIONS for why prose sections must not.
+                if dropping == "list":
+                    dropping = None
+                    kept.append(line)
                 continue
             if dropping == "list" and _is_prose(line):
                 dropping = None
