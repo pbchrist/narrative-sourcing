@@ -5,11 +5,14 @@ claimed against the source text, then derive confidence from what
 survived. The model proposes; this module decides what ships.
 """
 
+import difflib
+from dataclasses import dataclass, field
+
 from src.common import llm
 from src.common.parsing import ParseError, extract_json
 from src.common.types import Beat, CandidateProfile, CareerArc
 from src.story import prompt as prompt_mod
-from src.story.verify import canonical, verify_span
+from src.story.verify import MIN_SPAN_CHARS, canonical, normalize, verify_span
 
 # A well-supported arc cites several different parts of the profile. Four
 # distinct spans is treated as full coverage; fewer scales down.
@@ -24,6 +27,66 @@ CEILING_THIN = 0.6
 
 class StoryError(RuntimeError):
     """The backend returned something unusable as a CareerArc."""
+
+
+@dataclass
+class DroppedBeat:
+    """A claim that failed evidence verification, and why.
+
+    `reason` separates the model inventing things from this codebase being
+    strict. Reporting a drop rate without that split would overstate the
+    verifier's value: a quote rejected over a stray hyphen is not a
+    hallucination caught.
+    """
+    description: str
+    evidence: str
+    overlap: float  # longest run of the quote actually present, 0-1
+    reason: str     # too_short | near_miss | paraphrase | fabricated
+
+
+@dataclass
+class ExtractionReport:
+    proposed: int = 0
+    kept: int = 0
+    dropped: list = field(default_factory=list)
+
+    @property
+    def drop_rate(self) -> float:
+        return round(len(self.dropped) / self.proposed, 3) if self.proposed else 0.0
+
+
+def _classify(evidence: str, raw_text: str) -> tuple[float, str]:
+    """Why a citation failed: the model inventing, or this code being strict.
+
+    Two signals, because neither alone separates the cases. The longest
+    contiguous run says how much of the quote is literally present; local
+    similarity around that run says whether the surrounding text is the
+    same content reworded. Anything fully contiguous has already passed
+    verify_span, so "near_miss" here means a large fragment matched but
+    the rest did not.
+
+    The paraphrase/fabricated boundary is a judgement call, not a fact.
+    Calibrated against hand-written examples; treat counts near the
+    boundary as soft.
+    """
+    needle = canonical(evidence)
+    if len(needle) < MIN_SPAN_CHARS:
+        return 1.0, "too_short"
+
+    hay = normalize(raw_text).lower()
+    match = difflib.SequenceMatcher(None, needle, hay).find_longest_match(
+        0, len(needle), 0, len(hay))
+    contiguous = match.size / len(needle)
+
+    lo = max(0, match.b - len(needle) // 2)
+    window = hay[lo:match.b + len(needle) * 3 // 2]
+    local = round(difflib.SequenceMatcher(None, needle, window).ratio(), 3)
+
+    if contiguous >= 0.5:
+        return local, "near_miss"
+    if local >= 0.55:
+        return local, "paraphrase"
+    return local, "fabricated"
 
 
 def _beat_confidence(reported, evidence: str) -> float:
@@ -49,7 +112,7 @@ def _beat_confidence(reported, evidence: str) -> float:
     return round(min(value, ceiling), 2)
 
 
-def _verified_beats(raw_beats, raw_text: str) -> tuple[list[Beat], int]:
+def _verified_beats(raw_beats, raw_text: str, report=None) -> tuple[list[Beat], int]:
     """Return the beats whose evidence genuinely appears in raw_text, plus
     the number proposed. Unverifiable beats are dropped, per Principle 1."""
     kept: list[Beat] = []
@@ -61,6 +124,11 @@ def _verified_beats(raw_beats, raw_text: str) -> tuple[list[Beat], int]:
         evidence = str(item.get("evidence") or "")
         description = str(item.get("description") or "").strip()
         if not description or not verify_span(evidence, raw_text):
+            if report is not None:
+                overlap, reason = _classify(evidence, raw_text)
+                report.dropped.append(DroppedBeat(
+                    description=description, evidence=evidence,
+                    overlap=overlap, reason=reason))
             continue
         kept.append(Beat(
             description=description,
@@ -92,13 +160,23 @@ def _arc_confidence(beats: list[Beat], proposed: int) -> float:
     return round(survival * coverage * mean_beat, 2)
 
 
-def extract_arc(
+def extract_arc(profile: CandidateProfile, *, complete=None) -> CareerArc:
+    """Read the arc out of a profile, keeping only what the text supports."""
+    return extract_arc_detailed(profile, complete=complete)[0]
+
+
+def extract_arc_detailed(
     profile: CandidateProfile,
     *,
     complete=None,
-) -> CareerArc:
-    """Read the arc out of a profile, keeping only what the text supports."""
+) -> tuple[CareerArc, ExtractionReport]:
+    """As extract_arc, but also reports what was thrown away and why.
+
+    Exists to answer the question the whole design rests on: does evidence
+    verification actually catch anything, or is it ceremony?
+    """
     complete = complete or llm.complete
+    report = ExtractionReport()
 
     response = complete(
         prompt_mod.build(profile),
@@ -114,14 +192,16 @@ def extract_arc(
         raise StoryError("response contained no throughline")
 
     departures, dep_proposed = _verified_beats(
-        data.get("departures"), profile.raw_text
+        data.get("departures"), profile.raw_text, report
     )
     pursuits, pur_proposed = _verified_beats(
-        data.get("pursuits"), profile.raw_text
+        data.get("pursuits"), profile.raw_text, report
     )
     beats = departures + pursuits
+    report.proposed = dep_proposed + pur_proposed
+    report.kept = len(beats)
 
-    return CareerArc(
+    arc = CareerArc(
         throughline=throughline,
         departures=departures,
         pursuits=pursuits,
@@ -130,6 +210,8 @@ def extract_arc(
         # _arc_confidence and the backend note in src/common/llm.py.
         confidence=_arc_confidence(beats, dep_proposed + pur_proposed),
     )
+    return arc, report
 
 
-__all__ = ["StoryError", "extract_arc"]
+__all__ = ["DroppedBeat", "ExtractionReport", "StoryError", "extract_arc",
+           "extract_arc_detailed"]

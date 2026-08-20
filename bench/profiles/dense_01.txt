@@ -1,0 +1,15 @@
+About
+I have spent eleven years in payments and I still find settlement interesting, which I'm told is a warning sign.
+
+Experience
+Payments Engineer, Nordvik Bank — 2013-2017
+Worked on the core ledger. Learned that the interesting problems in payments are all reconciliation problems wearing a costume.
+
+Senior Engineer, Tessellate (Series A fintech) — 2017-2020
+Employee 12. Built the settlement engine that we later found out was the only reason our biggest customer stayed. Left when we were acquired and the roadmap became someone else's.
+
+Staff Engineer, Bandolier — 2020-2023
+Rebuilt their reconciliation pipeline. Good work, wrong company. The engineering was fine and the business kept changing its mind about what it was.
+
+Principal Engineer, Kestrel Payments — 2023-present
+Doing the same thing at a bigger scale. Increasingly interested in the fraud side, which I have no formal background in.

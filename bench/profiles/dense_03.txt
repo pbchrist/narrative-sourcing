@@ -1,0 +1,15 @@
+About
+Ex-academic. I study how systems fail and I have opinions about postmortems.
+
+Experience
+PhD, Distributed Systems, Northwestern — 2011-2016
+Dissertation on consensus under partial synchrony. Left academia because I wanted to see systems that had users.
+
+SRE, Camber Logistics — 2016-2019
+On-call for a fleet that moved physical goods, so outages had a smell. Learned more in three years than in five of grad school.
+
+Staff SRE, Vantage — 2019-2022
+Built the incident review practice from nothing. Wrote the postmortem template the company still uses. Left because they promoted me into a role that was all calendar.
+
+Independent — 2022-present
+Consulting on reliability programs. Enjoying it. Suspect it doesn't scale and I will eventually want a team again.
