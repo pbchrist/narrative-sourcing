@@ -86,3 +86,41 @@ def test_still_drops_a_real_phone_number():
 def test_still_drops_a_bare_page_number():
     out, _ = strip_furniture("Summary\nReal prose here.\n2")
     assert out.strip().endswith("Real prose here.")
+
+
+def test_list_section_drop_stops_at_prose():
+    # The sidebar in a real export runs Top Skills -> name -> headline ->
+    # Summary with no reliable blank line between them. A naive "drop
+    # until the next heading" eats the headline and the summary with it.
+    text = "\n".join([
+        "Top Skills", "PostgreSQL", "Kubernetes",
+        "Riley Chen",
+        "Engineering leader who likes the unglamorous half of software",
+        "Summary", "Real prose here.",
+    ])
+    out, _ = strip_furniture(text)
+    assert "PostgreSQL" not in out
+    assert "Kubernetes" not in out
+    assert "unglamorous half of software" in out
+    assert "Real prose here." in out
+
+
+def test_prose_section_drop_does_not_stop_at_prose():
+    # Recommendations ARE prose, so the same rule must not apply to them.
+    text = "\n".join([
+        "Recommendations",
+        "Riley single-handedly transformed our entire platform and would",
+        "excel in any executive role, a visionary leader in every respect.",
+        "Experience", "Kepler Health",
+    ])
+    out, _ = strip_furniture(text)
+    assert "single-handedly" not in out
+    assert "visionary leader" not in out
+    assert "Kepler Health" in out
+
+
+def test_blank_line_ends_a_dropped_section():
+    text = "Top Skills\nPostgreSQL\n\nRiley Chen\nStaff Engineer"
+    out, _ = strip_furniture(text)
+    assert "PostgreSQL" not in out
+    assert "Riley Chen" in out

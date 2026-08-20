@@ -30,14 +30,26 @@ import re
 
 # Sections in a third party's voice, or pure list-noise. Whitelist only:
 # anything not named here survives.
-_DROP_SECTIONS = {
-    "recommendations",
-    "received recommendations",
-    "given recommendations",
-    "endorsements",
-    "top skills",
-    "skills & endorsements",
+# Sections of short list items. A dropped list section ends at the first
+# line that reads as prose, because a real export runs
+# Top Skills -> name -> headline -> Summary with no reliable blank line
+# between them, and dropping blindly to the next heading eats the headline
+# and the summary along with the skills.
+_DROP_LIST_SECTIONS = {
+    "top skills", "skills & endorsements", "endorsements",
 }
+
+# Sections that are prose by nature, so the prose rule above cannot apply.
+# These end only at a heading or a blank line.
+_DROP_PROSE_SECTIONS = {
+    "recommendations", "received recommendations", "given recommendations",
+}
+
+_DROP_SECTIONS = _DROP_LIST_SECTIONS | _DROP_PROSE_SECTIONS
+
+# Eight words is the point where a line stops looking like a skill tag and
+# starts looking like something a person wrote about themselves.
+_PROSE_WORDS = 8
 
 # Every heading we recognise, needed to know where a dropped section ends.
 _SECTION_HEADINGS = _DROP_SECTIONS | {
@@ -67,6 +79,10 @@ _LINE_FURNITURE = [
 ]
 
 
+def _is_prose(line: str) -> bool:
+    return len(line.split()) >= _PROSE_WORDS
+
+
 def _heading(line: str) -> str | None:
     key = line.strip().strip(":").lower()
     return key if key in _SECTION_HEADINGS else None
@@ -93,23 +109,34 @@ def strip_furniture(text: str) -> tuple[str, list[str]]:
     """
     kept: list[str] = []
     removed: list[str] = []
-    dropping = False
+    dropping = None  # None, "list" or "prose"
 
     for line in (text or "").splitlines():
         heading = _heading(line)
 
         if heading is not None:
-            dropping = heading in _DROP_SECTIONS
-            if dropping or heading == "contact":
+            if heading in _DROP_LIST_SECTIONS:
+                dropping = "list"
+            elif heading in _DROP_PROSE_SECTIONS:
+                dropping = "prose"
+            else:
+                dropping = None
+            if heading in _DROP_SECTIONS or heading == "contact":
                 removed.append(line)
                 continue
             kept.append(line)
             continue
 
         if dropping:
-            if line.strip():
+            if not line.strip():
+                dropping = None
+                kept.append(line)
+                continue
+            if dropping == "list" and _is_prose(line):
+                dropping = None
+            else:
                 removed.append(line)
-            continue
+                continue
 
         if line.strip() and not _DATE_LINE.match(line) and _is_furniture(line):
             removed.append(line)

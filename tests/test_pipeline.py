@@ -83,3 +83,46 @@ def test_render_never_emits_a_ready_to_send_message():
     out = render(run(profile, role, complete=scripted(ARC, FIT)))
     assert "Write the message yourself." in out
     assert "hi dana" not in out.lower()
+
+
+def test_a_recommendation_cannot_become_evidence(tmp_path):
+    """Third-party praise is stripped at intake, so a model that tries to
+    cite it fails verification and the inference is dropped.
+
+    This is the belt-and-braces case: stripping alone would be enough, and
+    verification alone would not (the quote IS verbatim in the export), so
+    the two together are what close it.
+    """
+    from src.intake import read_source
+    from src.story import extract_arc
+    from tests._pdfbuild import minimal_pdf
+
+    export = [
+        "Summary", "I like problems where the hard part isn't the code.",
+        "Experience", "Kepler Health", "Staff Engineer", "2019 - 2022",
+        "Owned the patient-scheduling rewrite end to end, including the",
+        "parts nobody wanted: migration, on-call and the edge cases.",
+        "Recommendations",
+        "Riley single-handedly transformed our entire platform and would",
+        "excel in any executive role.",
+    ]
+    path = tmp_path / "p.pdf"
+    path.write_bytes(minimal_pdf(export))
+    text, removed = read_source(str(path))
+    profile = load_candidate(text, name="Riley")
+
+    flattering = json.dumps({
+        "throughline": "A visionary executive in the making.",
+        "unresolved_tension": "When they will take an executive role.",
+        "departures": [],
+        "pursuits": [{
+            "description": "Reaching for executive scope",
+            "evidence": "would excel in any executive role",
+            "confidence": 0.95,
+        }],
+    })
+    arc = extract_arc(profile, complete=scripted(flattering))
+
+    assert arc.pursuits == []
+    assert arc.confidence == 0.0
+    assert any("executive role" in r for r in removed)
