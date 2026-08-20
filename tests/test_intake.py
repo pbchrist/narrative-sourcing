@@ -38,19 +38,20 @@ def test_load_candidate_drops_blank_known_roles():
 
 
 def test_load_role_builds_context():
-    r = load_role("  Staff Engineer  ", "x" * 100)
+    r = load_role("x" * 100, title="  Staff Engineer  ")
     assert r.title == "Staff Engineer"
     assert r.company_context is None
 
 
-def test_load_role_rejects_empty_title():
-    with pytest.raises(IntakeError):
-        load_role("", "x" * 100)
+def test_load_role_derives_a_title_when_given_a_blank_one():
+    # A title is a label for the human reading the brief; scoring does not
+    # depend on it, so a blank one is filled in rather than refused.
+    assert load_role("x" * 100, title="").title
 
 
 def test_load_role_rejects_empty_description():
     with pytest.raises(IntakeError):
-        load_role("Staff Engineer", "  ")
+        load_role("  ", title="Staff Engineer")
 
 
 def test_intake_makes_no_llm_calls(monkeypatch):
@@ -59,4 +60,4 @@ def test_intake_makes_no_llm_calls(monkeypatch):
 
     monkeypatch.setattr("src.common.llm.complete", explode)
     load_candidate("x" * 200)
-    load_role("Staff Engineer", "x" * 100)
+    load_role("x" * 100, title="Staff Engineer")

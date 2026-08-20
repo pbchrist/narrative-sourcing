@@ -10,7 +10,12 @@ from src.intake.pdf import PdfError, extract_text, looks_like_pdf
 # A profile shorter than this has no arc to extract. Better to refuse at
 # the door than to let story/ infer a life story from one line.
 MIN_PROFILE_CHARS = 80
-MIN_ROLE_CHARS = 40
+# Deliberately low. The input here is not required to be a job
+# description: "pre-PMF, no process, lots of ambiguity" is a legitimate
+# thing to score someone against, and a floor tuned for a full JD would
+# reject exactly the freeform prompts this is most useful for. The floor
+# exists only to catch an empty or accidental argument.
+MIN_ROLE_CHARS = 8
 
 
 class IntakeError(ValueError):
@@ -79,27 +84,44 @@ def load_candidate(
     )
 
 
+def _derive_title(description: str) -> str:
+    """Best-effort label for freeform input.
+
+    A first line short enough to be a heading probably is one. Otherwise
+    take the opening of the text; the title is a label for the human
+    reading the brief, not something the scoring depends on.
+    """
+    first = description.splitlines()[0].strip()
+    if len(first) <= 80:
+        return first
+    return first[:77].rstrip() + "..."
+
+
 def load_role(
-    title: str,
     raw_description: str,
     *,
+    title: str | None = None,
     company_context: str | None = None,
 ) -> RoleContext:
-    clean_title = (title or "").strip()
-    if not clean_title:
-        raise IntakeError("role title is empty")
+    """Load whatever the recruiter wants to score the candidate against.
 
+    This does not have to be a job description. A sentence, a set of
+    conditions, or a direction ("wants to go found something") are all
+    valid: the question the pipeline asks is whether a move continues the
+    arc, and that question is not restricted to formal openings.
+    """
     description = (raw_description or "").strip()
     if not description:
-        raise IntakeError("role raw_description is empty")
+        raise IntakeError("nothing to score against: the role input is empty")
     if len(description) < MIN_ROLE_CHARS:
         raise IntakeError(
-            f"role raw_description is {len(description)} chars, below the "
-            f"{MIN_ROLE_CHARS}-char floor; paste the full job description"
+            f"role input is {len(description)} chars, too short to mean "
+            f"anything. A sentence is enough, but not a single word."
         )
 
     return RoleContext(
-        title=clean_title,
+        title=(title.strip() if title and title.strip()
+               else _derive_title(description)),
         raw_description=description,
         company_context=(
             (company_context.strip() or None) if company_context else None

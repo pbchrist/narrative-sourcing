@@ -16,14 +16,19 @@ AMBIGUITY_FLOOR = 0.45
 
 _AMBIGUOUS_WORDS = {"ambiguous", "unclear", "unknown", "none", "null", "n/a"}
 
-SYSTEM = """You are given a reading of a candidate's career arc and a role \
-description. Judge one thing: does this role continue that arc, or does it \
-fracture it?
+SYSTEM = """You are given a reading of a candidate's career arc and a \
+description of what they are being considered for. That description may be \
+a full job posting, or it may be a single sentence, a set of working \
+conditions, or a direction ("going to found something"). Treat whatever \
+you are given as the move under consideration.
+
+Judge one thing: does this move continue that arc, or does it fracture it?
 
 You are not scoring qualifications. Skills overlap is computed separately \
-and is not your job. Your job is the narrative question: would taking this \
-role be the next chapter of the story you were given, a detour from it, or \
-a contradiction of it?
+and is not your job. Your job is the narrative question: would making this \
+move be the next chapter of the story you were given, a detour from it, or \
+a contradiction of it? If the description is thin, say so in your \
+reasoning rather than inventing detail to judge.
 
 Return ONLY a JSON object:
 {
@@ -72,9 +77,9 @@ def _build_prompt(arc: CareerArc, role: RoleContext) -> str:
             lines.append(f"  - {b.description} [confidence {b.confidence}]")
             lines.append(f'    evidence: "{b.evidence}"')
 
-    lines += ["", "ROLE", f"Title: {role.title}"]
+    lines += ["", "UNDER CONSIDERATION", f"Label: {role.title}"]
     if role.company_context:
-        lines.append(f"Company context: {role.company_context}")
+        lines.append(f"Context: {role.company_context}")
     lines += ["Description:", role.raw_description]
     return "\n".join(lines)
 

@@ -46,7 +46,7 @@ FIT = json.dumps({
 
 def test_end_to_end_produces_a_brief():
     profile = load_candidate(RAW, name="Dana")
-    role = load_role("Platform Lead", JD)
+    role = load_role(JD, title="Platform Lead")
     brief = run(profile, role, complete=scripted(ARC, FIT))
 
     assert brief.candidate_name == "Dana"
@@ -67,7 +67,7 @@ def test_invented_evidence_does_not_survive_the_pipeline():
         "pursuits": [],
     })
     profile = load_candidate(RAW, name="Dana")
-    role = load_role("Platform Lead", JD)
+    role = load_role(JD, title="Platform Lead")
     brief = run(profile, role, complete=scripted(poisoned, FIT))
 
     # The invented departure is gone, and the brief says so loudly rather
@@ -79,7 +79,7 @@ def test_invented_evidence_does_not_survive_the_pipeline():
 
 def test_render_never_emits_a_ready_to_send_message():
     profile = load_candidate(RAW, name="Dana")
-    role = load_role("Platform Lead", JD)
+    role = load_role(JD, title="Platform Lead")
     out = render(run(profile, role, complete=scripted(ARC, FIT)))
     assert "Write the message yourself." in out
     assert "hi dana" not in out.lower()
