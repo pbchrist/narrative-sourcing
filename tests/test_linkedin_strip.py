@@ -195,3 +195,20 @@ def test_short_headline_is_still_lost_accepted_limitation():
                      "Summary\nReal prose.")
     out2, _ = strip_furniture(long_headline)
     assert "unglamorous half of software" in out2
+
+
+def test_drops_bare_linkedin_marker_line():
+    # Real export: the URL and the "(LinkedIn)" label land on separate
+    # lines, so removing the URL alone leaves the label behind.
+    out, _ = strip_furniture("(LinkedIn)\nTalent Partner at a16z\nSummary\nReal prose.")
+    assert "(LinkedIn)" not in out
+    assert "Talent Partner at a16z" in out
+
+
+def test_decodes_html_entities_from_extraction():
+    # Real export: PDF text arrives with "-&gt;" where the profile says
+    # "->". A model quoting what it sees would cite the decoded form and
+    # fail verification for a reason that has nothing to do with honesty.
+    out, _ = strip_furniture("Summary\nRead this -&gt; The Resume Is Dead &amp; more")
+    assert "-> The Resume Is Dead & more" in out
+    assert "&gt;" not in out

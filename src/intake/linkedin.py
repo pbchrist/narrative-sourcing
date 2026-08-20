@@ -26,6 +26,7 @@ citation would fail verification for reasons that have nothing to do with
 whether the model made it up.
 """
 
+import html
 import re
 
 # Sections in a third party's voice, or pure list-noise. Whitelist only:
@@ -87,6 +88,8 @@ _LINE_FURNITURE = [
     re.compile(r"^\s*(www\.|https?://)\S+", re.I),
     re.compile(r"^\s*\d[\d,+]*\s+(connections|followers)\s*$", re.I),
     re.compile(r"^\s*contact\s*$", re.I),
+    # The URL and its "(LinkedIn)" label extract onto separate lines.
+    re.compile(r"^\s*\(linkedin\)\s*$", re.I),
 ]
 
 
@@ -118,11 +121,17 @@ def strip_furniture(text: str) -> tuple[str, list[str]]:
     and the fastest way to find out where that guess is wrong is to print
     what was thrown away.
     """
+    # PDF extraction hands back HTML entities ("-&gt;" for "->"). Decoding
+    # here keeps raw_text as close to what the person actually wrote as
+    # possible: a model quoting the decoded form would otherwise fail
+    # verification for a reason unrelated to whether it invented anything.
+    text = html.unescape(text or "")
+
     kept: list[str] = []
     removed: list[str] = []
     dropping = None  # None, "list" or "prose"
 
-    for line in (text or "").splitlines():
+    for line in text.splitlines():
         heading = _heading(line)
 
         if heading is not None:
