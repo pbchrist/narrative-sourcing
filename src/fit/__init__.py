@@ -5,12 +5,10 @@ requirements" but "does this role continue the story we just read". The
 requirements match is computed alongside it and kept deliberately small.
 """
 
-import json
-
 from src.common import llm
+from src.common.parsing import ParseError, extract_json
 from src.common.types import CandidateProfile, CareerArc, FitAssessment, RoleContext
 from src.fit import overlap
-from src.story import _extract_json
 
 # Below this arc confidence, no verdict is allowed to stand. A clean
 # yes/no resting on a poorly evidenced arc is Principle 4's failure mode.
@@ -90,9 +88,11 @@ def assess(
 ) -> FitAssessment:
     complete = complete or llm.complete
 
+    # LLMError propagates untouched: a backend timeout is not a fit
+    # failure, and relabelling it as one hides what actually went wrong.
     try:
-        data = _extract_json(complete(_build_prompt(arc, role), system=SYSTEM))
-    except RuntimeError as exc:
+        data = extract_json(complete(_build_prompt(arc, role), system=SYSTEM))
+    except ParseError as exc:
         raise FitError(str(exc)) from exc
 
     reasoning = str(data.get("reasoning") or "").strip()

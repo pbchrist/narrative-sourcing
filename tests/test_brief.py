@@ -98,8 +98,35 @@ def test_arc_with_no_surviving_evidence_is_loudly_flagged():
     assert any("no evidence" in c.lower() or "0.0" in c for c in b.cautions)
 
 
-def test_guard_runs_on_every_brief():
+def test_model_authored_sendable_text_is_quarantined_not_fatal():
+    # Model output is untrusted input, not a bug in our code. A brief that
+    # dies because the model got chatty is a five-minute run thrown away.
     poisoned = assessment()
     poisoned.reasoning = "Hi Dana, I'd love to chat about this role."
-    with pytest.raises(SendableTextError):
-        build_brief(PROFILE, arc(), poisoned)
+    b = build_brief(PROFILE, arc(), poisoned)
+    assert "Hi Dana" not in b.why_this_role
+    assert any("withheld" in c.lower() for c in b.cautions)
+
+
+def test_quarantined_risk_flag_is_dropped_and_noted():
+    poisoned = assessment(flags=["Would you be open to a call?", "Real flag."])
+    b = build_brief(PROFILE, arc(), poisoned)
+    assert "Real flag." in b.cautions
+    assert not any("Would you be open" in c for c in b.cautions)
+    assert any("withheld" in c.lower() for c in b.cautions)
+
+
+def test_candidate_quoting_themselves_does_not_break_the_brief():
+    # The bug this test exists for: a LinkedIn About section containing
+    # "I'd love to connect" is verbatim candidate text, gets cited as
+    # evidence, and must not abort the pipeline.
+    quote = "I'd love to connect with people working on climate hardware."
+    a = CareerArc(
+        throughline="Moving from speed to substance.",
+        departures=[],
+        pursuits=[Beat("Reaching toward climate work", quote, 0.5)],
+        unresolved_tension="Whether slower means smaller.",
+        confidence=0.4,
+    )
+    b = build_brief(PROFILE, a, assessment())
+    assert any(quote in c for c in b.cautions)

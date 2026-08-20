@@ -5,9 +5,8 @@ claimed against the source text, then derive confidence from what
 survived. The model proposes; this module decides what ships.
 """
 
-import json
-
 from src.common import llm
+from src.common.parsing import ParseError, extract_json
 from src.common.types import Beat, CandidateProfile, CareerArc
 from src.story import prompt as prompt_mod
 from src.story.verify import canonical, verify_span
@@ -25,38 +24,6 @@ CEILING_THIN = 0.6
 
 class StoryError(RuntimeError):
     """The backend returned something unusable as a CareerArc."""
-
-
-def _extract_json(text: str) -> dict:
-    """Pull the first balanced JSON object out of a model response."""
-    start = text.find("{")
-    if start == -1:
-        raise StoryError(f"no JSON object in response: {text[:200]!r}")
-
-    depth = 0
-    in_string = False
-    escaped = False
-    for i, ch in enumerate(text[start:], start):
-        if in_string:
-            if escaped:
-                escaped = False
-            elif ch == "\\":
-                escaped = True
-            elif ch == '"':
-                in_string = False
-            continue
-        if ch == '"':
-            in_string = True
-        elif ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            if depth == 0:
-                try:
-                    return json.loads(text[start:i + 1])
-                except ValueError as exc:
-                    raise StoryError(f"malformed JSON in response: {exc}") from exc
-    raise StoryError("unterminated JSON object in response")
 
 
 def _beat_confidence(reported, evidence: str) -> float:
@@ -137,7 +104,10 @@ def extract_arc(
         prompt_mod.build(profile),
         system=prompt_mod.SYSTEM,
     )
-    data = _extract_json(response)
+    try:
+        data = extract_json(response)
+    except ParseError as exc:
+        raise StoryError(str(exc)) from exc
 
     throughline = str(data.get("throughline") or "").strip()
     if not throughline:

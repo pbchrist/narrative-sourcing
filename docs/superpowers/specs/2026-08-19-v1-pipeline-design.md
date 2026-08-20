@@ -19,9 +19,18 @@ Runtime inference runs against a local llama.cpp OpenAI-compatible
 endpoint. Configuration is environment-driven so the backend swaps
 without code changes:
 
-    NS_LLM_BASE_URL   default http://100.73.250.50:8081
-    NS_LLM_MODEL      default resolved from /v1/models
-    NS_LLM_TIMEOUT    default 120s
+    NS_LLM_BASE_URL    default http://100.73.250.50:8081
+    NS_LLM_MODEL       default unset (llama.cpp serves its loaded model)
+    NS_LLM_TIMEOUT     default 600s
+    NS_LLM_MAX_TOKENS  default 8000
+
+The backend is a *reasoning* model: it fills `reasoning_content` before
+it emits any `content`, and spends two to three minutes doing so on a
+profile-sized prompt. Two consequences the client must handle, and does:
+timeouts are measured in minutes rather than seconds, and an empty
+`content` field alongside a non-empty `reasoning_content` means the token
+budget ran out mid-thought. That is reported as itself rather than passed
+downstream as an empty string for a JSON parser to choke on.
 
 The intended backend is an abliterated Qwen. Abliteration removes
 refusals, which this task needs (safety-tuned models decline to infer
@@ -49,13 +58,23 @@ confidence.
 
 ### Principle 2 -> derived confidence, surfaced to the brief
 
-    arc.confidence = survival_rate * coverage_factor
+    arc.confidence = survival_rate * coverage_factor * mean_beat_confidence
 
-where `survival_rate` is verified beats / proposed beats, and
-`coverage_factor` scales with how much distinct evidence the surviving
-beats actually cite. An arc built from two beats that both quote the same
-sentence is not as well-supported as one drawing on four distinct spans,
-and the number reflects that.
+`survival_rate` is verified beats / proposed beats. `coverage_factor`
+scales with how much distinct evidence the surviving beats cite: an arc
+built from two beats that both quote the same sentence is not as
+well-supported as one drawing on four distinct spans, and the number
+reflects that. `mean_beat_confidence` carries the model's own doubt
+through, under the asymmetry described below.
+
+Per beat, the model may *lower* its confidence but never raise it:
+
+    beat.confidence = min(reported, ceiling)
+
+where `ceiling` is 0.9 for a substantial citation and 0.6 for a thin one.
+The asymmetry is deliberate. An abliterated model's certainty is not
+informative, but its doubt is — a model volunteering 0.2 is telling us
+something worth keeping. So doubt is honored and certainty is capped.
 
 `brief/` injects a caution naming the numeric confidence whenever the arc
 falls below 0.6. The brief cannot render a low-confidence arc as clean

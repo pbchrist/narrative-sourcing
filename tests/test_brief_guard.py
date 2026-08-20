@@ -47,3 +47,29 @@ def test_allows_recruiter_facing_advice_about_outreach():
 def test_still_rejects_first_person_outreach_opener():
     with pytest.raises(SendableTextError):
         reject_sendable_text("I'm reaching out because your background", field="c")
+
+
+def test_exempt_spans_are_not_scanned():
+    # A verbatim quote is the candidate's own text, already verified as
+    # theirs. The guard exists to stop the TOOL authoring sendable text,
+    # not to forbid quoting a candidate who writes like a recruiter.
+    quote = "I'd love to connect with people working on climate hardware."
+    reject_sendable_text(
+        f'Low-confidence inference (0.5): "{quote}".',
+        field="cautions[0]", exempt=[quote],
+    )
+
+
+def test_exemption_does_not_blind_the_rest_of_the_field():
+    quote = "I'd love to connect with people working on climate hardware."
+    with pytest.raises(SendableTextError):
+        reject_sendable_text(
+            f'Hi Dana, quoting you: "{quote}".',
+            field="cautions[0]", exempt=[quote],
+        )
+
+
+def test_scan_reports_without_raising():
+    from src.brief.guard import scan_sendable_text
+    assert scan_sendable_text("Hi Dana, quick note") == "salutation"
+    assert scan_sendable_text("Their arc points toward ownership.") is None

@@ -9,7 +9,7 @@ labels and warns.
 It also runs the sendable-text guard over every field on the way out.
 """
 
-from src.brief.guard import reject_sendable_text
+from src.brief.guard import reject_sendable_text, scan_sendable_text
 from src.common.types import (
     CandidateProfile, CareerArc, FitAssessment, OutreachBrief,
 )
@@ -68,8 +68,31 @@ def _cautions(arc: CareerArc, assessment: FitAssessment) -> list[str]:
             f'"{beat.description}" rests on a thin quote — "{beat.evidence}".'
         )
 
-    cautions.extend(assessment.risk_flags)
+    # Risk flags are model-authored, so they are screened rather than
+    # trusted. A flag that reads as a message to the candidate is withheld
+    # and its absence reported, not silently dropped.
+    for flag in assessment.risk_flags:
+        if scan_sendable_text(flag):
+            cautions.append(
+                "A risk flag was withheld: it read as text addressed to the "
+                "candidate rather than to you. Check the model output "
+                "directly if you need it."
+            )
+        else:
+            cautions.append(flag)
     return cautions
+
+
+def _quarantine(value: str, label: str, fallback: str) -> tuple[str, str | None]:
+    """Screen a model-authored field. Returns (value, caution_or_None)."""
+    kind = scan_sendable_text(value)
+    if not kind:
+        return value, None
+    return fallback, (
+        f"The {label} was withheld: the model produced {kind}, which is "
+        f"message text rather than a brief. Rule 3 in PRINCIPLES.md. Read "
+        f"the profile yourself for this part."
+    )
 
 
 def build_brief(
@@ -83,18 +106,33 @@ def build_brief(
         "(No specific tension was found in the profile — ask, do not assume.)"
     )
 
+    cautions = _cautions(arc, assessment)
+
+    # These three carry model prose, so they are screened and withheld on
+    # failure rather than aborting a run that is otherwise fine.
+    story, c1 = _quarantine(
+        arc.throughline, "one-line story", "(withheld — see cautions)")
+    why, c2 = _quarantine(
+        assessment.reasoning, "role rationale", "(withheld — see cautions)")
+    question, c3 = _quarantine(
+        open_question, "open question",
+        "What is actually unresolved for them right now? (ask, do not assume)")
+    cautions = [c for c in (c1, c2, c3) if c] + cautions
+
     brief = OutreachBrief(
         candidate_name=(profile.name or _ANONYMOUS),
-        one_line_story=arc.throughline,
-        why_this_role=assessment.reasoning,
-        open_question=open_question,
-        cautions=_cautions(arc, assessment),
+        one_line_story=story,
+        why_this_role=why,
+        open_question=question,
+        cautions=cautions,
     )
 
-    for field in ("one_line_story", "why_this_role", "open_question"):
-        reject_sendable_text(getattr(brief, field), field=field)
+    # Final sweep over text this module composed. Verbatim citations are
+    # exempt: they are the candidate's own words, already verified, and
+    # policing their prose is not what rule 3 is for.
+    quotes = [b.evidence for b in (arc.departures + arc.pursuits)]
     for i, caution in enumerate(brief.cautions):
-        reject_sendable_text(caution, field=f"cautions[{i}]")
+        reject_sendable_text(caution, field=f"cautions[{i}]", exempt=quotes)
 
     return brief
 

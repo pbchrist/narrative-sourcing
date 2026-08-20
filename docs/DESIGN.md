@@ -133,10 +133,16 @@ touching fit/ at all).
 ## Model backend
 
 Runs against the existing local Qwen setup on beastmaster via llama.cpp
-(port 8081) by default. src/common/llm.py should be a thin wrapper with
-one function, `complete(prompt: str) -> str`, so the backend can be
-swapped (e.g. to test against a hosted model for comparison) without
-touching story/ or fit/.
+(port 8081) by default. src/common/llm.py is a thin wrapper with one
+function, `complete(prompt: str, *, system: str | None = None) -> str`,
+so the backend can be swapped (e.g. to test against a hosted model for
+comparison) without touching story/ or fit/. Configuration is
+environment-driven: NS_LLM_BASE_URL, NS_LLM_MODEL, NS_LLM_TIMEOUT,
+NS_LLM_MAX_TOKENS.
+
+The wrapper handles reasoning backends, which emit `reasoning_content`
+before any `content` and can spend minutes doing so. See
+docs/superpowers/specs/2026-08-19-v1-pipeline-design.md.
 
 ## Definition of done for v1
 

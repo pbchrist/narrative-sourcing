@@ -1,5 +1,12 @@
 # What to hand Claude Code in your first session
 
+> **Historical.** This described the first session, which has happened:
+> the v1 pipeline in the list below is built and tested. Kept because the
+> closing note about where to spend effort is still the right instinct.
+> For current state, read `README.md` and
+> `docs/superpowers/specs/2026-08-19-v1-pipeline-design.md`.
+
+
 Open this repo in Claude Code with Superpowers installed, then paste
 something like:
 

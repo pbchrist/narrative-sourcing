@@ -20,9 +20,28 @@ bullshit generator.
 
 ## Status
 
-v1, in progress. Thin end-to-end pipeline: paste a candidate profile and
-a job description in, get one human-gated brief out. No scraping, no
-batch mode, no auto-send.
+v1 pipeline is implemented end to end: `intake -> story -> fit -> brief`.
+Paste a candidate profile and a job description in, get one human-gated
+brief out. No scraping, no batch mode, no auto-send.
+
+    python -m src.cli --profile profile.txt --role jd.txt \
+        --title "Founding Engineer, Platform" --name "Riley"
+
+The principles in `docs/PRINCIPLES.md` are enforced in code, not just
+asserted:
+
+- every cited quote is verified verbatim against the profile text, and
+  beats that fail are dropped (rule 1)
+- arc confidence is derived from what survived verification, never read
+  from the model, and low confidence is injected into the brief's
+  cautions with the number visible (rule 2)
+- a guard rejects any brief field containing salutations, sign-offs or
+  second-person pitch, so no sendable text can leak out (rule 3)
+- a verdict is withheld when the arc is too thinly evidenced, even if
+  the model offered one (rule 4)
+
+Run the suite with `pytest`. It is fully offline; no test touches the
+network.
 
 ## Stack
 
