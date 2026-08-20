@@ -1,0 +1,63 @@
+[
+  {
+    "profile": "dense_01.txt",
+    "kind": "dense",
+    "rep": 0,
+    "chars": 904,
+    "proposed": 4,
+    "kept": 0,
+    "drop_rate": 1.0,
+    "arc_confidence": 0.0,
+    "elapsed": 126.9,
+    "dropped": [
+      {
+        "reason": "fabricated",
+        "overlap": 0.042,
+        "description": "Leaving environments with strategic instability or loss of technical ownership",
+        "evidence": "Left Tessellate after acquisition changed the roadmap; left Bandolier because the business kept changing its mind about what it was."
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.083,
+        "description": "Moving away from traditional banking constraints toward scalable, product-driven fintech environments",
+        "evidence": "Progression from Nordvik Bank to a Series A fintech, then to other fintechs, culminating in 'doing the same thing at a bigger scale' at Kestrel."
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.056,
+        "description": "Seeking ownership of mission-critical infrastructure that directly impacts customer retention and business viability",
+        "evidence": "Built the settlement engine that kept Tessellate's biggest customer; rebuilt Bandolier's reconciliation pipeline; currently scaling similar work at Kestrel."
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.197,
+        "description": "Expanding technical expertise into adjacent, high-complexity domains beyond core reconciliation",
+        "evidence": "Explicitly states growing interest in the fraud side despite having 'no formal background in it.'"
+      }
+    ]
+  },
+  {
+    "profile": "dense_02.txt",
+    "kind": "dense",
+    "rep": 0,
+    "chars": 797,
+    "proposed": 4,
+    "kept": 4,
+    "drop_rate": 0.0,
+    "arc_confidence": 0.9,
+    "elapsed": 124.3,
+    "dropped": []
+  },
+  {
+    "profile": "dense_03.txt",
+    "kind": "dense",
+    "rep": 0,
+    "chars": 764,
+    "proposed": 4,
+    "kept": 4,
+    "drop_rate": 0.0,
+    "arc_confidence": 0.9,
+    "elapsed": 138.1,
+    "dropped": []
+  }
+]

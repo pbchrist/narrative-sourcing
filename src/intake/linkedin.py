@@ -90,6 +90,12 @@ _LINE_FURNITURE = [
     re.compile(r"^\s*contact\s*$", re.I),
     # The URL and its "(LinkedIn)" label extract onto separate lines.
     re.compile(r"^\s*\(linkedin\)\s*$", re.I),
+    # A narrow export column wraps an address mid-token, leaving a
+    # truncated local part on one line and the TLD alone on the next.
+    re.compile(r"^\s*[\w.+-]+@[\w-]+\s*$"),
+    re.compile(r"^\s*\.[a-z]{2,6}\s*$", re.I),
+    # A bare domain with the export's own label: "iconic.onl (Other)".
+    re.compile(r"^\s*\S+\.[a-z]{2,6}\s*\((other|personal|company|portfolio)\)\s*$", re.I),
 ]
 
 

@@ -212,3 +212,21 @@ def test_decodes_html_entities_from_extraction():
     out, _ = strip_furniture("Summary\nRead this -&gt; The Resume Is Dead &amp; more")
     assert "-> The Resume Is Dead & more" in out
     assert "&gt;" not in out
+
+
+def test_drops_an_email_split_across_lines():
+    # Real export, narrow column: "patrick@gmail" / ".com" on two lines.
+    out, _ = strip_furniture("Contact\nsomeone@gmail\n.com\nSummary\nReal prose here.")
+    assert "someone@gmail" not in out
+    assert ".com" not in out.splitlines()
+    assert "Real prose here." in out
+
+
+def test_drops_a_bare_domain_with_label():
+    out, _ = strip_furniture("Contact\niconic.onl (Other)\nSummary\nReal prose here.")
+    assert "iconic.onl" not in out
+
+
+def test_does_not_drop_a_sentence_that_merely_contains_a_domain():
+    out, _ = strip_furniture("Summary\nI run iconic.onl and I write about hiring.")
+    assert "iconic.onl and I write" in out
