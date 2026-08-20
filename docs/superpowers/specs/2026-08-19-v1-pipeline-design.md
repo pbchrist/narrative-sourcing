@@ -121,6 +121,39 @@ LLM call. It is the commoditized part of the problem and DESIGN.md wants
 it kept subordinate; making it cheap and boring in code is how that
 intent survives.
 
+## Intake sources
+
+`intake.read_source` reads `.txt` or `.pdf`, dispatching on magic bytes
+rather than extension. This is not a scraper and does not weaken the
+"recruiter pastes text in" rule: a PDF the recruiter exported themselves
+is still recruiter-supplied text.
+
+Stripping runs before `CandidateProfile.raw_text` is set, so the model and
+the verifier see byte-identical text. If they diverged, citations would
+fail verification for reasons unrelated to whether the model invented
+anything.
+
+Two asymmetries in the stripper, both learned by running it:
+
+**Recommendations are the point.** Third-party praise passes
+`verify_span` cleanly because it genuinely is in the document. A
+verifiable false attribution is worse than a hallucination, since every
+check downstream reports success. Third-party voice is removed at intake.
+
+**Line furniture is dropped aggressively, sections conservatively.**
+Over-stripping destroys narrative signal silently. Two real failures
+found this way: a date range like `2015 - 2019` matches a phone-number
+pattern, and dates are the load-bearing signal for an arc; and dropping a
+list section to the next heading swallowed the name, headline and
+location, because a real export runs Top Skills -> name -> headline ->
+Summary with no reliable blank line. Dropped sections are therefore
+typed — list sections end at the first prose line, prose sections
+(recommendations) cannot use that rule.
+
+These patterns are written against the remembered shape of an export and
+have not been verified against a real LinkedIn PDF. `--show-stripped`
+exists so the first real file reveals wrong guesses immediately.
+
 ## Out of scope for v1
 
 No scraper, no batch mode, no send path, no scheduling. One candidate,

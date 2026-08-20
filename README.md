@@ -24,8 +24,27 @@ v1 pipeline is implemented end to end: `intake -> story -> fit -> brief`.
 Paste a candidate profile and a job description in, get one human-gated
 brief out. No scraping, no batch mode, no auto-send.
 
-    python -m src.cli --profile profile.txt --role jd.txt \
+    python -m src.cli --profile profile.pdf --role jd.txt \
         --title "Founding Engineer, Platform" --name "Riley"
+
+`--profile` takes a `.txt` or a LinkedIn PDF export (detected by magic
+bytes, so an export saved without an extension still works). Export
+furniture — contact blocks, skill lists, page footers — is stripped
+before extraction. Run with `--show-stripped` on your first real export
+to see exactly what was removed; the strip rules are written against the
+usual export shape and that is how you find out where they guess wrong.
+
+The most important thing the stripper removes is **recommendations**. A
+colleague's praise is verbatim text in the export, so it passes evidence
+verification cleanly and would be attributed to the candidate's own
+self-narrative — a *verifiable* false attribution, which nothing
+downstream can flag. Principle 1 rests on the candidate's own words, so
+third-party voice never reaches the model.
+
+Job history is the most important input. Departures and pursuits are
+inferences about transitions, so they only exist in the sequence of
+moves; paste the About section alone and you will get a throughline with
+almost nothing under it, and a confidence score that says so.
 
 The principles in `docs/PRINCIPLES.md` are enforced in code, not just
 asserted:
