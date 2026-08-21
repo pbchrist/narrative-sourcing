@@ -3,7 +3,9 @@ const $=s=>document.querySelector(s);
 const LS="ns.settings.v1";
 // Default: a bridge fronting a self-hosted Qwen 3.8. Nothing for a visitor to
 // configure. Settings exists only for people who want their own model.
-const HOSTED={url:"https://patrick-beastmaster.tailf32530.ts.net/model/v1/chat/completions",
+// Not the tailnet hostname: on your own tailnet that resolves to a 100.x
+// address and Chrome refuses it from a public page. This is public for all.
+const HOSTED={url:"https://song-pattern-rice-graham.trycloudflare.com/v1/chat/completions",
               model:"",key:""};
 
 const PRESETS={
