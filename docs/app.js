@@ -101,8 +101,25 @@ function chips(a,cls){ return `<div class="terms ${cls||""}">`+(a||[]).map(x=>`<
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 function renderArc(arc, raw, name){
+  // The throughline and the tension are the two highest-value inferences in
+  // the whole system and neither can be quote-checked directly - they are
+  // syntheses, not citations. Left ungrounded, the app will happily render an
+  // invented headline over a set of perfectly verified beats and print a
+  // reassuring "0 were deleted" underneath it. So they are grounded
+  // transitively: they stand only on the claims that survived verification,
+  // and when nothing survived, they are labelled unsupported rather than
+  // shown as findings.
+  const kept = arc.departures.length + arc.pursuits.length;
+  const grounded = kept > 0;
+  const support = grounded
+    ? `<span class="ground ok">rests on ${kept} verified claim${kept===1?"":"s"}
+         &middot; confidence ${arc.confidence}</span>`
+    : `<span class="ground bad">UNSUPPORTED &mdash; no claim survived the verbatim
+         check, so nothing in the profile backs this. Treat it as the model's guess.</span>`;
+
   $("#out").innerHTML = `
-    <div class="shape"><span class="lbl">Their story in one line</span><p>${esc(arc.throughline)}</p></div>
+    <div class="shape${grounded?"":" ungrounded"}"><span class="lbl">Their story in one line</span>
+      <p>${esc(arc.throughline)}</p>${support}</div>
     <canvas id="arc"></canvas>
     <div class="arckey">
       <span class="k"><i style="background:#F1580A"></i>the person</span>
@@ -124,7 +141,8 @@ function renderArc(arc, raw, name){
       <div><span class="lbl">What they left</span><div id="deps"></div></div>
       <div><span class="lbl">What they are reaching for</span><div id="purs"></div></div>
     </div>
-    <div class="shape tension"><span class="lbl">The open question</span><p>${esc(arc.unresolved_tension)}</p></div>`;
+    <div class="shape tension${grounded?"":" ungrounded"}"><span class="lbl">The open question</span>
+      <p>${esc(arc.unresolved_tension)}</p>${support}</div>`;
   const beat=b=>`<div class="beat"><div class="bh"><b>${esc(b.description)}</b><span class="pill">${b.confidence}</span></div>
       <q>${esc(b.evidence)}</q></div>`;
   $("#deps").innerHTML = arc.departures.map(beat).join("") || `<p class="none">Nothing they left could be quoted.</p>`;
