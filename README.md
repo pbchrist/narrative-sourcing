@@ -74,7 +74,15 @@ for the swappable backend interface).
 
 ## Building this
 
-This repo is built with Claude Code using the Superpowers plugin
-(brainstorming -> planning -> subagent-driven TDD -> code review per
-task). Start any session by pointing Claude Code at `docs/DESIGN.md`
-and `docs/PRINCIPLES.md` and let it plan from there.
+Built with an agentic development workflow using the Superpowers
+plugin: brainstorming, then planning, then test-driven implementation,
+then review, per task. Start any session by pointing the agent at
+`docs/DESIGN.md` and `docs/PRINCIPLES.md` and let it plan from there.
+
+## License
+
+Source available under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+
+Read it, run it, learn from it, use it for personal or nonprofit work. Using it
+inside a commercial recruiting operation, reselling it, or white-labeling it
+requires a separate commercial license. Ask me: patrick@iconic.onl

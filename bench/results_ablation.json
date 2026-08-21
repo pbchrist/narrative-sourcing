@@ -59,5 +59,134 @@
     "arc_confidence": 0.9,
     "elapsed": 138.1,
     "dropped": []
+  },
+  {
+    "profile": "sparse_01.txt",
+    "kind": "sparse",
+    "rep": 0,
+    "chars": 165,
+    "proposed": 4,
+    "kept": 0,
+    "drop_rate": 1.0,
+    "arc_confidence": 0.0,
+    "elapsed": 135.6,
+    "dropped": [
+      {
+        "reason": "fabricated",
+        "overlap": 0.409,
+        "description": "Moving away from entry-level responsibilities and limited autonomy",
+        "evidence": "Title progression from 'Junior Engineer' at Trellis to 'Engineer' at Halverson Group and Solace"
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.184,
+        "description": "Leaving early-career or smaller-team environments for more established platforms",
+        "evidence": "Steady company progression over seven years with increasing role seniority"
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.241,
+        "description": "Gaining deeper technical expertise and professional seniority",
+        "evidence": "Consistent engineering titles with a clear trajectory from junior to standard engineer across multiple tenures"
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.349,
+        "description": "Finding environments that prioritize tangible product development and hands-on creation",
+        "evidence": "Summary explicitly states 'Building things' and every role is centered on engineering"
+      }
+    ]
+  },
+  {
+    "profile": "sparse_02.txt",
+    "rep": 0,
+    "kind": "error",
+    "error": "could not reach backend at http://100.73.250.50:8081: timed out"
+  },
+  {
+    "profile": "sparse_03.txt",
+    "kind": "sparse",
+    "rep": 0,
+    "chars": 180,
+    "proposed": 4,
+    "kept": 0,
+    "drop_rate": 1.0,
+    "arc_confidence": 0.0,
+    "elapsed": 102.9,
+    "dropped": [
+      {
+        "reason": "fabricated",
+        "overlap": 0.402,
+        "description": "Moving away from external consulting and client-facing analysis toward internal, long-term operational ownership.",
+        "evidence": "Career shift from Analyst at Grieve Consulting (2017-2019) to Ops Manager and Head of Ops at Larkspur (2019-present)."
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.301,
+        "description": "Leaving junior individual contributor roles for progressive leadership positions.",
+        "evidence": "Promotion from Ops Manager to Head of Ops at the same organization over a two-year period."
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.478,
+        "description": "Deepening expertise in operational systems and data-driven process management.",
+        "evidence": "Explicit personal statement 'I like spreadsheets more than is normal' paired with consistent Operations titles."
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.33,
+        "description": "Gaining end-to-end ownership of company operations within a single organization.",
+        "evidence": "Steady internal promotion at Larkspur from 2019 to present without changing employers."
+      }
+    ]
+  },
+  {
+    "profile": "test1.pdf",
+    "kind": "real",
+    "rep": 0,
+    "chars": 3210,
+    "proposed": 6,
+    "kept": 0,
+    "drop_rate": 1.0,
+    "arc_confidence": 0.0,
+    "elapsed": 173.6,
+    "dropped": [
+      {
+        "reason": "fabricated",
+        "overlap": 0.044,
+        "description": "Corporate and enterprise recruiting structures",
+        "evidence": "Transitioned from scaling Riot Games' internal recruiting org to becoming COO at a recruiting tech startup and later a Talent Partner for early-stage a16z portfolio companies."
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.035,
+        "description": "Manual, resume-centric hiring processes",
+        "evidence": "Explicitly publishes 'The Resume Is Dead' and focuses on AI agents, knowledge graphs, and automated warm networks to replace traditional screening methods."
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.054,
+        "description": "Single-company talent operations",
+        "evidence": "Shifted from managing internal mobility and interview programs at one company to building a 180k+ cross-company talent network and publishing industry-wide hiring frameworks."
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.096,
+        "description": "AI and technology-enabled talent matching",
+        "evidence": "Current focus on 'how agents, graphs, and new tooling are rewriting how companies find people' combined with a prior COO role at Talent SDK."
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.062,
+        "description": "Democratizing access to early-stage startup opportunities",
+        "evidence": "Runs a 180k+ talent network, publishes weekly founding role job lists, and explicitly aims to help 'ambitious builders land founding roles at early-stage startups.'"
+      },
+      {
+        "reason": "fabricated",
+        "overlap": 0.036,
+        "description": "Industry-wide thought leadership and standardization",
+        "evidence": "Publishes forward-looking articles like '2030: What Hiring Looks Like', creates hiring frameworks/playbooks, and shares data on how startup recruiting actually works."
+      }
+    ]
   }
 ]

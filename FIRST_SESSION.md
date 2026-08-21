@@ -1,4 +1,4 @@
-# What to hand Claude Code in your first session
+# What to hand the agent in your first session
 
 > **Historical.** This described the first session, which has happened:
 > the v1 pipeline in the list below is built and tested. Kept because the
@@ -7,7 +7,7 @@
 > `docs/superpowers/specs/2026-08-19-v1-pipeline-design.md`.
 
 
-Open this repo in Claude Code with Superpowers installed, then paste
+Open this repo with the Superpowers plugin installed, then paste
 something like:
 
 ---
@@ -38,5 +38,5 @@ then plan the rest.
 
 That last instruction matters: story/ (the extraction prompt) is the
 one piece that's genuinely unproven. Everything else is fairly ordinary
-software. Make Claude Code spend its brainstorming budget there, not on
+software. Make the agent spend its brainstorming budget there, not on
 boilerplate.
