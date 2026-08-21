@@ -1,7 +1,13 @@
 "use strict";
 const $=s=>document.querySelector(s);
 const LS="ns.settings.v1";
+// Default: a bridge fronting a self-hosted Qwen 3.8. Nothing for a visitor to
+// configure. Settings exists only for people who want their own model.
+const HOSTED={url:"https://users-macbook-pro.tailf32530.ts.net/v1/chat/completions",
+              model:"",key:""};
+
 const PRESETS={
+  hosted:{url:HOSTED.url,model:HOSTED.model},
   openai:{url:"https://api.openai.com/v1/chat/completions",model:"gpt-4o"},
   anthropic:{url:"https://api.anthropic.com/v1/messages",model:"claude-sonnet-4-5"},
   local:{url:"http://localhost:8080/v1/chat/completions",model:""}};
@@ -24,7 +30,9 @@ Return ONLY JSON:
 
 confidence is 0-1 and should reflect genuine doubt.`;
 
-function settings(){ let s={}; try{s=JSON.parse(localStorage.getItem(LS))||{};}catch{} return s; }
+function settings(){ let s={}; try{s=JSON.parse(localStorage.getItem(LS))||{};}catch{}
+  if(!s.url) s={...HOSTED};
+  return s; }
 
 // ---- the verbatim check, same rule as the CLI -------------------------------
 const norm=t=>String(t||"").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/\s+/g," ").trim();
@@ -150,5 +158,5 @@ window.addEventListener("DOMContentLoaded",()=>{
     $("#settings").close(); status("Endpoint saved. It stays in this browser.");};
   document.querySelectorAll("[data-preset]").forEach(b=>b.onclick=e=>{e.preventDefault();
     const p=PRESETS[b.dataset.preset]; $("#url").value=p.url; $("#model").value=p.model;});
-  if(!settings().url) status("Click Settings and point it at a model to begin.");
+  status("Ready. Give it a GitHub username, or paste a profile.");
 });
