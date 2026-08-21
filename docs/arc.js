@@ -20,8 +20,11 @@ function buildNodes(arc){
       x: dir * Math.cos(ang) * R,
       y: spread * 210,
       z: Math.sin(ang) * R * 0.75,
-      r: 7 + conf * 7, c: dir < 0 ? C.dep : C.pur,
+      r: 10 + conf * 9, c: dir < 0 ? C.dep : C.pur,
       label: short(b.description || ""), kind: dir < 0 ? "departure" : "pursuit",
+      // Alternate the label above and below the node so neighbours in the fan
+      // do not sit on the same baseline and collide.
+      lift: (i % 2 === 0) ? 1 : -1,
       font: 11, weight: 600, alpha: 0.4 + conf * 0.6, data: b
     });
   });
@@ -41,7 +44,7 @@ function mountArc(canvas, arc, onPick){
   const ctx = canvas.getContext("2d");
   const nodes = buildNodes(arc);
   const edges = nodes.slice(1).map(n => ({a:nodes[0], b:n, c:n.c, o:(n.alpha??1)*0.55}));
-  let W=0,H=0,yaw=0.35,pitch=0.22,dist=760,drag=false,lx=0,ly=0,moved=0,hot=null,booted=false;
+  let W=0,H=0,yaw=0.32,pitch=0.20,dist=470,drag=false,lx=0,ly=0,moved=0,hot=null,booted=false;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function size(){ const d=Math.min(devicePixelRatio||1,2);
@@ -82,10 +85,11 @@ function mountArc(canvas, arc, onPick){
       if(fs>8){
         ctx.globalAlpha=dim?0.25:1;
         ctx.font=`${n.weight} ${fs.toFixed(1)}px "IBM Plex Sans",sans-serif`;
-        ctx.textAlign="center"; ctx.textBaseline="bottom";
+        ctx.textAlign="center";
         ctx.fillStyle = n.kind==="person" ? C.person : C.ink;
-        String(n.label).split("\n").forEach((ln,i,a)=>
-          ctx.fillText(ln, p.sx, p.sy-rad-7-(a.length-1-i)*fs*1.15));
+        const up = (n.lift ?? 1) > 0;
+        ctx.textBaseline = up ? "bottom" : "top";
+        ctx.fillText(String(n.label), p.sx, up ? p.sy-rad-9 : p.sy+rad+9);
       }
     }
     ctx.globalAlpha=1;
