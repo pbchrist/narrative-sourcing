@@ -138,6 +138,27 @@ def _verified_beats(raw_beats, raw_text: str, report=None) -> tuple[list[Beat], 
     return kept, proposed
 
 
+def _verified_quotes(raw, raw_text: str) -> list[str]:
+    """Keep only the quotes that genuinely appear in the profile.
+
+    Used for the throughline and the unresolved tension. Those two cannot be
+    checked the way a beat is - they are syntheses - so instead they are made
+    to cite, and the citations get the identical treatment. A synthesis nobody
+    checked is precisely the line a reader repeats as fact.
+    """
+    if isinstance(raw, str):
+        raw = [raw]
+    if not isinstance(raw, list):
+        return []
+    out = []
+    for q in raw:
+        if isinstance(q, str) and verify_span(q, raw_text):
+            text = normalize_evidence(q)
+            if text not in out:
+                out.append(text)
+    return out
+
+
 def normalize_evidence(evidence: str) -> str:
     """Store the citation tidied but not rewritten."""
     return " ".join(str(evidence).split()).strip('"“” ')
@@ -203,6 +224,10 @@ def extract_arc_detailed(
 
     arc = CareerArc(
         throughline=throughline,
+        throughline_evidence=_verified_quotes(
+            data.get("throughline_evidence"), profile.raw_text),
+        tension_evidence=_verified_quotes(
+            data.get("tension_evidence"), profile.raw_text),
         departures=departures,
         pursuits=pursuits,
         unresolved_tension=str(data.get("unresolved_tension") or "").strip(),

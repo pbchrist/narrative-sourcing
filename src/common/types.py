@@ -29,6 +29,21 @@ class CareerArc:
     pursuits: list[Beat] = field(default_factory=list)
     unresolved_tension: str = ""
     confidence: float = 0.0
+    # The throughline and the tension are the two lines a recruiter will
+    # actually repeat, so they carry their own verified quotes. Empty means
+    # nothing in the profile could be quoted to support them - every beat
+    # below may check out and the headline still be invented, which is the
+    # exact failure this model exists to prevent.
+    throughline_evidence: list[str] = field(default_factory=list)
+    tension_evidence: list[str] = field(default_factory=list)
+
+    @property
+    def throughline_anchored(self) -> bool:
+        return bool(self.throughline_evidence)
+
+    @property
+    def tension_anchored(self) -> bool:
+        return bool(self.tension_evidence)
 
 
 @dataclass
