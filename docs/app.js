@@ -27,8 +27,12 @@ Hard rules:
 2. If you cannot find verbatim text supporting a claim, omit the claim. An honest short arc beats a well-written invented one.
 3. You are inferring about a real person from partial evidence. Prefer the plainer reading.
 
+The throughline and the tension must ALSO cite verbatim text, in the same way. \
+They are the two claims a reader will repeat, so they are the two that must \
+be anchored. Give one or two exact quotes that make each of them defensible.
+
 Return ONLY JSON:
-{"throughline":"one sentence","unresolved_tension":"one sentence","departures":[{"description":"...","evidence":"verbatim quote","confidence":0.0}],"pursuits":[{"description":"...","evidence":"verbatim quote","confidence":0.0}]}
+{"throughline":"one sentence","throughline_evidence":["verbatim quote","verbatim quote"],"unresolved_tension":"one sentence","tension_evidence":["verbatim quote"],"departures":[{"description":"...","evidence":"verbatim quote","confidence":0.0}],"pursuits":[{"description":"...","evidence":"verbatim quote","confidence":0.0}]}
 
 confidence is 0-1 and should reflect genuine doubt.`;
 
@@ -110,12 +114,19 @@ function renderArc(arc, raw, name){
   // and when nothing survived, they are labelled unsupported rather than
   // shown as findings.
   const kept = arc.departures.length + arc.pursuits.length;
-  const grounded = kept > 0;
-  const support = grounded
-    ? `<span class="ground ok">rests on ${kept} verified claim${kept===1?"":"s"}
-         &middot; confidence ${arc.confidence}</span>`
-    : `<span class="ground bad">UNSUPPORTED &mdash; no claim survived the verbatim
-         check, so nothing in the profile backs this. Treat it as the model's guess.</span>`;
+  const ground = (quotes, what) => {
+    if (quotes && quotes.length){
+      const q = quotes.map(x=>`<q>${esc(x)}</q>`).join("");
+      return `<span class="ground ok">anchored in the profile's own words
+                &middot; confidence ${arc.confidence}</span>${q}`;
+    }
+    return `<span class="ground bad">NOT ANCHORED &mdash; the model could not quote
+      anything in the profile that supports this ${what}. Every claim below may
+      check out and this line still be invented. Treat it as a guess.</span>`;
+  };
+  const support = ground(arc.throughline_evidence, "reading");
+  const tsupport = ground(arc.tension_evidence, "question");
+  const grounded = !!(arc.throughline_evidence && arc.throughline_evidence.length);
 
   $("#out").innerHTML = `
     <div class="shape${grounded?"":" ungrounded"}"><span class="lbl">Their story in one line</span>
@@ -141,8 +152,9 @@ function renderArc(arc, raw, name){
       <div><span class="lbl">What they left</span><div id="deps"></div></div>
       <div><span class="lbl">What they are reaching for</span><div id="purs"></div></div>
     </div>
-    <div class="shape tension${grounded?"":" ungrounded"}"><span class="lbl">The open question</span>
-      <p>${esc(arc.unresolved_tension)}</p>${support}</div>`;
+    <div class="shape tension${(arc.tension_evidence||[]).length?"":" ungrounded"}">
+      <span class="lbl">The open question</span>
+      <p>${esc(arc.unresolved_tension)}</p>${tsupport}</div>`;
   const beat=b=>`<div class="beat"><div class="bh"><b>${esc(b.description)}</b><span class="pill">${b.confidence}</span></div>
       <q>${esc(b.evidence)}</q></div>`;
   $("#deps").innerHTML = arc.departures.map(beat).join("") || `<p class="none">Nothing they left could be quoted.</p>`;
@@ -170,7 +182,13 @@ async function run(){
       .map(b=>({description:b.description,evidence:norm(b.evidence),
                 confidence:Math.round(Math.min(Number(b.confidence)||0.5, canon(b.evidence).length>=40?0.9:0.6)*100)/100}));
     const dropped=((data.departures||[]).length+(data.pursuits||[]).length);
+    // The headline claims get the identical treatment: quote the source or be
+    // struck. A synthesis nobody checked is exactly the thing a reader repeats.
+    const keepQuotes = arr => (Array.isArray(arr)?arr:[arr])
+      .filter(q => typeof q === "string" && verify(q, raw)).map(norm);
     const arc={throughline:data.throughline,unresolved_tension:data.unresolved_tension||"",
+               throughline_evidence:keepQuotes(data.throughline_evidence),
+               tension_evidence:keepQuotes(data.tension_evidence),
                departures:keep(data.departures),pursuits:keep(data.pursuits)};
     arc.confidence=score([...arc.departures,...arc.pursuits]);
     renderArc(arc,raw,name);
