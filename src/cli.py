@@ -5,6 +5,7 @@ import os
 import sys
 
 from src.intake import IntakeError, load_candidate, load_role, read_source
+from src.intake.github import GitHubError, load as load_github
 from src.pipeline import render, run
 
 
@@ -14,8 +15,13 @@ def main(argv=None) -> int:
         description="Read a candidate's career as a story and produce a "
                     "brief a human writes the message from.",
     )
-    parser.add_argument("--profile", required=True,
-                        help="file containing the pasted candidate profile")
+    parser.add_argument("--profile",
+                        help="file containing the pasted candidate profile "
+                             "(.txt or a LinkedIn PDF export)")
+    parser.add_argument("--github", metavar="USERNAME",
+                        help="read the candidate from a GitHub account instead: "
+                             "what they built, in what languages, over how long. "
+                             "Official API, nothing scraped.")
     parser.add_argument("--role", required=True,
                         help="what to score against: a file, or the text "
                              "itself. It does not have to be a job "
@@ -35,18 +41,27 @@ def main(argv=None) -> int:
                              "you find out where that guess is wrong.")
     args = parser.parse_args(argv)
 
+    if not args.profile and not args.github:
+        parser.error("give me --profile or --github")
+
     try:
-        profile_text, removed = read_source(args.profile)
+        if args.github:
+            profile = load_github(args.github)
+            removed = []
+            print(f"read github.com/{args.github}: {len(profile.raw_text)} chars "
+                  f"of built work", file=sys.stderr)
+        else:
+            profile_text, removed = read_source(args.profile)
+            profile = load_candidate(profile_text, name=args.name)
         # --role is text or a path. A path that exists is read; anything
         # else is taken literally, so a bare sentence needs no temp file.
         if os.path.exists(args.role):
             role_text, _ = read_source(args.role, strip=False)
         else:
             role_text = args.role
-        profile = load_candidate(profile_text, name=args.name)
         role = load_role(role_text, title=args.title,
                          company_context=args.company_context)
-    except IntakeError as exc:
+    except (IntakeError, GitHubError) as exc:
         print(f"intake failed: {exc}", file=sys.stderr)
         return 2
 
