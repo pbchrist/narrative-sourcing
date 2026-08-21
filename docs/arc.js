@@ -6,35 +6,42 @@
 const C = {person:"#F1580A", dep:"#FF6B57", pur:"#3FE0C4", ink:"#E7ECF3", dim:"#7C8FA3"};
 
 function buildNodes(arc){
-  const nodes = [{x:0,y:0,z:0,r:16,c:C.person,label:"THE PERSON",kind:"person",font:13,weight:700,data:arc}];
+  const nodes = [{x:0,y:0,z:0,r:19,c:C.person,label:"THE PERSON",kind:"person",font:13,weight:700,data:arc}];
+  // Departures go left, pursuits right, fanned wide. An earlier version put
+  // everything within ~150 units of the middle and the labels became a pile;
+  // the graph is only worth having if you can read it.
   const place = (beats, dir) => beats.forEach((b,i) => {
     const conf = Math.max(0.15, Math.min(1, b.confidence ?? 0.5));
-    const R = 150 + (1 - conf) * 190;               // less certain, further out
-    const spread = beats.length > 1 ? (i/(beats.length-1) - 0.5) : 0;
-    const ang = dir * (0.55 + spread * 0.9);
+    const R = 300 + (1 - conf) * 130;              // less certain, further out
+    const n = beats.length;
+    const spread = n > 1 ? (i/(n-1) - 0.5) : 0;    // -0.5 .. 0.5
+    const ang = spread * 1.5;                      // fan, not a stack
     nodes.push({
-      x: Math.cos(ang) * R * dir, y: spread * 150 + (dir<0?-25:25), z: Math.sin(ang) * R,
-      r: 6 + conf * 6, c: dir < 0 ? C.dep : C.pur,
-      label: wrap(b.description || ""), kind: dir < 0 ? "departure" : "pursuit",
-      font: 11.5, weight: 600, alpha: 0.35 + conf * 0.65, data: b
+      x: dir * Math.cos(ang) * R,
+      y: spread * 210,
+      z: Math.sin(ang) * R * 0.75,
+      r: 7 + conf * 7, c: dir < 0 ? C.dep : C.pur,
+      label: short(b.description || ""), kind: dir < 0 ? "departure" : "pursuit",
+      font: 11, weight: 600, alpha: 0.4 + conf * 0.6, data: b
     });
   });
   place(arc.departures || [], -1);
   place(arc.pursuits || [], 1);
   return nodes;
 }
-function wrap(s, at=26){
-  const w=s.split(" "); const out=[]; let cur="";
-  for(const x of w){ if(cur && (cur+" "+x).length>at){ out.push(cur); cur=x; } else cur=(cur+" "+x).trim(); }
-  if(cur) out.push(cur);
-  return out.slice(0,2).join("\n");
+
+// A node label is a handle, not the claim. Keep it to a few words on one
+// line — the full sentence and its quote live in the panel on click.
+function short(s, words=4){
+  const w = String(s).replace(/\s+/g," ").trim().split(" ");
+  return w.length <= words ? w.join(" ") : w.slice(0, words).join(" ") + "…";
 }
 
 function mountArc(canvas, arc, onPick){
   const ctx = canvas.getContext("2d");
   const nodes = buildNodes(arc);
   const edges = nodes.slice(1).map(n => ({a:nodes[0], b:n, c:n.c, o:(n.alpha??1)*0.55}));
-  let W=0,H=0,yaw=0.55,pitch=0.26,dist=560,drag=false,lx=0,ly=0,moved=0,hot=null,booted=false;
+  let W=0,H=0,yaw=0.35,pitch=0.22,dist=760,drag=false,lx=0,ly=0,moved=0,hot=null,booted=false;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function size(){ const d=Math.min(devicePixelRatio||1,2);
