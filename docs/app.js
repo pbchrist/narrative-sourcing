@@ -3,7 +3,7 @@ const $=s=>document.querySelector(s);
 const LS="ns.settings.v1";
 // Default: a bridge fronting a self-hosted Qwen 3.8. Nothing for a visitor to
 // configure. Settings exists only for people who want their own model.
-const HOSTED={url:"https://users-macbook-pro.tailf32530.ts.net/v1/chat/completions",
+const HOSTED={url:"https://patrick-beastmaster.tailf32530.ts.net/model/v1/chat/completions",
               model:"",key:""};
 
 const PRESETS={
