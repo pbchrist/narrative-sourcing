@@ -45,6 +45,39 @@ const norm=t=>String(t||"").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').re
 const canon=t=>norm(t).replace(/^(\.\.\.|…)+|(\.\.\.|…)+$/g,"").replace(/^[\s"'.,;:\-—–]+|[\s"'.,;:\-—–]+$/g,"").toLowerCase();
 function verify(ev, raw){ const n=canon(ev); return n.length>=12 && norm(raw).toLowerCase().includes(n); }
 
+// ---- second gate: does the quote SUPPORT the claim, or just sit near it? ----
+// Live playtest caught this. The verifier confirmed "Currently working at Odum
+// Research where I help building a modern trading platform" and let it stand as
+// evidence for "seeking roles that involve building trading infrastructure".
+// The quote proves he does it. It says nothing about what he wants. Verifying
+// the quote is not verifying the inference, and that gap is where a sourcing
+// tool starts inventing motives for real people.
+const INTENT=["seeking","seeks","wants to","want to","looking for","looking to",
+  "hopes to","hoping to","aims to","aiming to","aspires","is pursuing","intends to",
+  "would like to","ready to","eager to","open to"];
+const DEPARTURE=["left","leaving","departed","moved away","moved on","stepped away",
+  "stepped back","exited","quit","walked away","gave up","abandoned","moved from",
+  "transitioned from","shifted from","away from"];
+const LEADERSHIP=["lead","leads","leading","led","manage","manages","managing","managed",
+  "head of","heads","director","supervis","mentor","hired","reports"];
+const has=(t,ns)=>{const s=" "+norm(t).toLowerCase()+" ";return ns.some(n=>s.includes(n));};
+const nums=t=>new Set((String(t).replace(/,/g,"").match(/\d+/g)||[]));
+
+function entails(claim, quote){
+  claim=(claim||"").trim(); quote=(quote||"").trim();
+  if(!claim||!quote) return {ok:false,reason:"Nothing to check."};
+  if(has(claim,INTENT)&&!has(quote,INTENT))
+    return {ok:false,reason:"The quote shows what they do, not what they want."};
+  if(has(claim,DEPARTURE)&&!has(quote,DEPARTURE))
+    return {ok:false,reason:"The claim says they left something; the quote never mentions leaving."};
+  if(has(claim,LEADERSHIP)&&!has(quote,LEADERSHIP))
+    return {ok:false,reason:"The claim is about leading people; the quote does not mention it."};
+  const missing=[...nums(claim)].filter(n=>!nums(quote).has(n));
+  if(missing.length)
+    return {ok:false,reason:`The claim names a figure the quote does not contain: ${missing.join(", ")}.`};
+  return {ok:true,reason:""};
+}
+
 function score(beats){
   if(!beats.length) return 0;
   const distinct=new Set(beats.map(b=>canon(b.evidence))).size;
@@ -178,7 +211,13 @@ async function run(){
     status("Reading the arc. This takes as long as your model takes.");
     const data=extractJSON(await complete(`PROFILE TEXT (quote only from between these markers):\n---BEGIN PROFILE---\n${raw}\n---END PROFILE---`));
     if(!data.throughline) throw new Error("No throughline came back.");
-    const keep=(arr)=>(arr||[]).filter(b=>b&&b.description&&verify(b.evidence,raw))
+    const unsupported=[];
+    const keep=(arr)=>(arr||[]).filter(b=>{
+        if(!b||!b.description||!verify(b.evidence,raw)) return false;
+        const v=entails(b.description,b.evidence);
+        if(!v.ok){ unsupported.push({d:b.description,why:v.reason}); return false; }
+        return true;
+      })
       .map(b=>({description:b.description,evidence:norm(b.evidence),
                 confidence:Math.round(Math.min(Number(b.confidence)||0.5, canon(b.evidence).length>=40?0.9:0.6)*100)/100}));
     const dropped=((data.departures||[]).length+(data.pursuits||[]).length);
@@ -193,7 +232,10 @@ async function run(){
     arc.confidence=score([...arc.departures,...arc.pursuits]);
     renderArc(arc,raw,name);
     const kept=arc.departures.length+arc.pursuits.length;
-    status(`${kept} of ${dropped} claims quoted the profile exactly. ${dropped-kept} were deleted.`);
+    const un = unsupported.length
+      ? ` ${unsupported.length} had a real quote that did not support the claim (${unsupported[0].why})`
+      : "";
+    status(`${kept} of ${dropped} claims survived. ${dropped-kept} deleted.${un}`);
   }catch(e){ status(e.message,1); }
   finally{ $("#run").disabled=false; }
 }

@@ -12,6 +12,7 @@ from src.common import llm
 from src.common.parsing import ParseError, extract_json
 from src.common.types import Beat, CandidateProfile, CareerArc
 from src.story import prompt as prompt_mod
+from src.story.entails import entails
 from src.story.verify import MIN_SPAN_CHARS, canonical, normalize, verify_span
 
 # A well-supported arc cites several different parts of the profile. Four
@@ -41,7 +42,8 @@ class DroppedBeat:
     description: str
     evidence: str
     overlap: float  # longest run of the quote actually present, 0-1
-    reason: str     # too_short | near_miss | paraphrase | fabricated
+    reason: str     # too_short | near_miss | paraphrase | fabricated | unsupported
+    note: str = ""  # for "unsupported": why the real quote does not back it
 
 
 @dataclass
@@ -129,6 +131,17 @@ def _verified_beats(raw_beats, raw_text: str, report=None) -> tuple[list[Beat], 
                 report.dropped.append(DroppedBeat(
                     description=description, evidence=evidence,
                     overlap=overlap, reason=reason))
+            continue
+
+        # The quote is genuinely theirs. Second gate: does it actually back
+        # this claim? A real quote attached to an inference it does not
+        # support is how a sourcing tool starts inventing motives.
+        verdict = entails(description, evidence)
+        if not verdict.ok:
+            if report is not None:
+                report.dropped.append(DroppedBeat(
+                    description=description, evidence=evidence,
+                    overlap=1.0, reason="unsupported", note=verdict.reason))
             continue
         kept.append(Beat(
             description=description,
