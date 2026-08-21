@@ -6,7 +6,7 @@
 const C = {person:"#F1580A", dep:"#FF6B57", pur:"#3FE0C4", ink:"#E7ECF3", dim:"#7C8FA3"};
 
 function buildNodes(arc){
-  const nodes = [{x:0,y:0,z:0,r:19,c:C.person,label:"THE PERSON",kind:"person",font:13,weight:700,data:arc}];
+  const nodes = [{x:0,y:0,z:0,r:12,c:C.person,label:"THE PERSON",kind:"person",font:13,weight:700,lift:1,data:arc}];
   // Departures go left, pursuits right, fanned wide. An earlier version put
   // everything within ~150 units of the middle and the labels became a pile;
   // the graph is only worth having if you can read it.
@@ -20,7 +20,7 @@ function buildNodes(arc){
       x: dir * Math.cos(ang) * R,
       y: spread * 210,
       z: Math.sin(ang) * R * 0.75,
-      r: 10 + conf * 9, c: dir < 0 ? C.dep : C.pur,
+      r: 6 + conf * 5, c: dir < 0 ? C.dep : C.pur,
       label: short(b.description || ""), kind: dir < 0 ? "departure" : "pursuit",
       // Alternate the label above and below the node so neighbours in the fan
       // do not sit on the same baseline and collide.
@@ -89,7 +89,11 @@ function mountArc(canvas, arc, onPick){
         ctx.fillStyle = n.kind==="person" ? C.person : C.ink;
         const up = (n.lift ?? 1) > 0;
         ctx.textBaseline = up ? "bottom" : "top";
-        ctx.fillText(String(n.label), p.sx, up ? p.sy-rad-9 : p.sy+rad+9);
+        // Keep the label inside the canvas. A node near the edge would
+        // otherwise render half its text past the border.
+        const half = ctx.measureText(String(n.label)).width / 2 + 8;
+        const lx2 = Math.max(half, Math.min(W - half, p.sx));
+        ctx.fillText(String(n.label), lx2, up ? p.sy-rad-9 : p.sy+rad+9);
       }
     }
     ctx.globalAlpha=1;
