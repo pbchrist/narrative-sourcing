@@ -104,6 +104,17 @@ function renderArc(arc, raw, name){
   $("#out").innerHTML = `
     <div class="shape"><span class="lbl">Their story in one line</span><p>${esc(arc.throughline)}</p></div>
     <canvas id="arc"></canvas>
+    <div class="arckey">
+      <span class="k"><i style="background:#F1580A"></i>the person</span>
+      <span class="k"><i style="background:#FF6B57"></i>left behind <b>&larr; left side</b></span>
+      <span class="k"><i style="background:#3FE0C4"></i>reaching for <b>right side &rarr;</b></span>
+      <span class="k"><i style="background:#3FE0C4"></i><i class="sm" style="background:#3FE0C4"></i>
+        <b>big &amp; close</b> = the profile says it plainly &middot;
+        <b>small &amp; far</b> = inferred</span>
+      <span class="k"><i class="mine"></i>yours, not evidenced</span>
+      <span class="hint">hover a node for the quote &middot; click empty space to add one &middot;
+        shift-drag to connect &middot; double-click yours to delete</span>
+    </div>
     <div class="bar"><span>${arc.departures.length+arc.pursuits.length} claims survived the verbatim check
       &middot; confidence <b>${arc.confidence}</b></span></div>
     <div id="detail" class="detail"><span class="lbl">Click any node</span>
