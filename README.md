@@ -1,5 +1,12 @@
 # narrative-sourcing
 
+### → [Open the app](https://pbchrist.github.io/narrative-sourcing/)
+
+No install. A GitHub username or a pasted profile in, the career arc out — with
+every claim quoting the source word for word, and a graph of the arc you can
+turn. Runs in your browser against a model you choose.
+
+
 Every AI sourcing tool scores candidates against a job description like a
 resume is a bag of keywords. It isn't. It's a plot with the connective
 tissue removed.
