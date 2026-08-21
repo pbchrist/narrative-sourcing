@@ -86,10 +86,42 @@ function score(beats){
   return Math.round(cover*mean*100)/100;
 }
 
+// ---- where the hosted model actually is -------------------------------------
+// The public address is a Cloudflare quick tunnel, and a quick tunnel gets a
+// brand-new random hostname every time cloudflared restarts. The server
+// publishes wherever it currently is to endpoint.json beside this file, and a
+// timer keeps that current. The constant above is only the fallback for when
+// that file is missing.
+let RESOLVED_URL = null;
+async function hostedURL(fallback){
+  if(RESOLVED_URL) return RESOLVED_URL;
+  try{
+    const r = await fetch("endpoint.json?t=" + Date.now(), {cache:"no-store"});
+    if(r.ok){
+      const d = await r.json();
+      if(d && typeof d.url === "string" && /^https:\/\//.test(d.url)){
+        return (RESOLVED_URL = d.url);
+      }
+    }
+  }catch(e){ /* offline, or the file is not there yet - use the fallback */ }
+  return (RESOLVED_URL = fallback);
+}
+
+// A saved endpoint normally wins: someone chose it in Settings. The exception
+// is a saved tunnel address, which was never a choice - just a snapshot of
+// where the tunnel happened to be that day. Left alone it would pin whoever
+// saved one to a dead host forever, which breaks the app worst for the people
+// who opened Settings most.
+async function endpointFor(s, fallback){
+  if(s.url && !/\.trycloudflare\.com/.test(s.url)) return s.url;
+  return await hostedURL(fallback);
+}
+
 async function complete(prompt){
   const s=settings();
-  if(!s.url) throw new Error("Point it at a model first — click Settings.");
-  const anth=/anthropic\.com/.test(s.url);
+  const url=await endpointFor(s, HOSTED.url);
+  if(!url) throw new Error("Point it at a model first — click Settings.");
+  const anth=/anthropic\.com/.test(url);
   const h={"Content-Type":"application/json"}; let body;
   if(anth){ h["x-api-key"]=s.key||""; h["anthropic-version"]="2023-06-01";
     h["anthropic-dangerous-direct-browser-access"]="true";
@@ -97,7 +129,7 @@ async function complete(prompt){
   } else { if(s.key) h.Authorization="Bearer "+s.key;
     body={messages:[{role:"system",content:SYSTEM},{role:"user",content:prompt}],temperature:0.2,max_tokens:8000};
     if(s.model) body.model=s.model; }
-  const r=await fetch(s.url,{method:"POST",headers:h,body:JSON.stringify(body)});
+  const r=await fetch(url,{method:"POST",headers:h,body:JSON.stringify(body)});
   if(!r.ok) throw new Error(`${r.status} from your endpoint. ${(await r.text()).slice(0,180)}`);
   const d=await r.json();
   if(anth) return (d.content||[]).map(c=>c.text||"").join("");
