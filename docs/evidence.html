@@ -1,0 +1,147 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Does the rule do anything?</title>
+<meta name="description" content="An ablation measuring whether forcing verbatim citation actually changes what the model does. It did — less than expected, and not in the way expected.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#0C1017;--bg2:#131924;--card:#161E2B;--rule:#26303F;--ink:#E7ECF3;
+ --ink2:#9FADBE;--ink3:#6B7A8C;--acc:#F1580A;--teal:#3FE0C4;--red:#FF6B57}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "IBM Plex Sans",system-ui,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:32px 20px 90px}
+.tag{font:11px/1 "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;
+ color:var(--ink3);display:block;margin-bottom:14px}
+h1{font-size:clamp(26px,4.4vw,38px);margin:0 0 18px;letter-spacing:-.02em;text-wrap:balance}
+h1 span{color:var(--teal)}
+h2{font-size:19px;margin:44px 0 12px;letter-spacing:-.01em}
+p{color:var(--ink2);max-width:66ch}
+p b,li b{color:var(--ink);font-weight:600}
+a{color:var(--teal)}
+.lede{font-size:18px;color:var(--ink);max-width:64ch}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--rule);font-size:15px}
+th{font:11px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+td.n{text-align:right}
+.scroll{overflow-x:auto}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:18px 20px;margin:18px 0}
+.card.warn{border-left:3px solid var(--acc)}
+.card.good{border-left:3px solid var(--teal)}
+.k{font:11px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--ink3);display:block;margin-bottom:8px}
+q{display:block;font:14px/1.65 "IBM Plex Mono",monospace;color:var(--ink);
+ border-left:2px solid var(--rule);padding:2px 0 2px 12px;margin:8px 0;quotes:none}
+q.bad{border-left-color:var(--red);color:#FFCFC7}
+.claim{color:var(--ink2);font-size:15px;margin:0 0 4px}
+ul{color:var(--ink2);max-width:66ch;padding-left:20px}
+li{margin:7px 0}
+footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:18px;
+ color:var(--ink3);font-size:14px}
+</style>
+<div class="wrap">
+
+<span class="tag">narrative-sourcing · ablation</span>
+<h1>Does the rule actually <span>do anything?</span></h1>
+
+<p class="lede">This tool deletes any claim whose quote does not appear in the source
+word for word. That is the whole design. So it is worth asking whether the rule changes
+what the model does, or just makes the README sound rigorous.</p>
+
+<p>I measured it. The result was smaller than I expected, is not statistically
+significant, and turned up a failure mode I had not predicted. All three of those
+sentences are in this page on purpose.</p>
+
+<h2>Method</h2>
+
+<p>Twelve profiles — eight short, four long — through the same model at the same
+temperature, twice. The two runs differ in exactly one thing: whether the system
+prompt demands the evidence be copied verbatim.</p>
+
+<p>The ablation removes <b>only</b> the verbatim requirement. Both conditions still
+ask for evidence. Removing evidence entirely would have proved something nobody
+doubted.</p>
+
+<div class="card">
+  <span class="k">removed in the ablated condition</span>
+  <q>Every departure and pursuit must quote VERBATIM text from the profile as its
+evidence. Copy the characters exactly… A quote that does not appear in the profile
+word for word will be discarded automatically.</q>
+  <span class="k" style="margin-top:14px">replaced with</span>
+  <q>Every departure and pursuit should include supporting evidence from the profile.</q>
+</div>
+
+<p>Grading is done by <code>src/story/verify.py</code> — the same deterministic
+check the product ships. No model judges this, including me.</p>
+
+<h2>Results</h2>
+
+<div class="scroll">
+<table>
+<tr><th>condition</th><th class="n">claims</th><th class="n">verbatim</th><th class="n">fabricated</th><th class="n">rate</th></tr>
+<tr><td>with the rule</td><td class="n">37</td><td class="n">37</td><td class="n">0</td><td class="n">0.0%</td></tr>
+<tr><td>without the rule</td><td class="n">40</td><td class="n">37</td><td class="n">3</td><td class="n">7.5%</td></tr>
+</table>
+</div>
+
+<div class="card warn">
+  <span class="k">the honest caveat</span>
+  <p style="margin:0">Fisher exact, two-tailed: <b>p = 0.241</b>. At 77 claims this
+  difference is <b>not statistically significant</b>. The rule may help. This
+  experiment does not prove it does.</p>
+</div>
+
+<p>I was originally going to publish a much larger number, carried over from an
+earlier run. It did not reproduce when I measured it again. That is why this page
+shows 7.5% instead, and why <a href="https://github.com/pbchrist/narrative-sourcing/tree/main/ablation">the
+raw model output for all 24 runs</a> is committed next to the code — so the numbers
+can be checked rather than believed.</p>
+
+<h2>The interesting part is not the rate</h2>
+
+<p>All three failures are the same move, and it is not invention. The model
+<b>splices non-contiguous fragments into something that reads as one continuous
+quotation</b>:</p>
+
+<div class="card">
+  <p class="claim">claim: “Moving away from designing new machines toward preventing failures.”</p>
+  <q class="bad">2013-2018 Mechanical Designer, Kubota; 2018-now Reliability Engineer, Daikin</q>
+  <p style="margin:6px 0 0;font-size:14px">Two separate lines, joined by a semicolon that
+  is not in the profile.</p>
+</div>
+
+<div class="card">
+  <p class="claim">claim: “A deep, perhaps obsessive engagement with the root causes of mechanical breakdown.”</p>
+  <q class="bad">I look at why machines fail. … I read failure reports for fun, which my wife finds concerning.</q>
+  <p style="margin:6px 0 0;font-size:14px">Two sentences bridged by an ellipsis, with a
+  paragraph removed between them.</p>
+</div>
+
+<p>Every fragment is real. The quotation is not. That is more dangerous than an
+invented fact, because it manufactures adjacency between things that were never
+adjacent — and a reader checking one fragment will find it and stop checking.</p>
+
+<h2>What this actually changed my mind about</h2>
+
+<div class="card good">
+<ul style="margin:0">
+<li>The prompt wording is <b>not</b> the load-bearing part. I assumed it was.</li>
+<li>The <b>verifier</b> is. It caught all three regardless of the prompt, because it
+compares characters rather than trusting instructions.</li>
+<li>The failure to design against is <b>quote-splicing</b>, not fabrication — which is
+why the check requires one contiguous span and rejects a stitched one.</li>
+</ul>
+</div>
+
+<p>A 7.5% splice rate on a small sample is not a headline. But three invented
+quotations attributed to real people, in 40 claims, is the exact thing a recruiter
+would paste into an email and never think about again.</p>
+
+<footer>
+Run against a local Qwen 3.8 (27B, Q4_K_M) at temperature 0.2. Profiles are synthetic,
+written for this test, and included in the repository. ·
+<a href="./">back to the tool</a> ·
+<a href="https://github.com/pbchrist/narrative-sourcing">source</a>
+</footer>
+
+</div>
