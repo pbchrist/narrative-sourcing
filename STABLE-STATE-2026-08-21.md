@@ -22,8 +22,18 @@ To come back to the latest work afterwards: `git checkout main`
 
 Double-click **CHECK-EVERYTHING.command** on your Desktop.
 
-Green means the code still behaves exactly as it did on 21 August.
-Red means something changed, and it prints exactly what.
+Green means nothing has drifted since the last deliberate change.
+Red means something changed by accident, and it prints exactly what.
+
+Two different things, worth keeping straight:
+
+- **The tag** `stable-2026-08-21` is frozen. It is this day, forever.
+  It never moves. That is the thing you go back to.
+- **The checker** compares against the most recent *intended* behaviour.
+  When a fix deliberately changes what the code does, the baseline is
+  re-recorded and the commit says so. So green does not mean "identical
+  to 21 August" - it means "nothing has broken since the last change
+  someone meant to make."
 
 ## What "working" meant on this date — verified, not assumed
 
@@ -42,9 +52,10 @@ Red means something changed, and it prints exactly what.
 
 ## Known problems on this date (not fixed here)
 
-1. **Obviousness scores are unreliable.** Whole maps come back all 1/5 or
-   all 4/5. Diagnosed: ranking pools within a map works, the absolute 1-5
-   score does not.
+1. ~~**Obviousness scores are unreliable.**~~ FIXED after this tag, on
+   21 August. Pools are now ranked within a map instead of scored against
+   the whole market. If you check out this tag you get the broken version
+   back - the fix is on `main`.
 2. **The throughline and the tension can overreach.** Their quotes are real
    but are not checked against the claim the way the beats are.
 3. **Two people pasted in together produce one confident profile.** Nothing
