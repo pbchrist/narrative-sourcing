@@ -1,0 +1,18 @@
+{
+  "throughline": "Elena Vasquez deliberately seeks out increasingly chaotic and undefined environments to apply her operational expertise to building systems from scratch.",
+  "unresolved_tension": "Whether she will eventually transition from building these messy systems to leading a mature, stable organization, or if she will continue to chase the initial chaos indefinitely.",
+  "departures": [
+    {
+      "description": "Moving away from established, structured logistics processes toward more ambiguous operational roles.",
+      "evidence": "Every job I have taken has been messier than the last one and that is on purpose.",
+      "confidence": 0.95
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "Actively seeking out the early-stage challenge of creating order where none exists.",
+      "evidence": "I like the part where nothing works yet.",
+      "confidence": 0.95
+    }
+  ]
+}

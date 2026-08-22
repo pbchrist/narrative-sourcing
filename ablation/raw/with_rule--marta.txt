@@ -1,0 +1,18 @@
+{
+  "throughline": "Marta Reyes consistently prioritizes backend stability and predictable work rhythms over high-risk technical adventures.",
+  "unresolved_tension": "Whether her move to Pleo represents a permanent shift toward financial domain expertise or simply a tactical retreat to a more stable environment after a failed migration.",
+  "departures": [
+    {
+      "description": "Moving away from complex, long-term infrastructure projects that may not materialize.",
+      "evidence": "Spent about eighteen months on a migration that got cancelled.",
+      "confidence": 0.9
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "Seeking roles with clear business impact and stable schedules to accommodate family life.",
+      "evidence": "Now closer to the money side of things. Two kids, so I optimise for predictable weeks.",
+      "confidence": 0.85
+    }
+  ]
+}

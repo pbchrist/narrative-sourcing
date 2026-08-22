@@ -1,0 +1,28 @@
+{
+  "throughline": "The career is defined by a persistent focus on creating psychological safety for frontline staff as the primary driver of clinical quality and operational stability.",
+  "unresolved_tension": "Whether the specific cultural interventions that stabilized a 212-bed facility can be scaled or replicated in larger, more complex healthcare systems beyond the single-site director role.",
+  "departures": [
+    {
+      "description": "Moving away from direct bedside care to administrative leadership, while maintaining a self-perception rooted in clinical origins.",
+      "evidence": "I came up on the floor. I did eleven years of bedside before I took an administrative role and I still think that is the only reason anyone listens to me.",
+      "confidence": 0.95
+    },
+    {
+      "description": "Rejecting the common industry assumption that staffing contracts are the root cause of facility performance issues.",
+      "evidence": "The difference was never the staffing agency contract.",
+      "confidence": 0.9
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "Cultivating an environment where staff feel safe to report issues without fear of retribution.",
+      "evidence": "It was whether the charge nurses trusted that reporting a problem would not end badly for them.",
+      "confidence": 0.95
+    },
+    {
+      "description": "Improving staff retention and working conditions through structural changes to scheduling and overtime policies.",
+      "evidence": "Reduced RN turnover from 71% annualised to 38% by rebuilding the scheduling model and killing mandatory overtime.",
+      "confidence": 0.9
+    }
+  ]
+}

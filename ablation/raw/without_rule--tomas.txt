@@ -1,0 +1,28 @@
+{
+  "throughline": "A progressive shift from abstract design to tangible operational reality, prioritizing the functional performance of built assets over their theoretical construction.",
+  "unresolved_tension": "Whether this trajectory represents a permanent settlement into the operational phase of the asset lifecycle or a stepping stone toward a broader leadership role in energy infrastructure management.",
+  "departures": [
+    {
+      "description": "Moving away from the theoretical and design-focused aspects of engineering.",
+      "evidence": "I moved from designing structures to making sure they actually work once built.",
+      "confidence": 0.95
+    },
+    {
+      "description": "Leaving the focus on static structural integrity for dynamic system performance.",
+      "evidence": "Commissioning is where the drawings meet reality and I find that more interesting than the drawings.",
+      "confidence": 0.9
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "Seeking roles that validate the practical application of engineering plans in the real world.",
+      "evidence": "making sure they actually work once built",
+      "confidence": 0.95
+    },
+    {
+      "description": "Pursuing the intersection of technical planning and physical execution.",
+      "evidence": "Commissioning is where the drawings meet reality",
+      "confidence": 0.9
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "throughline": "The career is defined by a consistent focus on backend systems and infrastructure rather than user-facing application development.",
+  "unresolved_tension": "The move from a fintech startup to a global edge network suggests a shift from building product-specific infrastructure to solving large-scale, distributed systems problems, but the specific technical challenge driving this transition remains open.",
+  "departures": [
+    {
+      "description": "Moving away from a specific fintech context to a broader infrastructure provider.",
+      "evidence": "Previously at Monzo, now at Cloudflare.",
+      "confidence": 0.9
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "A sustained commitment to infrastructure engineering over other software disciplines.",
+      "evidence": "Software engineer, mostly infrastructure.",
+      "confidence": 0.95
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "throughline": "The candidate consistently prioritizes diagnosing and fixing broken internal hiring processes over passive sourcing or branding.",
+  "unresolved_tension": "Whether the candidate can successfully scale a recruiting function beyond the specific context of high-growth tech companies, given the profile's heavy emphasis on engineering and rapid headcount growth.",
+  "departures": [
+    {
+      "description": "Moving away from generic agency recruitment and passive sourcing toward active process design.",
+      "evidence": "Recruitment Consultant\nMichael Page\n2014 - 2018 · Madrid",
+      "confidence": 0.85
+    },
+    {
+      "description": "Rejecting the industry norm of relying on employer branding to fix hiring issues.",
+      "evidence": "I do not believe in employer branding as a substitute for a good interview process.",
+      "confidence": 0.95
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "Seeking roles where they can build systems from scratch at the point of organizational transition.",
+      "evidence": "Three times now I have joined a company at the point where founder-led hiring stopped working and had to design something that could survive without heroics.",
+      "confidence": 0.9
+    },
+    {
+      "description": "Focusing on the diagnostic root causes of hiring failures rather than surface-level metrics.",
+      "evidence": "What I actually enjoy is the diagnostic part - working out why a pipeline is failing, which is almost never the sourcing channel everyone blames.",
+      "confidence": 0.95
+    }
+  ]
+}

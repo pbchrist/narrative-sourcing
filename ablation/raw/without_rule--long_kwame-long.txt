@@ -1,0 +1,28 @@
+{
+  "throughline": "Kwame Asante’s career is defined by a consistent effort to build institutional trust and psychological safety for frontline nurses, using his clinical credibility to protect staff from systemic failures.",
+  "unresolved_tension": "The profile ends with a successful operational turnaround at a large facility, leaving open the question of whether he will continue to optimize existing systems or move into a role focused on systemic policy change or education to address the root causes of the crises he has repeatedly fixed.",
+  "departures": [
+    {
+      "description": "He moved away from direct bedside care to administrative leadership, a transition he frames as a loss of primary authority but a gain in systemic influence.",
+      "evidence": "I came up on the floor. I did eleven years of bedside before I took an administrative role and I still think that is the only reason anyone listens to me.",
+      "confidence": 0.95
+    },
+    {
+      "description": "He explicitly rejected the common industry solution of relying on staffing agencies to solve operational problems, choosing instead to address internal cultural and structural issues.",
+      "evidence": "The difference was never the staffing agency contract. It was whether the charge nurses trusted that reporting a problem would not end badly for them.",
+      "confidence": 0.9
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "He actively pursued the creation of a safe reporting culture where clinical staff feel protected when identifying risks, viewing this as the primary driver of quality outcomes.",
+      "evidence": "It was whether the charge nurses trusted that reporting a problem would not end badly for them.",
+      "confidence": 0.95
+    },
+    {
+      "description": "He sought to humanize the workforce by eliminating exploitative labor practices, specifically targeting mandatory overtime as a barrier to staff retention and well-being.",
+      "evidence": "Reduced RN turnover from 71% annualised to 38% by rebuilding the scheduling model and killing mandatory overtime.",
+      "confidence": 0.9
+    }
+  ]
+}

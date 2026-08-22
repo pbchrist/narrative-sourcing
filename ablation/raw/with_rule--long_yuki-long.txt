@@ -1,0 +1,28 @@
+{
+  "throughline": "A persistent return to the foundational mechanics of data durability and consistency, specifically within storage engines, despite attempts to move away from them.",
+  "unresolved_tension": "The conflict between a deep preference for defining correctness in ambiguous systems and a stated boredom with settled requirements, leaving open whether the next role will provide enough novelty or if the candidate will struggle with execution-heavy phases.",
+  "departures": [
+    {
+      "description": "Moving away from reliance on centralized coordination services in favor of decentralized protocols.",
+      "evidence": "replaced the previous ZooKeeper-backed path",
+      "confidence": 0.9
+    },
+    {
+      "description": "Abandoning the pursuit of building complex caching layers when the architectural decision was to not build them.",
+      "evidence": "Wrote the internal design doc for a caching layer that was ultimately not built, which was the right call.",
+      "confidence": 0.8
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "Seeking problems where the definition of correctness is not yet established, requiring the engineer to define the standard.",
+      "evidence": "I am at my best on problems where the correct answer is not yet known and somebody has to write down what \"correct\" even means.",
+      "confidence": 0.95
+    },
+    {
+      "description": "Focusing on the invisible, critical infrastructure components that only become apparent during failure.",
+      "evidence": "I work on the parts of systems that only get noticed when they break.",
+      "confidence": 0.9
+    }
+  ]
+}

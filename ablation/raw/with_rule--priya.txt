@@ -1,0 +1,23 @@
+{
+  "throughline": "The career arc is defined by a deliberate shift from surface-level visualization to foundational data infrastructure.",
+  "unresolved_tension": "The profile ends with a self-taught skill acquired out of necessity, leaving open whether this represents a permanent pivot to independent engineering or a temporary workaround for organizational constraints.",
+  "departures": [
+    {
+      "description": "Moving away from creating visual dashboards to building the underlying data models.",
+      "evidence": "I started in dashboards and I have been running away from dashboards ever since.",
+      "confidence": 0.95
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "Developing the foundational data models that support other teams' visualizations.",
+      "evidence": "Now I build the models other people's dashboards sit on top of.",
+      "confidence": 0.9
+    },
+    {
+      "description": "Acquiring specific technical skills (dbt) independently to fill a gap in the organization.",
+      "evidence": "I taught myself dbt on nights and weekends because nobody at Wealthsimple would pay for it.",
+      "confidence": 0.85
+    }
+  ]
+}

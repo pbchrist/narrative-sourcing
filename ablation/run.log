@@ -1,0 +1,35 @@
+  with_rule     priya        3/3 quotes check out
+  with_rule     devon        3/3 quotes check out
+  with_rule     marta        2/2 quotes check out
+  with_rule     tomas        4/4 quotes check out
+  with_rule     aisha        2/2 quotes check out
+  with_rule     hiro         3/3 quotes check out
+  with_rule     sam          2/2 quotes check out
+  with_rule     elena        2/2 quotes check out
+  without_rule  priya        4/4 quotes check out
+  without_rule  devon        3/3 quotes check out
+  without_rule  marta        4/4 quotes check out
+  without_rule  tomas        4/4 quotes check out
+  without_rule  aisha        2/2 quotes check out
+  without_rule  hiro         1/3 quotes check out
+  without_rule  sam          2/2 quotes check out
+  without_rule  elena        2/2 quotes check out
+
+{
+  "with_rule": {
+    "claims": 21,
+    "verbatim": 21,
+    "fabricated": 0,
+    "fabrication_rate": 0.0,
+    "profiles_fully_clean": 8,
+    "profiles_fully_invented": 0
+  },
+  "without_rule": {
+    "claims": 24,
+    "verbatim": 22,
+    "fabricated": 2,
+    "fabrication_rate": 0.083,
+    "profiles_fully_clean": 7,
+    "profiles_fully_invented": 0
+  }
+}

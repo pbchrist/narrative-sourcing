@@ -1,0 +1,18 @@
+{
+  "throughline": "Elena Vasquez consistently seeks out chaotic, pre-structured environments to build order from the ground up.",
+  "unresolved_tension": "The profile ends with her current role at Merqueo, leaving open whether she will continue this pattern of escalating complexity or if this position represents the culmination of her preference for 'messy' environments.",
+  "departures": [
+    {
+      "description": "Moving away from established, stable logistics structures toward more chaotic operational roles.",
+      "evidence": "Every job I have taken has been messier than the last one",
+      "confidence": 0.95
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "Actively seeking out the initial phase of organizational development where systems are not yet functional.",
+      "evidence": "I like the part where nothing works yet.",
+      "confidence": 0.98
+    }
+  ]
+}

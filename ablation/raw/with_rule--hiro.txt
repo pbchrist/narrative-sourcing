@@ -1,0 +1,23 @@
+{
+  "throughline": "A consistent focus on understanding the root causes of mechanical failure, evolving from designing the components to analyzing their breakdown.",
+  "unresolved_tension": "Whether the role will remain a defensive gatekeeper against premature shipping or evolve into a proactive force that redesigns systems to prevent failure.",
+  "departures": [
+    {
+      "description": "Moving away from the creative act of building machines toward the analytical task of diagnosing their defects.",
+      "evidence": "2013-2018  Mechanical Designer, Kubota",
+      "confidence": 0.9
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "A deep, almost obsessive engagement with the forensic analysis of why systems break down.",
+      "evidence": "I read failure reports for fun, which my wife finds concerning.",
+      "confidence": 0.95
+    },
+    {
+      "description": "Actively challenging production timelines to ensure reliability standards are met.",
+      "evidence": "Most of my job is arguing with people who want to ship on schedule.",
+      "confidence": 0.85
+    }
+  ]
+}

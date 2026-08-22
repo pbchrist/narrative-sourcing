@@ -1,0 +1,28 @@
+{
+  "throughline": "Yuki Nakamura consistently gravitates toward the foundational, often invisible layers of distributed systems where correctness is undefined and failure modes must be rigorously defined.",
+  "unresolved_tension": "The profile reveals a deep conflict between a passion for defining correctness in complex systems and a stated boredom with settled requirements, leaving it unclear if the next move will be a departure from engineering into architecture/leadership or a return to a more research-oriented role.",
+  "departures": [
+    {
+      "description": "Moving away from ZooKeeper-based coordination mechanisms in favor of more modern, self-contained metadata protocols.",
+      "evidence": "Designed and shipped the metadata reconciliation protocol that replaced the previous ZooKeeper-backed path.",
+      "confidence": 0.95
+    },
+    {
+      "description": "Stepping back from projects where the technical challenge is purely execution-based rather than definitional.",
+      "evidence": "I am at my worst on projects where the requirements are settled and the work is execution - I get bored and I am not proud of that.",
+      "confidence": 0.9
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "Seeking out problems where the definition of 'correct' behavior is not yet established, requiring the engineer to write the specification as well as the code.",
+      "evidence": "I am at my best on problems where the correct answer is not yet known and somebody has to write down what \"correct\" even means.",
+      "confidence": 0.95
+    },
+    {
+      "description": "Focusing on the resilience and operational blast radius of systems, particularly in the context of storage and consensus.",
+      "evidence": "That incident changed how I think about operational blast radius more than anything else in my career.",
+      "confidence": 0.85
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "throughline": "The subject has consistently prioritized the diagnosis of mechanical failure modes over the speed of production, evolving from designing components to explicitly managing their reliability.",
+  "unresolved_tension": "The profile suggests a potential conflict between the subject's deep personal interest in failure analysis and the practical, schedule-driven constraints of their current role, leaving open whether they will remain in a corporate reliability capacity or move toward a more independent or academic focus on root cause analysis.",
+  "departures": [
+    {
+      "description": "Moving away from the creative or constructive aspect of engineering (designing new machines) toward a defensive, analytical role (preventing failures).",
+      "evidence": "2013-2018 Mechanical Designer, Kubota; 2018-now Reliability Engineer, Daikin",
+      "confidence": 0.9
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "A deep, perhaps obsessive, engagement with the root causes of mechanical breakdown, treating failure analysis as a primary intellectual interest rather than just a job requirement.",
+      "evidence": "I look at why machines fail. ... I read failure reports for fun, which my wife finds concerning.",
+      "confidence": 0.85
+    },
+    {
+      "description": "A commitment to quality and safety standards that overrides production timelines, evidenced by the subject's self-described role as an obstacle to shipping schedules.",
+      "evidence": "Most of my job is arguing with people who want to ship on schedule.",
+      "confidence": 0.95
+    }
+  ]
+}

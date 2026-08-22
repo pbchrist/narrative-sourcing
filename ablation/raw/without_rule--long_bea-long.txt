@@ -1,0 +1,28 @@
+{
+  "throughline": "Beatriz consistently moves from individual contributor roles to designing systemic hiring frameworks, prioritizing diagnostic clarity and process integrity over volume or branding.",
+  "unresolved_tension": "Whether she will continue scaling existing functions or pivot to a new domain where her diagnostic approach to 'unclear scorecards' can be applied beyond engineering recruitment.",
+  "departures": [
+    {
+      "description": "Moving away from traditional agency recruitment and high-volume sourcing tactics toward internal process design and diagnostic problem-solving.",
+      "evidence": "I do not believe in employer branding as a substitute for a good interview process. Candidates can tell.",
+      "confidence": 0.9
+    },
+    {
+      "description": "Leaving the role of a sole technical recruiter to build a team and a scalable function, indicating a departure from individual heroics to systemic leadership.",
+      "evidence": "Sole technical recruiter for the first year, then built a team of six.",
+      "confidence": 0.85
+    }
+  ],
+  "pursuits": [
+    {
+      "description": "Pursuing the creation of sustainable, non-heroic hiring systems that can survive the departure of founders or key individuals.",
+      "evidence": "Three times now I have joined a company at the point where founder-led hiring stopped working and had to design something that could survive without heroics.",
+      "confidence": 0.95
+    },
+    {
+      "description": "Focusing on the diagnostic root causes of hiring failures, specifically targeting unclear job definitions and interviewer calibration rather than sourcing channels.",
+      "evidence": "What I actually enjoy is the diagnostic part - working out why a pipeline is failing, which is almost never the sourcing channel everyone blames. Usually it is an unclear scorecard or a hiring manager who cannot describe what good looks like.",
+      "confidence": 0.9
+    }
+  ]
+}

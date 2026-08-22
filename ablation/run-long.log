@@ -1,0 +1,27 @@
+  with_rule     long_marcus  4/4 quotes check out
+  with_rule     long_yuki    4/4 quotes check out
+  with_rule     long_bea     4/4 quotes check out
+  with_rule     long_kwame   4/4 quotes check out
+  without_rule  long_marcus  3/4 quotes check out
+  without_rule  long_yuki    4/4 quotes check out
+  without_rule  long_bea     4/4 quotes check out
+  without_rule  long_kwame   4/4 quotes check out
+
+{
+  "with_rule": {
+    "claims": 16,
+    "verbatim": 16,
+    "fabricated": 0,
+    "fabrication_rate": 0.0,
+    "profiles_fully_clean": 4,
+    "profiles_fully_invented": 0
+  },
+  "without_rule": {
+    "claims": 16,
+    "verbatim": 15,
+    "fabricated": 1,
+    "fabrication_rate": 0.062,
+    "profiles_fully_clean": 3,
+    "profiles_fully_invented": 0
+  }
+}
