@@ -160,7 +160,7 @@ def _verified_beats(raw_beats, raw_text: str, report=None, spans=None) -> tuple[
         # out for departure language produced an empty "what they left" section
         # for a career changer - the exact reader this tool is for.
         if (not verdict.ok and spans and "leaving" in verdict.reason
-                and (proves_departure(evidence, spans)
+                and (proves_departure(evidence, spans, raw_text)
                      or confirms_order(description, spans))):
             verdict = Verdict(True, "The record shows this role ended and other work followed.")
         if not verdict.ok:

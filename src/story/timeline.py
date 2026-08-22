@@ -25,13 +25,41 @@ MONTHS = ("January|February|March|April|May|June|July|August|September|"
 # "January 2023 - Present", "October 2014 - December 2022", "2015 - 2016",
 # "(1994 - 1997)". The whole line must be the date range: a year inside a
 # sentence is a fact about a job, not a job.
+# Years, however they are dressed. Whatever precedes a year - a month name, an
+# 03/, a 3/1/ - is thrown away, because only the year matters for putting a
+# career in order.
+_MON = rf"(?:{MONTHS})"
+_PRE = rf"(?:{_MON}\s+|\d{{1,2}}[/.]\d{{1,2}}[/.]|\d{{1,2}}[/.])?\s*"
+_Y = r"(?:19|20)\d{2}"
+_OPEN = r"Present|Current|Now|Today|Ongoing"
+
 _RANGE = re.compile(
-    r"^[\s·•\-–(\[]*"
-    rf"(?:(?:{MONTHS})\s+)?((?:19|20)\d{{2}})"
-    r"\s*(?:[-–—]|to)\s*"
-    rf"(?:(?:{MONTHS})\s+)?((?:19|20)\d{{2}}|Present|Current|Now)"
-    r"[\s)\]·•]*$",
+    rf"^[\s·•\-–(\[]*{_PRE}({_Y})\s*(?:[-–—]|to|until)\s*{_PRE}({_Y}|{_OPEN})[\s)\]·•]*$",
     re.I)
+
+# "Since 2015" / "From 2015" - a start with no stated end.
+_SINCE = re.compile(rf"^[\s·•(\[]*(?:since|from)\s+{_PRE}({_Y})[\s)\]·•]*$", re.I)
+
+# A whole role on one line: "Acme, Engineer, 2015 - 2019".
+_INLINE = re.compile(
+    rf"^(.{{3,90}}?)[,;·•\s]+{_PRE}({_Y})\s*(?:[-–—]|to|until)\s*{_PRE}({_Y}|{_OPEN})"
+    r"[\s)\]·•]*$", re.I)
+
+# "Jan '15" is a year like any other; normalised before matching so the
+# patterns above only ever deal with four digits.
+_APOS = re.compile(r"'(\d{2})\b")
+
+
+def _year(text: str) -> int:
+    n = int(text)
+    if n >= 100:
+        return n
+    return 1900 + n if n > 40 else 2000 + n
+
+
+def _normalise(line: str) -> str:
+    return _APOS.sub(lambda m: str(_year(m.group(1))), line)
+
 
 # Lines that sit above a date range but are not the job.
 _NOT_A_LABEL = {
@@ -49,6 +77,7 @@ class Span:
     label: str
     start: int
     end: int | None      # None means it is still going
+    line: int = -1       # where the date sat, so a bullet can be traced to its job
 
 
 def _label_for(lines, i):
@@ -84,15 +113,30 @@ def extract(text) -> list:
     lines = text.splitlines()
     spans = []
     for i, line in enumerate(lines):
-        m = _RANGE.match(line.strip())
-        if not m:
+        bare = _normalise(line.strip())
+        m = _RANGE.match(bare)
+        if m:
+            tail = m.group(2)
+            end = _year(tail) if tail[:1].isdigit() else None
+            label = _label_for(lines, i)
+            if label:
+                spans.append(Span(label=label, start=_year(m.group(1)), end=end, line=i))
             continue
-        start = int(m.group(1))
-        tail = m.group(2)
-        end = None if not tail[:1].isdigit() else int(tail)
-        label = _label_for(lines, i)
-        if label:
-            spans.append(Span(label=label, start=start, end=end))
+        m = _SINCE.match(bare)
+        if m:
+            label = _label_for(lines, i)
+            if label:
+                spans.append(Span(label=label, start=_year(m.group(1)), end=None, line=i))
+            continue
+        m = _INLINE.match(bare)
+        if m:
+            label = m.group(1).strip(" ,;·•-\u2013")
+            if label and not _NOT_A_LABEL.__contains__(label.lower()):
+                tail = m.group(3)
+                spans.append(Span(label=label,
+                                  start=_year(m.group(2)),
+                                  end=_year(tail) if tail[:1].isdigit() else None,
+                                  line=i))
     # Oldest first, and a still-running role sorts last within its year.
     spans.sort(key=lambda s: (s.start, s.end if s.end is not None else 9999))
     return spans
@@ -123,24 +167,41 @@ def _words(text) -> set:
             if w not in _WEAK and len(w) > 2}
 
 
-_STEM = 6   # shared prefix that counts as the same word
+# Longest first, so "ation" is tried before "ion" and "ing" before "s".
+_SUFFIXES = ("ational", "ization", "isation", "ators", "ation", "ition",
+             "ement", "ments", "ment", "ering", "ings", "ator", "ing", "ors",
+             "ers", "ies", "ion", "ist", "or", "er", "ed", "es", "s")
+_MIN_STEM = 3
 
 
-def _same(a: str, b: str) -> bool:
-    """recruiting/recruiter and scriptwriting/scriptwriter are one word here.
+def _stem(word: str) -> str:
+    """Crude but honest: strip one common ending, then a trailing e.
 
-    Exact matching missed the pivot entirely: a claim about "scriptwriting"
-    never lined up with a role titled "Scriptwriter", so the gate had nothing
-    to compare and stayed silent on a backwards claim.
+    A fixed shared-prefix length cannot work here. teaching/teacher share five
+    characters and nursing/nurse share four, but consulting/construction also
+    share four and are unrelated - so any threshold low enough to catch a nurse
+    is low enough to confuse a consultant with a construction site.
     """
-    if a == b:
-        return True
-    n = 0
-    for x, y in zip(a, b):
-        if x != y:
+    for suffix in _SUFFIXES:
+        if word.endswith(suffix) and len(word) - len(suffix) >= _MIN_STEM:
+            word = word[:-len(suffix)]
             break
-        n += 1
-    return n >= _STEM
+    return word.rstrip("e") or word
+
+
+def same_word(a: str, b: str) -> bool:
+    """Two words naming the same thing: teaching/teacher, nursing/nurse.
+
+    Exact matching missed the pivot entirely - a claim about "scriptwriting"
+    never lined up with a role titled "Scriptwriter" - so the gate had nothing
+    to compare and stayed silent on a backwards claim. Synonyms are out of
+    reach: cooking and chef are the same job and share no letters, and no
+    amount of string handling fixes that.
+    """
+    return a == b or _stem(a) == _stem(b)
+
+
+_same = same_word
 
 
 def _match(text, spans):
@@ -150,15 +211,39 @@ def _match(text, spans):
             if any(_same(a, b) for a in _words(s.label) for b in tw)]
 
 
-def proves_departure(quote, spans) -> bool:
+def _span_owning(quote, spans, text):
+    """Which job does this line of the CV belong to?
+
+    By position, not by wording. A bullet under a job almost never repeats the
+    job title - "Read scripts and bought films" says nothing about being an
+    acquisitions executive - so matching on shared words either misses it or,
+    worse, attaches it to a different job that happens to share a word.
+    """
+    if not text or not quote:
+        return None
+    at = text.find(quote.strip())
+    if at < 0:
+        return None
+    line_no = text.count("\n", 0, at)
+    owner = None
+    for s in spans:
+        if 0 <= s.line <= line_no and (owner is None or s.line > owner.line):
+            owner = s
+    return owner
+
+
+def proves_departure(quote, spans, text=None) -> bool:
     """Did the record itself show them leaving whatever this quote names?
 
     A CV proves a departure with dates, not with the word "left". If the quote
-    names a role that finished, and other work began at or after it finished,
-    the person left it. That is not an inference about their feelings - it is
-    what the document says happened.
+    belongs to a role that finished, and other work began at or after it
+    finished, the person left it. That is not an inference about their
+    feelings - it is what the document says happened.
     """
-    for s in _match(quote, spans or []):
+    spans = spans or []
+    owner = _span_owning(quote, spans, text)
+    candidates = [owner] if owner is not None else _match(quote, spans)
+    for s in candidates:
         if s.end is None:
             continue                      # still there; nothing was left
         if any(o is not s and o.start >= s.end for o in spans):
@@ -207,4 +292,4 @@ def contradicts_order(claim, spans) -> bool:
 
 
 __all__ = ["Span", "confirms_order", "contradicts_order", "extract",
-           "proves_departure", "summary"]
+           "proves_departure", "same_word", "summary"]

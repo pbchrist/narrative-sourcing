@@ -70,6 +70,61 @@
     "confirms": [
       "Moved from scriptwriting into technical recruiting",
       "Moved from technical recruiting into scriptwriting"
-    ]
+    ],
+    "same_word": [
+      [
+        "teaching",
+        "teacher"
+      ],
+      [
+        "nursing",
+        "nurse"
+      ],
+      [
+        "scriptwriting",
+        "scriptwriter"
+      ],
+      [
+        "recruiting",
+        "recruiter"
+      ],
+      [
+        "administration",
+        "administrator"
+      ],
+      [
+        "consulting",
+        "construction"
+      ],
+      [
+        "marketing",
+        "marine"
+      ],
+      [
+        "cooking",
+        "chef"
+      ],
+      [
+        "producer",
+        "production"
+      ]
+    ],
+    "formats": {
+      "linkedin": "Acme\nEngineer\nJanuary 2015 - March 2019",
+      "bare": "Acme\nEngineer\n2015 - 2019",
+      "slash": "Acme\nEngineer\n03/2015 - 05/2019",
+      "us": "Acme\nEngineer\n3/1/2015 - 5/1/2019",
+      "apostrophe": "Acme\nEngineer\nJan '15 - Mar '19",
+      "since": "Acme\nEngineer\nSince 2015",
+      "inline": "Acme, Engineer, 2015 - 2019",
+      "present": "Acme\nEngineer\n2015 - Present"
+    },
+    "owning": {
+      "text": "Experience\n\nIconic\nFounder\nJanuary 2023 - Present\nRuns it day to day.\n\nFocus Features\nAcquisitions Executive\nMay 2005 - December 2005\nRead scripts and bought films.\n",
+      "quotes": [
+        "Read scripts and bought films.",
+        "Runs it day to day."
+      ]
+    }
   }
 }

@@ -26,7 +26,7 @@ from src.story.entails import entails                   # noqa: E402
 from src.story.identity import one_person               # noqa: E402
 from src.story.timeline import (confirms_order, contradicts_order,  # noqa: E402
                                 extract as extract_timeline,
-                                proves_departure,
+                                proves_departure, same_word,
                                 summary as timeline_summary)
 from src.story.verify import verify_span                # noqa: E402
 
@@ -90,6 +90,14 @@ def _timeline_answers():
         out["con:" + q] = contradicts_order(q, spans)
     for q in PARITY["timeline"]["confirms"]:
         out["cfm:" + q] = confirms_order(q, spans)
+    for a, b in PARITY["timeline"]["same_word"]:
+        out[f"same:{a}/{b}"] = same_word(a, b)
+    for name, cv in PARITY["timeline"]["formats"].items():
+        got = extract_timeline(cv)
+        out["fmt:" + name] = [got[0].start, got[0].end] if got else None
+    ow = PARITY["timeline"]["owning"]
+    for q in ow["quotes"]:
+        out["own:" + q] = proves_departure(q, extract_timeline(ow["text"]), ow["text"])
     return out
 
 

@@ -93,3 +93,39 @@ def test_the_record_does_not_confirm_a_backwards_one():
 def test_confirmation_needs_both_ends_in_the_record():
     from src.story.timeline import confirms_order
     assert not confirms_order("Moved from scriptwriting into carpentry", SPANS)
+
+
+# --- a quote belongs to the job it sits under ------------------------------
+# Matching a quote to a role by shared words only works when the bullet
+# repeats the job title, which real CVs never do. "Read scripts and bought
+# films" belongs to the acquisitions job because of where it sits on the page,
+# and the only reason it ever passed before was an accident: it matched the
+# word "Scriptwriter" in a different job entirely.
+
+CV_WITH_BULLETS = """Experience
+
+Iconic
+Founder and Principal
+January 2023 - Present
+Runs the consultancy day to day.
+
+Focus Features
+Acquisitions Executive
+May 2005 - December 2005
+Read scripts and bought films.
+"""
+
+
+def test_a_bullet_under_a_finished_job_proves_they_left_it():
+    spans = extract(CV_WITH_BULLETS)
+    assert proves_departure("Read scripts and bought films.", spans, CV_WITH_BULLETS)
+
+
+def test_a_bullet_under_the_current_job_does_not():
+    spans = extract(CV_WITH_BULLETS)
+    assert not proves_departure("Runs the consultancy day to day.", spans, CV_WITH_BULLETS)
+
+
+def test_a_quote_that_is_not_in_the_text_falls_back_to_words():
+    spans = extract(CV_WITH_BULLETS)
+    assert proves_departure("Focus Features Acquisitions Executive", spans, CV_WITH_BULLETS)

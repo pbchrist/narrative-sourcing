@@ -660,10 +660,19 @@ async function gatherSources(tokens){
 // of career order. Read top to bottom, a pivot comes out backwards.
 const MONTHS = "January|February|March|April|May|June|July|August|September|"
              + "October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec";
-const RANGE = new RegExp(
-  "^[\\s·•\\-–(\\[]*(?:(?:" + MONTHS + ")\\s+)?((?:19|20)\\d{2})"
-  + "\\s*(?:[-–—]|to)\\s*(?:(?:" + MONTHS + ")\\s+)?((?:19|20)\\d{2}|Present|Current|Now)"
-  + "[\\s)\\]·•]*$", "i");
+// Years however they are dressed. Whatever precedes a year - a month name, an
+// 03/, a 3/1/ - is discarded; only the year orders a career.
+const PRE = "(?:(?:" + MONTHS + ")\\s+|\\d{1,2}[/.]\\d{1,2}[/.]|\\d{1,2}[/.])?\\s*";
+const Y = "(?:19|20)\\d{2}";
+const OPEN = "Present|Current|Now|Today|Ongoing";
+const RANGE = new RegExp("^[\\s·•\\-–(\\[]*" + PRE + "(" + Y + ")"
+  + "\\s*(?:[-–—]|to|until)\\s*" + PRE + "(" + Y + "|" + OPEN + ")[\\s)\\]·•]*$", "i");
+const SINCE = new RegExp("^[\\s·•(\\[]*(?:since|from)\\s+" + PRE + "(" + Y + ")[\\s)\\]·•]*$", "i");
+const INLINE = new RegExp("^(.{3,90}?)[,;·•\\s]+" + PRE + "(" + Y + ")"
+  + "\\s*(?:[-–—]|to|until)\\s*" + PRE + "(" + Y + "|" + OPEN + ")[\\s)\\]·•]*$", "i");
+const APOS = /'(\d{2})\b/g;
+const tlYear = s => { const n = parseInt(s, 10); return n >= 100 ? n : (n > 40 ? 1900 + n : 2000 + n); };
+const tlNormalise = s => s.replace(APOS, (m, y) => String(tlYear(y)));
 const NOT_A_LABEL = new Set(["experience","education","certifications","licenses",
   "summary","about","contact","top skills","skills","honors","publications",
   "recommendations","volunteering","projects","languages"]);
@@ -686,11 +695,27 @@ function extractTimeline(text){
   const lines = text.split("\n");
   const spans = [];
   lines.forEach((line, i) => {
-    const m = RANGE.exec(line.trim());
-    if(!m) return;
-    const end = /^\d/.test(m[2]) ? parseInt(m[2], 10) : null;
-    const label = labelFor(lines, i);
-    if(label) spans.push({label, start: parseInt(m[1], 10), end});
+    const bare = tlNormalise(line.trim());
+    let m = RANGE.exec(bare);
+    if(m){
+      const end = /^\d/.test(m[2]) ? tlYear(m[2]) : null;
+      const label = labelFor(lines, i);
+      if(label) spans.push({label, start: tlYear(m[1]), end, line: i});
+      return;
+    }
+    m = SINCE.exec(bare);
+    if(m){
+      const label = labelFor(lines, i);
+      if(label) spans.push({label, start: tlYear(m[1]), end: null, line: i});
+      return;
+    }
+    m = INLINE.exec(bare);
+    if(m){
+      const label = m[1].replace(/^[\s,;·•\-–]+|[\s,;·•\-–]+$/g, "");
+      if(label && !NOT_A_LABEL.has(label.toLowerCase()))
+        spans.push({label, start: tlYear(m[2]),
+                    end: /^\d/.test(m[3]) ? tlYear(m[3]) : null, line: i});
+    }
   });
   spans.sort((a,b) => (a.start - b.start) || ((a.end ?? 9999) - (b.end ?? 9999)));
   return spans;
@@ -712,22 +737,43 @@ function tlWords(text){
     .filter(w => !TL_WEAK.has(w) && w.length > 2));
 }
 
-// recruiting/recruiter and scriptwriting/scriptwriter are one word here.
-// Exact matching missed the pivot entirely.
-function tlSame(a, b){
-  if(a === b) return true;
-  let n = 0;
-  while(n < a.length && n < b.length && a[n] === b[n]) n++;
-  return n >= 6;
+// A fixed shared-prefix length cannot work: teaching/teacher share five
+// characters and nursing/nurse share four, but consulting/construction also
+// share four and are unrelated. So: strip one common ending, then a trailing e.
+const SUFFIXES = ["ational","ization","isation","ators","ation","ition","ement",
+  "ments","ment","ering","ings","ator","ing","ors","ers","ies","ion","ist","or",
+  "er","ed","es","s"];
+function tlStem(w){
+  for(const s of SUFFIXES){
+    if(w.endsWith(s) && w.length - s.length >= 3){ w = w.slice(0, -s.length); break; }
+  }
+  return w.replace(/e+$/, "") || w;
 }
+function tlSame(a, b){ return a === b || tlStem(a) === tlStem(b); }
 
 function tlMatch(text, spans){
   const tw = [...tlWords(text)];
   return (spans||[]).filter(s => [...tlWords(s.label)].some(a => tw.some(b => tlSame(a,b))));
 }
 
-function provesDeparture(quote, spans){
-  for(const s of tlMatch(quote, spans)){
+// Which job does this line belong to? By position, not wording: a bullet under
+// a job almost never repeats the job title, and matching on shared words
+// either misses it or attaches it to a different job sharing a word.
+function spanOwning(quote, spans, text){
+  if(!text || !quote) return null;
+  const at = text.indexOf(String(quote).trim());
+  if(at < 0) return null;
+  const lineNo = text.slice(0, at).split("\n").length - 1;
+  let owner = null;
+  for(const s of spans || []){
+    if(s.line >= 0 && s.line <= lineNo && (!owner || s.line > owner.line)) owner = s;
+  }
+  return owner;
+}
+
+function provesDeparture(quote, spans, text){
+  const owner = spanOwning(quote, spans, text);
+  for(const s of (owner ? [owner] : tlMatch(quote, spans))){
     if(s.end === null) continue;
     if((spans||[]).some(o => o !== s && o.start >= s.end)) return true;
   }
@@ -798,7 +844,7 @@ function buildArc(data, raw){
         let v=entails(b.description,b.evidence);
         // A CV proves a departure with dates, not with the word "left".
         if(!v.ok && spans.length && /leaving/.test(v.reason)
-           && (provesDeparture(b.evidence, spans) || confirmsOrder(b.description, spans)))
+           && (provesDeparture(b.evidence, spans, raw) || confirmsOrder(b.description, spans)))
           v = {ok:true, reason:"The record shows this role ended and other work followed."};
         if(!v.ok){ unsupported.push({d:b.description,why:v.reason}); return false; }
         return true;

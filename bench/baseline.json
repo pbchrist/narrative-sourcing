@@ -57,6 +57,49 @@
     "dep:Focus Features Acquisitions Executive": true,
     "dep:I care about doing good work": false,
     "dep:Iconic Founder and Principal": false,
+    "fmt:apostrophe": [
+      2015,
+      2019
+    ],
+    "fmt:bare": [
+      2015,
+      2019
+    ],
+    "fmt:inline": [
+      2015,
+      2019
+    ],
+    "fmt:linkedin": [
+      2015,
+      2019
+    ],
+    "fmt:present": [
+      2015,
+      null
+    ],
+    "fmt:since": [
+      2015,
+      null
+    ],
+    "fmt:slash": [
+      2015,
+      2019
+    ],
+    "fmt:us": [
+      2015,
+      2019
+    ],
+    "own:Read scripts and bought films.": true,
+    "own:Runs it day to day.": false,
+    "same:administration/administrator": true,
+    "same:consulting/construction": false,
+    "same:cooking/chef": false,
+    "same:marketing/marine": false,
+    "same:nursing/nurse": true,
+    "same:producer/production": false,
+    "same:recruiting/recruiter": true,
+    "same:scriptwriting/scriptwriter": true,
+    "same:teaching/teacher": true,
     "summary": "2005-2005: Focus Features \u2014 Acquisitions Executive\n2011-2012: Scriptwriter\n2015-2016: Groupon \u2014 Technical Recruiter\n2023-present: Iconic \u2014 Founder and Principal"
   },
   "verify": {

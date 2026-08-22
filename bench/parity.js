@@ -21,7 +21,7 @@ new Function("exports", seg +
   "\nexports.entails=entails;exports.verify=verify;exports.onePerson=onePerson;"
   + "exports.extractTimeline=extractTimeline;exports.timelineSummary=timelineSummary;"
   + "exports.provesDeparture=provesDeparture;exports.confirmsOrder=confirmsOrder;"
-  + "exports.contradictsOrder=contradictsOrder;")(api);
+  + "exports.contradictsOrder=contradictsOrder;exports.tlSame=tlSame;")(api);
 
 const C = JSON.parse(fs.readFileSync(__dirname + "/parity-cases.json", "utf8"));
 const out = { entails: {}, verify: {}, onePerson: {}, timeline: {} };
@@ -33,4 +33,12 @@ out.timeline = { summary: api.timelineSummary(spans) };
 for (const q of C.timeline.proves_departure) out.timeline["dep:" + q] = api.provesDeparture(q, spans);
 for (const q of C.timeline.contradicts) out.timeline["con:" + q] = api.contradictsOrder(q, spans);
 for (const q of C.timeline.confirms) out.timeline["cfm:" + q] = api.confirmsOrder(q, spans);
+for (const [a, b] of C.timeline.same_word) out.timeline["same:" + a + "/" + b] = api.tlSame(a, b);
+for (const [id, cv] of Object.entries(C.timeline.formats)) {
+  const s = api.extractTimeline(cv);
+  out.timeline["fmt:" + id] = s.length ? [s[0].start, s[0].end] : null;
+}
+const ow = C.timeline.owning;
+for (const q of ow.quotes)
+  out.timeline["own:" + q] = api.provesDeparture(q, api.extractTimeline(ow.text), ow.text);
 process.stdout.write(JSON.stringify(out, null, 2) + "\n");
