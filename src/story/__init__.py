@@ -13,6 +13,7 @@ from src.common.parsing import ParseError, extract_json
 from src.common.types import Beat, CandidateProfile, CareerArc
 from src.story import prompt as prompt_mod
 from src.story.entails import entails
+from src.story.identity import one_person
 from src.story.verify import MIN_SPAN_CHARS, canonical, normalize, verify_span
 
 # A well-supported arc cites several different parts of the profile. Four
@@ -220,6 +221,16 @@ def extract_arc_detailed(
     """
     complete = complete or llm.complete
     report = ExtractionReport()
+
+    # Before anything else, and before paying for a model call: is this one
+    # person? Every other gate here asks whether a claim is supported by the
+    # text. None of them ask whether the text is about a single human being,
+    # and a live run built a confident arc for someone who does not exist out
+    # of two profiles pasted together - keeping one and silently dropping the
+    # other. Nothing was fabricated, so nothing downstream could catch it.
+    who = one_person(profile.raw_text)
+    if not who.ok:
+        raise StoryError(f"{who.reason} Found: {', '.join(who.evidence)}.")
 
     response = complete(
         prompt_mod.build(profile),

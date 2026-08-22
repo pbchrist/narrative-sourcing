@@ -8,6 +8,13 @@
     "Seeking roles building trading infrastructure || Currently working at Odum Research where I help building a modern trading platform.": false,
     "Works on trading platform engineering || Currently working at Odum Research where I help building a modern trading platform.": true
   },
+  "identity": {
+    "no-header": true,
+    "one": true,
+    "terse": true,
+    "two": false,
+    "two-reversed": false
+  },
   "pipeline": {
     "arc_confidence": 0.05,
     "beat_confidences": [

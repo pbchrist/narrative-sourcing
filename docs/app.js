@@ -60,6 +60,13 @@ const DEPARTURE=["left","leaving","departed","moved away","moved on","stepped aw
   "transitioned from","shifted from","away from"];
 const LEADERSHIP=["lead","leads","leading","led","manage","manages","managing","managed",
   "head of","heads","director","supervis","mentor","hired","reports"];
+// A claim that an event caused, affected or upset someone needs a quote that
+// speaks that way. Live failure: "the lingering impact of a long, cancelled
+// project" cited by a line that only says the project was cancelled.
+const CONSEQUENCE=["because","due to","as a result","resulted in","led to","caused",
+  "prompted","impact","affect","lingering","legacy of","in the wake of","shaped by",
+  "frustrated","burned out","burnt out","demorali","disillusioned","tired of","weary",
+  "resent","bitter","scarred","soured","jaded"];
 const has=(t,ns)=>{const s=" "+norm(t).toLowerCase()+" ";return ns.some(n=>s.includes(n));};
 const nums=t=>new Set((String(t).replace(/,/g,"").match(/\d+/g)||[]));
 
@@ -72,6 +79,8 @@ function entails(claim, quote){
     return {ok:false,reason:"The claim says they left something; the quote never mentions leaving."};
   if(has(claim,LEADERSHIP)&&!has(quote,LEADERSHIP))
     return {ok:false,reason:"The claim is about leading people; the quote does not mention it."};
+  if(has(claim,CONSEQUENCE)&&!has(quote,CONSEQUENCE))
+    return {ok:false,reason:"The claim says the event affected them; the quote only says it happened."};
   const missing=[...nums(claim)].filter(n=>!nums(quote).has(n));
   if(missing.length)
     return {ok:false,reason:`The claim names a figure the quote does not contain: ${missing.join(", ")}.`};
@@ -233,6 +242,47 @@ function renderArc(arc, raw, name){
   });
 }
 
+// ---- is this one person? ---------------------------------------------------
+// Every other gate asks whether a claim is supported by the text. None asks
+// whether the text is about a single human being. A live run pasted two
+// profiles together and produced a confident arc for someone who does not
+// exist - keeping one person, silently dropping the other, every quote
+// verbatim-correct. Nothing was fabricated, so nothing downstream caught it.
+const NOT_A_NAME = new Set(["senior","staff","principal","lead","head","chief",
+  "director","manager","engineer","developer","analyst","specialist","consultant",
+  "experience","education","skills","summary","about","projects","work",
+  "employment","history","contact","profile","recommendations","certifications",
+  "languages","interests","volunteering","publications","software","technical",
+  "professional","current","previous"]);
+
+function nameHeader(line){
+  const head = String(line).trim().split(/\s+[-–—|]\s+|,/)[0].trim();
+  if(!head || /\d/.test(head)) return null;
+  const words = head.split(/\s+/);
+  if(words.length < 2 || words.length > 4) return null;
+  for(const w of words){
+    const bare = w.replace(/[.'’]+$/,"").replace(/^[.'’]+/,"");
+    if(!bare || bare[0] !== bare[0].toUpperCase() || bare[0] === bare[0].toLowerCase()) return null;
+    if(NOT_A_NAME.has(bare.toLowerCase())) return null;
+    if(!/^[A-Za-z][A-Za-z.'’-]*$/.test(bare)) return null;
+  }
+  return head;
+}
+
+// Deliberately narrow: two or more distinct name headers. Two concurrent
+// employers is NOT used - people genuinely hold an advisory role alongside a
+// job, and accusing them of being two people over it is worse than the failure
+// this prevents.
+function onePerson(text){
+  if(typeof text !== "string" || !text.trim()) return {ok:true, names:[]};
+  const names=[], seen=new Set();
+  for(const line of text.split("\n")){
+    const got = nameHeader(line);
+    if(got && !seen.has(got.toLowerCase())){ seen.add(got.toLowerCase()); names.push(got); }
+  }
+  return names.length < 2 ? {ok:true, names:[]} : {ok:false, names};
+}
+
 async function run(){
   const gh=$("#gh").value.trim(), pasted=$("#profile").value.trim();
   if(!gh && pasted.length<80){ status("Paste a profile, or give me a GitHub username.",1); return; }
@@ -240,6 +290,11 @@ async function run(){
   try{
     let raw=pasted, name=$("#name").value.trim();
     if(gh){ status(`Reading github.com/${gh}…`); const g=await fromGithub(gh); raw=g.text; name=name||g.name; $("#profile").value=raw; }
+    const who = onePerson(raw);
+    if(!who.ok) throw new Error(
+      "This looks like more than one person's profile pasted together — found "
+      + who.names.join(" and ") + ". An arc drawn across two careers is not a "
+      + "career, and this would quietly keep one of them and drop the other.");
     status("Reading the arc. This takes as long as your model takes.");
     const data=extractJSON(await complete(`PROFILE TEXT (quote only from between these markers):\n---BEGIN PROFILE---\n${raw}\n---END PROFILE---`));
     if(!data.throughline) throw new Error("No throughline came back.");
@@ -255,11 +310,15 @@ async function run(){
     const dropped=((data.departures||[]).length+(data.pursuits||[]).length);
     // The headline claims get the identical treatment: quote the source or be
     // struck. A synthesis nobody checked is exactly the thing a reader repeats.
-    const keepQuotes = arr => (Array.isArray(arr)?arr:[arr])
-      .filter(q => typeof q === "string" && verify(q, raw)).map(norm);
+    // Both gates, not one. verify() stops a quote that is not in the profile;
+    // entails() stops a quote that IS in the profile but does not back what the
+    // headline says. These are the two lines a recruiter repeats out loud.
+    const keepQuotes = (arr, claim) => (Array.isArray(arr)?arr:[arr])
+      .filter(q => typeof q === "string" && verify(q, raw)
+                   && (!claim || entails(claim, q).ok)).map(norm);
     const arc={throughline:data.throughline,unresolved_tension:data.unresolved_tension||"",
-               throughline_evidence:keepQuotes(data.throughline_evidence),
-               tension_evidence:keepQuotes(data.tension_evidence),
+               throughline_evidence:keepQuotes(data.throughline_evidence, data.throughline),
+               tension_evidence:keepQuotes(data.tension_evidence, data.unresolved_tension||""),
                departures:keep(data.departures),pursuits:keep(data.pursuits)};
     arc.confidence=score([...arc.departures,...arc.pursuits]);
     renderArc(arc,raw,name);

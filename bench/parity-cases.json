@@ -1,0 +1,54 @@
+{
+  "entails": [
+    [
+      "Seeking roles building trading infrastructure",
+      "Currently working at Odum Research where I help building a modern trading platform."
+    ],
+    [
+      "Works on trading platform engineering",
+      "Currently working at Odum Research where I help building a modern trading platform."
+    ],
+    [
+      "Left agency work behind",
+      "Joined a Series B to own a product end to end."
+    ],
+    [
+      "Now manages a team",
+      "Writes Go and Java every day."
+    ],
+    [
+      "Led a team of 40 engineers",
+      "Led a team of engineers."
+    ],
+    [
+      "Carrying the lingering impact of a cancelled project",
+      "Spent about eighteen months on a migration that got cancelled."
+    ],
+    [
+      "Frustrated by the cancelled work",
+      "Spent about eighteen months on a migration that got cancelled."
+    ],
+    [
+      "Worked on a migration that was cancelled",
+      "Spent about eighteen months on a migration that got cancelled."
+    ],
+    [
+      "Moved from Java to Go",
+      "I moved from Java to Go over the last two years."
+    ]
+  ],
+  "verify_text": "Marta Reyes - Berlin\n2019-2023 Senior Backend Engineer, Zalando\nSpent about eighteen months on a migration that got cancelled.\nTwo kids, so I optimise for predictable weeks.",
+  "verify": [
+    "Two kids, so I optimise for predictable weeks.",
+    "two kids so i optimise for predictable weeks",
+    "She grew tired of the corporate treadmill.",
+    "optimise"
+  ],
+  "onePerson": {
+    "one": "Marta Reyes - Berlin\n2023-now Backend Engineer, Pleo\nI moved from Java to Go over the last two years.",
+    "two": "Marta Reyes - Berlin\n2023-now Backend Engineer, Pleo\nI moved from Java to Go over the last two years.\n\nDevon Okonkwo - Austin, TX\n2018-now Staff Embedded Engineer, Applied Materials\nI write C for motion control on semiconductor deposition tools.",
+    "two-reversed": "Devon Okonkwo - Austin, TX\n2018-now Staff Embedded Engineer, Applied Materials\nI write C for motion control on semiconductor deposition tools.\n\nMarta Reyes - Berlin\n2023-now Backend Engineer, Pleo\nI moved from Java to Go over the last two years.",
+    "terse": "Sam Okafor\nSoftware engineer, mostly infrastructure.",
+    "no-header": "I have spent eleven years building payment systems under load."
+  }
+}

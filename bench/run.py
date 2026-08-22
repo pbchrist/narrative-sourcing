@@ -15,6 +15,7 @@ comparison would be worthless.
 
 import json
 import pathlib
+import subprocess
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
@@ -22,6 +23,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from src.common.types import CandidateProfile           # noqa: E402
 from src.story import extract_arc_detailed              # noqa: E402
 from src.story.entails import entails                   # noqa: E402
+from src.story.identity import one_person               # noqa: E402
 from src.story.verify import verify_span                # noqa: E402
 
 HERE = pathlib.Path(__file__).parent
@@ -72,6 +74,29 @@ ENTAILS_CASES = [
     ("Moved from Java to Go", "I moved from Java to Go over the last two years."),
 ]
 
+PARITY = json.loads((HERE / "parity-cases.json").read_text())
+
+
+def parity():
+    """The deployed page runs its own copy of these gates. A fix once landed in
+    Python and never reached docs/app.js; the live page stayed wrong for hours
+    with every test green. This compares the two directly."""
+    py = {
+        "entails": {f"{c} || {q}": entails(c, q).ok for c, q in PARITY["entails"]},
+        "verify": {q: verify_span(q, PARITY["verify_text"]) for q in PARITY["verify"]},
+        "onePerson": {k: one_person(v).ok for k, v in PARITY["onePerson"].items()},
+    }
+    try:
+        js = json.loads(subprocess.run(
+            ["node", str(HERE / "parity.js")], capture_output=True, text=True,
+            timeout=60, check=True).stdout)
+    except Exception as exc:
+        return [("node could not run", "-", str(exc)[:80])]
+    return [(f"{sec}.{k}", v, js.get(sec, {}).get(k))
+            for sec in py for k, v in py[sec].items()
+            if v != js.get(sec, {}).get(k)]
+
+
 VERIFY_CASES = [
     ("Two kids, so I optimise for predictable weeks.", True),
     ("two kids so i optimise for predictable weeks", True),
@@ -96,6 +121,7 @@ def measure():
         },
         "entails": {f"{c} || {q}": entails(c, q).ok for c, q in ENTAILS_CASES},
         "verify": {q: verify_span(q, PROFILE) for q, _ in VERIFY_CASES},
+        "identity": {k: one_person(v).ok for k, v in PARITY["onePerson"].items()},
     }
 
 
@@ -122,8 +148,17 @@ def main():
     diffs = [(k, was.get(k), isnow.get(k))
              for k in sorted(set(was) | set(isnow)) if was.get(k) != isnow.get(k)]
 
+    drift = parity()
+    if drift:
+        print(f"narrative-sourcing  PYTHON AND JAVASCRIPT DISAGREE  ({len(drift)})\n")
+        for k, a, b in drift:
+            print(f"  {k}\n      python: {a}\n      js    : {b}")
+        print("\nThe deployed page is the JavaScript. Fix docs/app.js.")
+        return 1
+
     if not diffs:
-        print(f"narrative-sourcing  SAME as known good  ({len(isnow)} checks)")
+        print(f"narrative-sourcing  SAME as known good  "
+              f"({len(isnow)} checks, python and js agree)")
         return 0
     print(f"narrative-sourcing  CHANGED  ({len(diffs)} of {len(isnow)} checks differ)\n")
     for k, a, b in diffs:
