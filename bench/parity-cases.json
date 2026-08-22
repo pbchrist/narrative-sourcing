@@ -45,10 +45,13 @@
     "optimise"
   ],
   "onePerson": {
-    "one": "Marta Reyes - Berlin\n2023-now Backend Engineer, Pleo\nI moved from Java to Go over the last two years.",
-    "two": "Marta Reyes - Berlin\n2023-now Backend Engineer, Pleo\nI moved from Java to Go over the last two years.\n\nDevon Okonkwo - Austin, TX\n2018-now Staff Embedded Engineer, Applied Materials\nI write C for motion control on semiconductor deposition tools.",
-    "two-reversed": "Devon Okonkwo - Austin, TX\n2018-now Staff Embedded Engineer, Applied Materials\nI write C for motion control on semiconductor deposition tools.\n\nMarta Reyes - Berlin\n2023-now Backend Engineer, Pleo\nI moved from Java to Go over the last two years.",
-    "terse": "Sam Okafor\nSoftware engineer, mostly infrastructure.",
-    "no-header": "I have spent eleven years building payment systems under load."
+    "one-export": "Contact\nwww.linkedin.com/in/cortmaclean\nCort Maclean\nLine Producer\nExperience\nDigitelio Film Development\nEducation\nWestern Michigan University",
+    "two-exports": "Contact\nwww.linkedin.com/in/cortmaclean\nCort Maclean\nLine Producer\nExperience\nDigitelio Film Development\nEducation\nWestern Michigan University\n\nContact\nwww.linkedin.com/in/danielaortiz\nDaniela Ortiz\nExperience\nThornton Tomasetti\nEducation\nIllinois Institute of Technology",
+    "two-emails": "reach me at a@example.com\nlater: b@example.com",
+    "same-email-twice": "a@example.com\nsee also a@example.com",
+    "film-titles-only": "Line Producer\nSupervising Producer\nStudio Liaison\nProduction Coordinator",
+    "tech-titles-only": "Senior Backend Engineer\nStaff Engineer\nEngineering Manager",
+    "bare-cvs-not-detected": "Marta Reyes - Berlin\n2023-now Backend Engineer, Pleo\n\nDevon Okonkwo - Austin\n2018-now Staff Embedded Engineer",
+    "terse": "Sam Okafor\nSoftware engineer, mostly infrastructure."
   }
 }

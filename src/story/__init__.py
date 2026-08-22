@@ -52,6 +52,10 @@ class ExtractionReport:
     proposed: int = 0
     kept: int = 0
     dropped: list = field(default_factory=list)
+    # Things worth telling the reader that are not grounds for refusing to
+    # work. Refusing on a guess locked a real user out of the tool over an
+    # ordinary profile; see src/story/identity.py.
+    warnings: list = field(default_factory=list)
 
     @property
     def drop_rate(self) -> float:
@@ -222,15 +226,15 @@ def extract_arc_detailed(
     complete = complete or llm.complete
     report = ExtractionReport()
 
-    # Before anything else, and before paying for a model call: is this one
-    # person? Every other gate here asks whether a claim is supported by the
-    # text. None of them ask whether the text is about a single human being,
-    # and a live run built a confident arc for someone who does not exist out
-    # of two profiles pasted together - keeping one and silently dropping the
-    # other. Nothing was fabricated, so nothing downstream could catch it.
+    # Is this one person? Every other gate asks whether a claim is supported
+    # by the text; none asks whether the text is about a single human being.
+    # This warns rather than refuses. The first version refused, on a signal
+    # that turned out to fire on every real LinkedIn export, and locking
+    # someone out of the tool over an ordinary profile is a far worse outcome
+    # than one arc a reader can see is muddled.
     who = one_person(profile.raw_text)
     if not who.ok:
-        raise StoryError(f"{who.reason} Found: {', '.join(who.evidence)}.")
+        report.warnings.append(f"{who.reason} ({'; '.join(who.evidence)})")
 
     response = complete(
         prompt_mod.build(profile),

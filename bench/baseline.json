@@ -9,11 +9,14 @@
     "Works on trading platform engineering || Currently working at Odum Research where I help building a modern trading platform.": true
   },
   "identity": {
-    "no-header": true,
-    "one": true,
+    "bare-cvs-not-detected": true,
+    "film-titles-only": true,
+    "one-export": true,
+    "same-email-twice": true,
+    "tech-titles-only": true,
     "terse": true,
-    "two": false,
-    "two-reversed": false
+    "two-emails": false,
+    "two-exports": false
   },
   "pipeline": {
     "arc_confidence": 0.05,

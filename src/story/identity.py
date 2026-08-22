@@ -1,87 +1,105 @@
-"""Is this text about one person?
+"""Does this text look like two profiles pasted together?
 
-Nothing else in the pipeline asks. Every other gate here checks whether a
-claim is supported by the text; none of them check whether the text is about
-a single human being. A live run pasted two profiles together and produced one
-confident arc - and not a blend, which would at least look wrong. It kept
-Devon, silently discarded Marta, and reported confidence 0.45 with every quote
-verbatim-correct. Nothing was fabricated, so nothing downstream could catch it.
+A live run refused a single perfectly ordinary LinkedIn export and listed
+twenty-six "people" it had found - among them Los Angeles, Brand Strategy,
+Line Producer, Quicken Loans, Western Michigan University, and three
+colleagues who had left recommendations.
 
-The signal used is deliberately narrow: two or more distinct name headers. A
-name header is the line a profile opens with - a person's name, sometimes
-followed by a place. It is the one structural feature that a second person
-almost always brings with them and that a single profile almost never repeats
-with a different name.
+The old signal was "a line of two to four capitalised words". A LinkedIn
+export is almost entirely lines of two to four capitalised words: cities,
+skills, employers, schools, job titles, section headings. It fired on every
+real profile it ever saw. Careers being wildly divergent is also not the
+signal - plenty of real people have been a mortgage originator and then a film
+producer, and a tool that doubts them is worse than useless.
 
-Deliberately NOT used: two concurrent employers. People genuinely hold an
-advisory role alongside a job, and accusing them of being two people over it
-would be worse than the failure this prevents.
+What actually distinguishes two documents from one is structure, not names:
+
+    handles   two different linkedin.com/in/... slugs
+    contact   two different email addresses
+    sections  the one-per-document headings appearing twice each
+
+The costs are not symmetric, so this no longer refuses. A missed detection
+produces one arc blending two careers, which a reader can see and judge. A
+false positive locks someone out of the tool entirely with no way around it.
+So this warns, loudly, and lets the run proceed.
+
+It follows that the plain case - two bare CVs concatenated, no contact block,
+no section headings - is not detected. That is a real limit and it is better
+than guessing from capitalisation.
 """
 
 import re
 from dataclasses import dataclass, field
 
-# Words that appear in job titles and section headings, which otherwise look
-# exactly like names once a document is title-cased.
-_NOT_A_NAME = {
-    "senior", "staff", "principal", "lead", "head", "chief", "director",
-    "manager", "engineer", "developer", "analyst", "specialist", "consultant",
-    "experience", "education", "skills", "summary", "about", "projects",
-    "work", "employment", "history", "contact", "profile", "recommendations",
-    "certifications", "languages", "interests", "volunteering", "publications",
-    "software", "technical", "professional", "current", "previous",
-}
-
-_MAX_NAME_WORDS = 4
+# Headings that appear at most once in a single profile export.
+_SECTIONS = (
+    "contact", "top skills", "skills", "experience", "education", "summary",
+    "about", "certifications", "licenses", "honors", "publications",
+)
 
 
 @dataclass
 class Finding:
     ok: bool
     reason: str = ""
-    evidence: list[str] = field(default_factory=list)
+    evidence: list = field(default_factory=list)
 
 
-def _name_header(line: str) -> str | None:
-    """The name at the start of a profile, or None if this is not that line."""
-    # A name header may carry a location after a dash or comma; drop it.
-    head = re.split(r"\s+[-–—|]\s+|,", line.strip(), maxsplit=1)[0].strip()
-    if not head or any(c.isdigit() for c in head):
-        return None
-    words = head.split()
-    if not 2 <= len(words) <= _MAX_NAME_WORDS:
-        return None
-    for w in words:
-        bare = w.strip(".'’")
-        if not bare or not bare[0].isupper() or bare.lower() in _NOT_A_NAME:
-            return None
-        if not re.fullmatch(r"[A-Za-z][A-Za-z.'’-]*", bare):
-            return None
-    return head
+def _handles(text: str) -> list:
+    found = re.findall(r"linkedin\.com/in/([A-Za-z0-9\-_%]+)", text, re.I)
+    out = []
+    for h in found:
+        h = h.strip("/").lower()
+        if h and h not in out:
+            out.append(h)
+    return out
+
+
+def _emails(text: str) -> list:
+    found = re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", text)
+    out = []
+    for e in found:
+        e = e.lower()
+        if e not in out:
+            out.append(e)
+    return out
+
+
+def _repeated_sections(text: str) -> list:
+    counts = {}
+    for line in text.splitlines():
+        bare = line.strip().strip(":").lower()
+        if bare in _SECTIONS:
+            counts[bare] = counts.get(bare, 0) + 1
+    return sorted(k for k, n in counts.items() if n >= 2)
 
 
 def one_person(raw_text) -> Finding:
-    """Whether the text looks like one person's profile."""
+    """Whether the text looks like a single person's profile."""
     if not isinstance(raw_text, str) or not raw_text.strip():
         return Finding(True)
 
-    names, seen = [], set()
-    for line in raw_text.splitlines():
-        got = _name_header(line)
-        if got and got.lower() not in seen:
-            seen.add(got.lower())
-            names.append(got)
+    handles = _handles(raw_text)
+    emails = _emails(raw_text)
+    repeated = _repeated_sections(raw_text)
 
-    if len(names) < 2:
-        return Finding(True)
+    if len(handles) >= 2:
+        return Finding(False,
+                       "Two different LinkedIn profiles appear in this text.",
+                       [f"linkedin.com/in/{h}" for h in handles])
+    if len(emails) >= 2:
+        return Finding(False,
+                       "Two different email addresses appear in this text.",
+                       emails)
+    # One repeated heading can happen; two separate ones repeating is a document
+    # boundary rather than a quirk of formatting.
+    if len(repeated) >= 2:
+        return Finding(False,
+                       "The one-per-profile headings appear twice, which usually "
+                       "means two documents are stacked here.",
+                       [f'"{s}" appears more than once' for s in repeated])
 
-    return Finding(
-        False,
-        "This looks like more than one person's profile pasted together. "
-        "An arc drawn across two careers is not a career, and the pipeline "
-        "would quietly keep one of them and drop the other.",
-        names,
-    )
+    return Finding(True)
 
 
 __all__ = ["Finding", "one_person"]

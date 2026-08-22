@@ -1,9 +1,9 @@
-"""The pipeline refuses a profile that is two people.
+"""The pipeline warns about a profile that looks like two people.
 
-Refusing is the point. The live failure was not a wrong answer that looked
-wrong - it was a confident, internally consistent arc for a person who does
-not exist, built from real quotes. A tool that says "this is two people" is
-useful. A tool that averages them is worse than no tool.
+It used to refuse. Refusing turned out to be the wrong call: the detector
+fired on ordinary single profiles and locked people out entirely, with no way
+around it. A warning still tells the reader what was noticed, and an arc they
+can look at and judge beats a door they cannot open.
 """
 
 import json
@@ -13,48 +13,49 @@ import pytest
 from src.common.types import CandidateProfile
 from src.story import StoryError, extract_arc_detailed
 
-MARTA = """Marta Reyes - Berlin
-2023-now Backend Engineer, Pleo
-I moved from Java to Go over the last two years."""
+ONE = """Contact
+www.linkedin.com/in/cortmaclean
+Cort Maclean
+Experience
+Digitelio Film Development
+Education
+Western Michigan University
+I moved from mortgages to film and I am not going back."""
 
-DEVON = """Devon Okonkwo - Austin, TX
-2018-now Staff Embedded Engineer, Applied Materials
-I write C for motion control on semiconductor deposition tools."""
+TWO = ONE + """
+
+Contact
+www.linkedin.com/in/danielaortiz
+Daniela Ortiz
+Experience
+Thornton Tomasetti
+Education
+Illinois Institute of Technology"""
 
 BODY = json.dumps({
-    "throughline": "Builds systems.",
-    "throughline_evidence": ["I write C for motion control on semiconductor deposition tools."],
+    "throughline": "Builds things.",
+    "throughline_evidence": ["I moved from mortgages to film and I am not going back."],
     "unresolved_tension": "", "tension_evidence": [], "departures": [], "pursuits": [],
 })
 
 
-def run(text, calls=None):
-    def complete(*a, **k):
-        if calls is not None:
-            calls.append(1)
-        return BODY
-    return extract_arc_detailed(CandidateProfile(raw_text=text), complete=complete)
+def run(text):
+    return extract_arc_detailed(CandidateProfile(raw_text=text),
+                                complete=lambda *a, **k: BODY)
 
 
-def test_two_people_are_refused():
-    with pytest.raises(StoryError):
-        run(MARTA + "\n\n" + DEVON)
+def test_two_profiles_produce_a_warning_not_an_error():
+    arc, report = run(TWO)
+    assert report.warnings
+    assert arc.throughline == "Builds things."
 
 
-def test_the_refusal_names_who_it_found():
-    with pytest.raises(StoryError) as e:
-        run(MARTA + "\n\n" + DEVON)
-    assert "Marta Reyes" in str(e.value) and "Devon Okonkwo" in str(e.value)
+def test_the_warning_says_what_it_saw():
+    _, report = run(TWO)
+    assert "cortmaclean" in " ".join(report.warnings)
 
 
-def test_the_model_is_never_called_for_two_people():
-    """Refusing after paying for the call would be a strange kind of refusal."""
-    calls = []
-    with pytest.raises(StoryError):
-        run(MARTA + "\n\n" + DEVON, calls)
-    assert calls == []
-
-
-def test_one_person_still_works():
-    arc, _ = run(DEVON)
-    assert arc.throughline == "Builds systems."
+def test_one_profile_produces_no_warning():
+    arc, report = run(ONE)
+    assert report.warnings == []
+    assert arc.throughline == "Builds things."

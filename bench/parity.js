@@ -13,7 +13,7 @@ function slice(from, to) {
   return src.slice(a, b);
 }
 const seg = slice("const norm=", "function extractJSON")
-          + slice("const NOT_A_NAME", "async function run(){");
+          + slice("const SECTIONS", "async function run(){");
 
 const api = {};
 new Function("exports", seg +

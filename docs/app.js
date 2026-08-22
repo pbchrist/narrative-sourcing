@@ -242,394 +242,50 @@ function renderArc(arc, raw, name){
   });
 }
 
-// ---- is this one person? ---------------------------------------------------
-// Every other gate asks whether a claim is supported by the text. None asks
-// whether the text is about a single human being. A live run pasted two
-// profiles together and produced a confident arc for someone who does not
-// exist - keeping one person, silently dropping the other, every quote
-// verbatim-correct. Nothing was fabricated, so nothing downstream caught it.
-const NOT_A_NAME = new Set(["senior","staff","principal","lead","head","chief",
-  "director","manager","engineer","developer","analyst","specialist","consultant",
-  "experience","education","skills","summary","about","projects","work",
-  "employment","history","contact","profile","recommendations","certifications",
-  "languages","interests","volunteering","publications","software","technical",
-  "professional","current","previous"]);
+// ---- is this two profiles stacked together? --------------------------------
+// The first version counted lines of two to four capitalised words as people's
+// names. A LinkedIn export is almost nothing but lines of two to four
+// capitalised words - cities, skills, employers, schools, job titles - so it
+// fired on every real profile it ever saw, once listing Los Angeles, Brand
+// Strategy and Line Producer as three of the people it had found.
+//
+// It was also quietly biased: its exemption list was senior/staff/lead/
+// engineer/developer/manager, so a tech profile's titles were filtered out
+// while "Line Producer" and "Studio Liaison" were counted as human beings.
+//
+// Structure, not names. And it warns rather than refusing: a missed detection
+// gives one muddled arc a reader can judge, while a false positive locks
+// someone out of the tool over an ordinary profile.
+const SECTIONS = ["contact","top skills","skills","experience","education",
+  "summary","about","certifications","licenses","honors","publications"];
 
-function nameHeader(line){
-  const head = String(line).trim().split(/\s+[-–—|]\s+|,/)[0].trim();
-  if(!head || /\d/.test(head)) return null;
-  const words = head.split(/\s+/);
-  if(words.length < 2 || words.length > 4) return null;
-  for(const w of words){
-    const bare = w.replace(/[.'’]+$/,"").replace(/^[.'’]+/,"");
-    if(!bare || bare[0] !== bare[0].toUpperCase() || bare[0] === bare[0].toLowerCase()) return null;
-    if(NOT_A_NAME.has(bare.toLowerCase())) return null;
-    if(!/^[A-Za-z][A-Za-z.'’-]*$/.test(bare)) return null;
-  }
-  return head;
-}
-
-// Deliberately narrow: two or more distinct name headers. Two concurrent
-// employers is NOT used - people genuinely hold an advisory role alongside a
-// job, and accusing them of being two people over it is worse than the failure
-// this prevents.
 function onePerson(text){
-  if(typeof text !== "string" || !text.trim()) return {ok:true, names:[]};
-  const names=[], seen=new Set();
+  if(typeof text !== "string" || !text.trim()) return {ok:true, why:"", evidence:[]};
+
+  const handles = [...new Set((text.match(/linkedin\.com\/in\/[A-Za-z0-9\-_%]+/gi) || [])
+    .map(h => h.toLowerCase().replace(/\/$/, "")))];
+  if(handles.length >= 2)
+    return {ok:false, why:"Two different LinkedIn profiles appear in this text.",
+            evidence:handles};
+
+  const emails = [...new Set((text.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [])
+    .map(e => e.toLowerCase()))];
+  if(emails.length >= 2)
+    return {ok:false, why:"Two different email addresses appear in this text.",
+            evidence:emails};
+
+  const counts = {};
   for(const line of text.split("\n")){
-    const got = nameHeader(line);
-    if(got && !seen.has(got.toLowerCase())){ seen.add(got.toLowerCase()); names.push(got); }
+    const bare = line.trim().replace(/:$/, "").toLowerCase();
+    if(SECTIONS.includes(bare)) counts[bare] = (counts[bare] || 0) + 1;
   }
-  return names.length < 2 ? {ok:true, names:[]} : {ok:false, names};
-}
+  const repeated = Object.keys(counts).filter(k => counts[k] >= 2).sort();
+  if(repeated.length >= 2)
+    return {ok:false,
+            why:"The one-per-profile headings appear twice, which usually means two documents are stacked here.",
+            evidence:repeated.map(s => `"${s}" appears more than once`)};
 
-// ---- the worked example -----------------------------------------------------
-// A first-time visitor arrives with nothing to paste and no reason to wait
-// twenty seconds for a model on a machine that is not always on. Worse, when
-// that machine is off they used to get the browser's own words: "Failed to
-// fetch". This is a real saved run - the same input, the same model output -
-// replayed through the same gates in the browser, so the numbers it shows are
-// computed here and now rather than baked in.
-let EXAMPLE = null;
-async function loadExample(){
-  if(EXAMPLE !== null) return EXAMPLE;
-  try{
-    const r = await fetch("example.json?t=" + Date.now(), {cache:"no-store"});
-    if(r.ok) return (EXAMPLE = await r.json());
-  }catch(e){ /* offline, or not published yet */ }
-  return (EXAMPLE = false);
-}
-
-// The browser's network error is not a sentence anybody should have to read.
-function friendly(err){
-  const m = String((err && err.message) || err || "");
-  if(/failed to fetch|networkerror|load failed|err_/i.test(m))
-    return "Could not reach the model — it runs on a machine that is not always on. "
-         + "The worked example still works; it needs nothing.";
-  return m;
-}
-
-async function showExample(){
-  const ex = await loadExample();
-  if(!ex){ status("The worked example could not be loaded.", 1); return; }
-  const data = extractJSON(ex.content);
-  // Straight through the real gates - nothing here is precomputed.
-  processArc(data, ex.profile, ex.name || "");
-  status(statusFor(data, ex.profile) + "  ·  worked example, " + ex.caption);
-}
-
-// ---- reading files people drop in -------------------------------------------
-// No library: a strict CSP means anything loaded from a CDN never arrives, and
-// inlining a PDF engine would be a megabyte of script for one feature. The
-// browser already ships the hard part - DecompressionStream does the inflating
-// that both .docx and most PDFs need.
-
-async function inflate(bytes, format){
-  const ds = new DecompressionStream(format);
-  const buf = await new Response(
-    new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer();
-  return new Uint8Array(buf);
-}
-
-// A .docx is a zip. Walk its central directory, pull word/document.xml.
-async function readDocx(bytes){
-  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  let eocd = -1;
-  for(let i = bytes.length - 22; i >= 0 && i > bytes.length - 66000; i--){
-    if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
-  }
-  if(eocd < 0) throw new Error("that .docx does not look like a valid file");
-  let off = dv.getUint32(eocd + 16, true);
-  const count = dv.getUint16(eocd + 10, true);
-  for(let n = 0; n < count; n++){
-    if(dv.getUint32(off, true) !== 0x02014b50) break;
-    const method = dv.getUint16(off + 10, true);
-    const csize  = dv.getUint32(off + 20, true);
-    const nlen   = dv.getUint16(off + 28, true);
-    const elen   = dv.getUint16(off + 30, true);
-    const clen   = dv.getUint16(off + 32, true);
-    const lho    = dv.getUint32(off + 42, true);
-    const name   = new TextDecoder().decode(bytes.subarray(off + 46, off + 46 + nlen));
-    if(name === "word/document.xml"){
-      const lnlen = dv.getUint16(lho + 26, true), lelen = dv.getUint16(lho + 28, true);
-      const start = lho + 30 + lnlen + lelen;
-      const raw = bytes.subarray(start, start + csize);
-      const xml = new TextDecoder().decode(method === 8 ? await inflate(raw, "deflate-raw") : raw);
-      return xml
-        .replace(/<\/w:p>/g, "\n")
-        .replace(/<w:tab[^>]*\/>/g, "\t")
-        .replace(/<[^>]+>/g, "")
-        .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-        .replace(/\n{3,}/g, "\n\n").trim();
-    }
-    off += 46 + nlen + elen + clen;
-  }
-  throw new Error("could not find the text inside that .docx");
-}
-
-// PDFs. Modern ones (Chrome, Word, Pages, LinkedIn) subset their fonts and put
-// glyph numbers on the page rather than letters - <0037> Tj means "glyph 55 of
-// this subset", not "T". The only way back to text is the font's own ToUnicode
-// table, so that gets parsed too. Without it, PDF support would be decoration
-// that happens to work on the handful of files still using literal strings.
-function pdfEscapes(s){
-  return s.replace(/\\([nrtbf()\\]|[0-7]{1,3})/g, (m, g) => {
-    if(g === "n" || g === "r") return "\n";
-    if(g === "t") return "\t";
-    if(g === "b" || g === "f") return " ";
-    if(g === "(" || g === ")" || g === "\\") return g;
-    return String.fromCharCode(parseInt(g, 8));
-  });
-}
-
-function hexToText(hex){
-  let out = "";
-  for(let i = 0; i + 3 < hex.length + 1; i += 4){
-    const c = parseInt(hex.slice(i, i + 4), 16);
-    if(!isNaN(c) && c) out += String.fromCharCode(c);
-  }
-  return out;
-}
-
-function parseCMap(text){
-  const map = new Map();
-  let m;
-  const bf = /beginbfchar([\s\S]*?)endbfchar/g;
-  while((m = bf.exec(text))){
-    const pair = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g;
-    let g; while((g = pair.exec(m[1]))) map.set(g[1].toLowerCase(), hexToText(g[2]));
-  }
-  const br = /beginbfrange([\s\S]*?)endbfrange/g;
-  while((m = br.exec(text))){
-    const body = m[1];
-    let g;
-    const trip = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g;
-    while((g = trip.exec(body))){
-      const lo = parseInt(g[1],16), hi = parseInt(g[2],16), dst = parseInt(g[3],16), w = g[1].length;
-      for(let c = lo; c <= hi && c - lo < 65535; c++)
-        map.set(c.toString(16).padStart(w,"0").toLowerCase(), String.fromCharCode(dst + (c - lo)));
-    }
-    const arr = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*\[([\s\S]*?)\]/g;
-    while((g = arr.exec(body))){
-      const lo = parseInt(g[1],16), w = g[1].length;
-      const items = g[3].match(/<[0-9A-Fa-f]+>/g) || [];
-      items.forEach((it, i) =>
-        map.set((lo + i).toString(16).padStart(w,"0").toLowerCase(), hexToText(it.slice(1,-1))));
-    }
-  }
-  return map;
-}
-
-function decodeHex(hex, map){
-  if(!map || !map.size) return hexToText(hex);
-  const w = [...map.keys()][0].length || 4;
-  let out = "";
-  for(let i = 0; i < hex.length; i += w){
-    const code = hex.slice(i, i + w).toLowerCase();
-    out += map.has(code) ? map.get(code) : "";
-  }
-  return out;
-}
-
-// Pull text out of one content stream, switching decoder whenever the page
-// switches font.
-function pdfTextFrom(str, fontMaps){
-  let out = "", cur = null;
-  const re = /\/([A-Za-z0-9]+)\s+[\d.]+\s+Tf|\((?:[^()\\]|\\.)*\)\s*Tj|<([0-9A-Fa-f\s]*)>\s*Tj|\[(?:[^\[\]]*)\]\s*TJ|ET|T\*/g;
-  let m;
-  while((m = re.exec(str))){
-    const tok = m[0];
-    if(m[1] !== undefined){ cur = fontMaps.get(m[1]) || null; continue; }
-    if(tok === "ET" || tok === "T*"){ out += "\n"; continue; }
-    if(tok.startsWith("<")){
-      out += decodeHex((m[2] || "").replace(/\s/g, ""), cur);
-      continue;
-    }
-    if(tok.startsWith("[")){
-      const items = tok.match(/<[0-9A-Fa-f\s]*>|\((?:[^()\\]|\\.)*\)/g) || [];
-      for(const it of items){
-        out += it.startsWith("<")
-          ? decodeHex(it.slice(1,-1).replace(/\s/g,""), cur)
-          : pdfEscapes(it.slice(1,-1));
-      }
-      continue;
-    }
-    const lit = tok.match(/\((?:[^()\\]|\\.)*\)/);
-    if(lit) out += pdfEscapes(lit[0].slice(1,-1)) + "\n";
-  }
-  return out;
-}
-
-// Where the compressed data actually ends. Slicing up to "endstream" leaves
-// the newline before it attached, and both Node and the browser reject that as
-// trailing junk rather than ignoring it - which is why this silently returned
-// nothing until it was traced.
-function streamEnd(latin, dict, from){
-  const len = /\/Length\s+(\d+)(?!\s+\d+\s+R)/.exec(dict);
-  if(len) return from + parseInt(len[1], 10);
-  let to = latin.indexOf("endstream", from);
-  if(to < 0) return -1;
-  while(to > from && /[\r\n \t]/.test(latin[to - 1])) to--;
-  return to;
-}
-
-async function readPdf(bytes){
-  const latin = new TextDecoder("latin1").decode(bytes);
-
-  // Where each indirect object lives, so /ToUnicode 12 0 R can be followed.
-  const objAt = new Map();
-  const objRe = /(\d+)\s+0\s+obj\b/g;
-  let om;
-  while((om = objRe.exec(latin))){
-    const end = latin.indexOf("endobj", om.index);
-    objAt.set(om[1], [om.index, end < 0 ? latin.length : end]);
-  }
-
-  const streamOf = async (num) => {
-    const at = objAt.get(String(num));
-    if(!at) return "";
-    const body = latin.slice(at[0], at[1]);
-    const sm = /stream\r?\n?/.exec(body);
-    if(!sm) return "";
-    const from = at[0] + sm.index + sm[0].length;
-    const to = streamEnd(latin, body.slice(0, sm.index), from);
-    if(to < 0) return "";
-    const raw = bytes.subarray(from, to);
-    if(!/\/FlateDecode/.test(body.slice(0, sm.index))) return latin.slice(from, to);
-    try { return new TextDecoder("latin1").decode(await inflate(raw, "deflate")); }
-    catch(e){ return ""; }
-  };
-
-  // /F4 -> font object -> its ToUnicode table.
-  const fontObj = new Map();
-  const fr = /\/Font\s*<<([\s\S]*?)>>/g;
-  let fm;
-  while((fm = fr.exec(latin))){
-    const pr = /\/([A-Za-z0-9]+)\s+(\d+)\s+0\s+R/g;
-    let g; while((g = pr.exec(fm[1]))) fontObj.set(g[1], g[2]);
-  }
-  const fontMaps = new Map();
-  for(const [name, num] of fontObj){
-    const at = objAt.get(String(num));
-    if(!at) continue;
-    const tu = /\/ToUnicode\s+(\d+)\s+0\s+R/.exec(latin.slice(at[0], at[1]));
-    if(!tu) continue;
-    const cmap = await streamOf(tu[1]);
-    if(cmap) fontMaps.set(name, parseCMap(cmap));
-  }
-
-  let text = "";
-  const re = /stream\r?\n?/g;
-  let m;
-  while((m = re.exec(latin))){
-    const head = latin.slice(Math.max(0, m.index - 400), m.index);
-    if(/\/Image|\/DCTDecode|\/JPXDecode|\/CCITTFaxDecode|beginbfchar|\/ToUnicode/.test(head)) continue;
-    const from = m.index + m[0].length;
-    const end = streamEnd(latin, head, from);
-    if(end < 0) continue;
-    let body;
-    if(/\/FlateDecode/.test(head)){
-      try { body = new TextDecoder("latin1").decode(
-              await inflate(bytes.subarray(from, end), "deflate")); }
-      catch(e){ continue; }
-    } else {
-      body = latin.slice(from, end);
-    }
-    if(!/Tj|TJ/.test(body)) continue;
-    text += pdfTextFrom(body, fontMaps);
-  }
-  // Typographic ligatures come back as single characters and would otherwise
-  // show up inside quotes as "ﬁnd".
-  const LIG = {"\uFB00":"ff","\uFB01":"fi","\uFB02":"fl","\uFB03":"ffi","\uFB04":"ffl","\uFB05":"st","\uFB06":"st"};
-  text = text.replace(/[\uFB00-\uFB06]/g, c => LIG[c] || c)
-             .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"')
-             .replace(/[ \t]+/g, " ").replace(/ ?\n ?/g, "\n")
-             .replace(/\n{3,}/g, "\n\n").trim();
-  if(text.replace(/\s/g, "").length < 40)
-    throw new Error("no text could be read out of that PDF — if it is a scan, it is a "
-                  + "picture of words rather than words, and needs OCR first");
-  return text;
-}
-
-async function readAnyFile(file){
-  const name = (file.name || "").toLowerCase();
-  if(/\.(txt|md|markdown|csv|json)$/.test(name) || file.type.startsWith("text/"))
-    return (await file.text()).trim();
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  if(name.endsWith(".docx")) return readDocx(bytes);
-  if(name.endsWith(".pdf"))  return readPdf(bytes);
-  if(name.endsWith(".doc"))
-    throw new Error("old .doc files cannot be read in a browser — save it as .docx or PDF");
-  return (await file.text()).trim();   // last resort: treat it as text
-}
-
-async function addFiles(files){
-  const list = [...files];
-  if(!list.length) return;
-  status(`Reading ${list.length} file${list.length>1?"s":""}…`);
-  const got = [], failed = [];
-  for(const f of list){
-    try{
-      const text = await readAnyFile(f);
-      if(text) got.push(text); else failed.push(`${f.name} (it was empty)`);
-    }catch(e){ failed.push(`${f.name} — ${e.message}`); }
-  }
-  if(got.length){
-    const box = $("#profile");
-    box.value = (box.value.trim() ? box.value.trim() + "\n\n" : "") + got.join("\n\n");
-  }
-  status(failed.length
-    ? `Read ${got.length} of ${list.length}. Could not read: ${failed.join("; ")}`
-    : `Read ${got.length} file${got.length>1?"s":""} into the box. Have a look before you run it.`,
-    failed.length && !got.length ? 1 : 0);
-}
-
-// ---- several sources at once ------------------------------------------------
-// Comma separated. GitHub is fetched properly; anything else is attempted and
-// named out loud if the site refuses, because a browser cannot read most sites
-// and pretending otherwise would be the same sin as an unquoted claim.
-function parseSources(raw){
-  return String(raw || "").split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
-}
-
-function githubLogin(token){
-  const m = token.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9-]+)\/?$/i);
-  if(m) return m[1];
-  if(/^[A-Za-z0-9-]+$/.test(token)) return token;
-  return null;
-}
-
-async function gatherSources(tokens){
-  const texts = [], failures = [];
-  let name = "";
-  for(const tok of tokens){
-    const login = githubLogin(tok);
-    try{
-      if(login){
-        status(`Reading github.com/${login}…`);
-        const g = await fromGithub(login);
-        texts.push(g.text); name = name || g.name;
-      } else {
-        status(`Reading ${tok}…`);
-        const r = await fetch(tok);
-        if(!r.ok) throw new Error(`it answered ${r.status}`);
-        const html = await r.text();
-        const stripped = html.replace(/<script[\s\S]*?<\/script>/gi, " ")
-                             .replace(/<style[\s\S]*?<\/style>/gi, " ")
-                             .replace(/<[^>]+>/g, " ")
-                             .replace(/\s{2,}/g, " ").trim();
-        if(stripped.length < 80) throw new Error("there was no readable text on the page");
-        texts.push(stripped);
-      }
-    }catch(e){
-      const why = /failed to fetch|networkerror|load failed/i.test(String(e.message))
-        ? "that site does not allow being read by a browser"
-        : e.message;
-      failures.push(`${tok} — ${why}`);
-    }
-  }
-  return {texts, failures, name};
+  return {ok:true, why:"", evidence:[]};
 }
 
 async function run(){
@@ -653,17 +309,15 @@ async function run(){
     if(!parts.length) throw new Error("Nothing could be read. " + failures.join("; "));
     const raw = parts.join("\n\n");
     const who = onePerson(raw);
-    if(!who.ok) throw new Error(
-      "This looks like more than one person's profile pasted together — found "
-      + who.names.join(" and ") + ". An arc drawn across two careers is not a "
-      + "career, and this would quietly keep one of them and drop the other.");
+    if(!who.ok) failures = failures.concat(
+      [`heads up — ${who.why} (${who.evidence.join("; ")})`]);
     status("Reading the arc. This takes as long as your model takes.");
     const data=extractJSON(await complete(`PROFILE TEXT (quote only from between these markers):\n---BEGIN PROFILE---\n${raw}\n---END PROFILE---`));
     processArc(data, raw, name);
     remember(name || (raw.split("\n").find(l=>l.trim()) || "profile").trim().slice(0,46),
              {arc: LAST_ARC, raw, name});
     status(statusFor(data, raw)
-      + (failures.length ? `  ·  could not read: ${failures.join("; ")}` : ""));
+      + (failures.length ? `  ·  ${failures.join("; ")}` : ""));
   }catch(e){ status(friendly(e),1); }
   finally{ $("#run").disabled=false; }
 }
