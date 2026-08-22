@@ -23,6 +23,8 @@ asserts something in a different mode than the quote:
     intent      claim says wants/seeks, quote reports only what they do
     departure   claim says left, quote never mentions leaving
     leadership  claim says leads, quote never mentions leading
+    consequence claim says an event caused, affected or upset them, quote
+                reports only that the event happened
     quantity    claim names a number the quote does not contain
 
 Everything else passes. A false pass costs a reader one weak beat; a false
@@ -42,6 +44,18 @@ DEPARTURE = (
     "left", "leaving", "departed", "moved away", "moved on", "stepped away",
     "stepped back", "exited", "quit", "walked away", "gave up", "abandoned",
     "moved from", "transitioned from", "shifted from", "away from",
+)
+# A second live failure, this one from the unresolved tension rather than a
+# beat: "the lingering impact of a long, cancelled project" cited by "Spent
+# about eighteen months on a migration that got cancelled." The quote proves
+# the cancellation. The impact is the tool assigning someone an inner life it
+# cannot observe.
+CONSEQUENCE = (
+    "because", "due to", "as a result", "resulted in", "led to", "caused",
+    "prompted", "impact", "affect", "lingering", "legacy of", "in the wake of",
+    "shaped by", "frustrated", "burned out", "burnt out", "demorali",
+    "disillusioned", "tired of", "weary", "resent", "bitter", "scarred",
+    "soured", "jaded",
 )
 LEADERSHIP = (
     "lead", "leads", "leading", "led", "manage", "manages", "managing",
@@ -86,6 +100,12 @@ def entails(claim: str, quote: str) -> Verdict:
         return Verdict(False,
                        "The claim is about leading people, and the quote does not "
                        "mention leading, managing or hiring anyone.")
+
+    if _has(claim, CONSEQUENCE) and not _has(quote, CONSEQUENCE):
+        return Verdict(False,
+                       "The claim says the event affected them, and the quote "
+                       "only says the event happened. How someone felt about "
+                       "their own history has to come from them.")
 
     missing = _numbers(claim) - _numbers(quote)
     if missing:

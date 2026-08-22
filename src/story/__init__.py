@@ -151,13 +151,20 @@ def _verified_beats(raw_beats, raw_text: str, report=None) -> tuple[list[Beat], 
     return kept, proposed
 
 
-def _verified_quotes(raw, raw_text: str) -> list[str]:
+def _verified_quotes(raw, raw_text: str, claim: str = "") -> list[str]:
     """Keep only the quotes that genuinely appear in the profile.
 
     Used for the throughline and the unresolved tension. Those two cannot be
     checked the way a beat is - they are syntheses - so instead they are made
     to cite, and the citations get the identical treatment. A synthesis nobody
     checked is precisely the line a reader repeats as fact.
+
+    Both gates, not one. verify_span stops a quote that is not in the profile;
+    entails stops a quote that IS in the profile but does not back what the
+    headline says. A live run produced both failures here: a tension claiming
+    "the lingering impact of a long, cancelled project" citing the line that
+    only says it was cancelled, and a throughline about "broader engineering
+    leadership" citing a line that is an employer and a date.
     """
     if isinstance(raw, str):
         raw = [raw]
@@ -166,6 +173,8 @@ def _verified_quotes(raw, raw_text: str) -> list[str]:
     out = []
     for q in raw:
         if isinstance(q, str) and verify_span(q, raw_text):
+            if claim and not entails(claim, q).ok:
+                continue
             text = normalize_evidence(q)
             if text not in out:
                 out.append(text)
@@ -235,15 +244,16 @@ def extract_arc_detailed(
     report.proposed = dep_proposed + pur_proposed
     report.kept = len(beats)
 
+    tension = str(data.get("unresolved_tension") or "").strip()
     arc = CareerArc(
         throughline=throughline,
         throughline_evidence=_verified_quotes(
-            data.get("throughline_evidence"), profile.raw_text),
+            data.get("throughline_evidence"), profile.raw_text, throughline),
         tension_evidence=_verified_quotes(
-            data.get("tension_evidence"), profile.raw_text),
+            data.get("tension_evidence"), profile.raw_text, tension),
         departures=departures,
         pursuits=pursuits,
-        unresolved_tension=str(data.get("unresolved_tension") or "").strip(),
+        unresolved_tension=tension,
         # data["confidence"] is read and deliberately discarded; see
         # _arc_confidence and the backend note in src/common/llm.py.
         confidence=_arc_confidence(beats, dep_proposed + pur_proposed),
