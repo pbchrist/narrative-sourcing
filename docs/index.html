@@ -94,6 +94,20 @@ dialog .note{color:var(--ink3);font-size:13.5px;margin:0 0 18px}
       .btn,.recent .chip{transition:none}
       .btn:active:not(:disabled),.recent .chip:active{transform:none}
     }
+
+    .hint{display:block;font:400 12.5px/1.5 "IBM Plex Sans",sans-serif;color:var(--ink3);
+      margin-top:7px;text-transform:none;letter-spacing:0}
+    .linky{background:none;border:0;padding:0;font:inherit;color:var(--teal);
+      cursor:pointer;text-decoration:underline}
+    #droplabel.drag textarea{outline:2px dashed var(--teal);outline-offset:-2px;
+      background:#10202A}
+    details.more{margin:0 0 14px;border:1px solid var(--rule);border-radius:3px;
+      padding:10px 13px;background:var(--bg2)}
+    details.more summary{cursor:pointer;font:11px/1.4 "IBM Plex Mono",monospace;
+      letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+    details.more summary em{font-style:normal;color:var(--ink3);opacity:.75}
+    details.more[open] summary{color:var(--ink2)}
+    details.more label.f:last-of-type{margin-bottom:0}
 </style>
 
 <div class="wrap">
@@ -108,12 +122,25 @@ what someone left, what they are reaching for, what is still unresolved. <b>Ever
 quote the source word for word</b> — anything the model cannot quote is deleted, not flagged.
 It produces a brief for you to write from. It will not write the message.</p>
 
-<label class="f"><span>GitHub username</span>
-  <input id="gh" placeholder="tomlooman" autocomplete="off"></label>
-<p class="or">— or paste any profile —</p>
-<label class="f"><span>Profile text</span>
-  <textarea id="profile" placeholder="Paste a LinkedIn profile, a résumé, anything they wrote about their work."></textarea></label>
-<label class="f"><span>Name (optional)</span><input id="name" autocomplete="off"></label>
+<label class="f" id="droplabel">
+  <span>Their profile — paste it, or drop a file in</span>
+  <textarea id="profile" placeholder="Paste a LinkedIn profile, a résumé, anything they wrote about their work.&#10;&#10;Or drag a PDF, Word doc or text file straight onto this box."></textarea>
+  <span class="hint">Drop a file anywhere on this box, or <button type="button" class="linky" id="pick">choose one</button>. PDF, Word (.docx), .txt and .md.</span>
+</label>
+
+<details class="more">
+  <summary>Add links or GitHub usernames instead <em>(optional)</em></summary>
+  <label class="f" style="margin-top:12px">
+    <span>Sources, separated by commas</span>
+    <input id="gh" placeholder="github.com/someone, another-username" autocomplete="off">
+    <span class="hint">Anything here is fetched and added to whatever is in the box above.
+      GitHub works without setup. Most other sites block being read by a browser — if one
+      does, it will say so by name rather than failing quietly.</span>
+  </label>
+  <label class="f"><span>Name (optional)</span><input id="name" autocomplete="off"></label>
+</details>
+
+<input type="file" id="file" accept=".pdf,.docx,.txt,.md,.markdown,text/plain" hidden multiple>
 <div class="row">
   <button class="btn primary" id="run" type="button">Read the arc</button>
   <button class="btn" id="demo" type="button">See a worked example</button>
