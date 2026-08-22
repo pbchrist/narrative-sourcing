@@ -283,6 +283,41 @@ function onePerson(text){
   return names.length < 2 ? {ok:true, names:[]} : {ok:false, names};
 }
 
+// ---- the worked example -----------------------------------------------------
+// A first-time visitor arrives with nothing to paste and no reason to wait
+// twenty seconds for a model on a machine that is not always on. Worse, when
+// that machine is off they used to get the browser's own words: "Failed to
+// fetch". This is a real saved run - the same input, the same model output -
+// replayed through the same gates in the browser, so the numbers it shows are
+// computed here and now rather than baked in.
+let EXAMPLE = null;
+async function loadExample(){
+  if(EXAMPLE !== null) return EXAMPLE;
+  try{
+    const r = await fetch("example.json?t=" + Date.now(), {cache:"no-store"});
+    if(r.ok) return (EXAMPLE = await r.json());
+  }catch(e){ /* offline, or not published yet */ }
+  return (EXAMPLE = false);
+}
+
+// The browser's network error is not a sentence anybody should have to read.
+function friendly(err){
+  const m = String((err && err.message) || err || "");
+  if(/failed to fetch|networkerror|load failed|err_/i.test(m))
+    return "Could not reach the model — it runs on a machine that is not always on. "
+         + "The worked example still works; it needs nothing.";
+  return m;
+}
+
+async function showExample(){
+  const ex = await loadExample();
+  if(!ex){ status("The worked example could not be loaded.", 1); return; }
+  const data = extractJSON(ex.content);
+  // Straight through the real gates - nothing here is precomputed.
+  processArc(data, ex.profile, ex.name || "");
+  status(statusFor(data, ex.profile) + "  ·  worked example, " + ex.caption);
+}
+
 async function run(){
   const gh=$("#gh").value.trim(), pasted=$("#profile").value.trim();
   if(!gh && pasted.length<80){ status("Paste a profile, or give me a GitHub username.",1); return; }
@@ -297,6 +332,17 @@ async function run(){
       + "career, and this would quietly keep one of them and drop the other.");
     status("Reading the arc. This takes as long as your model takes.");
     const data=extractJSON(await complete(`PROFILE TEXT (quote only from between these markers):\n---BEGIN PROFILE---\n${raw}\n---END PROFILE---`));
+    processArc(data, raw, name);
+    remember(name || (raw.split("\n").find(l=>l.trim()) || "profile").trim().slice(0,46),
+             {arc: LAST_ARC, raw, name});
+    status(statusFor(data, raw));
+  }catch(e){ status(friendly(e),1); }
+  finally{ $("#run").disabled=false; }
+}
+
+let LAST_ARC = null;
+
+function buildArc(data, raw){
     if(!data.throughline) throw new Error("No throughline came back.");
     const unsupported=[];
     const keep=(arr)=>(arr||[]).filter(b=>{
@@ -321,16 +367,24 @@ async function run(){
                tension_evidence:keepQuotes(data.tension_evidence, data.unresolved_tension||""),
                departures:keep(data.departures),pursuits:keep(data.pursuits)};
     arc.confidence=score([...arc.departures,...arc.pursuits]);
-    renderArc(arc,raw,name);
-    remember(name || (raw.split("\n").find(l=>l.trim()) || "profile").trim().slice(0,46),
-             {arc, raw, name});
-    const kept=arc.departures.length+arc.pursuits.length;
-    const un = unsupported.length
-      ? ` ${unsupported.length} had a real quote that did not support the claim (${unsupported[0].why})`
-      : "";
-    status(`${kept} of ${dropped} claims survived. ${dropped-kept} deleted.${un}`);
-  }catch(e){ status(e.message,1); }
-  finally{ $("#run").disabled=false; }
+    arc._proposed = dropped; arc._unsupported = unsupported;
+    return arc;
+}
+
+function processArc(data, raw, name){
+  const arc = buildArc(data, raw);
+  LAST_ARC = arc;
+  renderArc(arc, raw, name);
+  return arc;
+}
+
+function statusFor(data, raw){
+  const arc = LAST_ARC || buildArc(data, raw);
+  const kept = arc.departures.length + arc.pursuits.length;
+  const un = arc._unsupported.length
+    ? ` ${arc._unsupported.length} had a real quote that did not support the claim (${arc._unsupported[0].why})`
+    : "";
+  return `${kept} of ${arc._proposed} claims survived. ${arc._proposed-kept} deleted.${un}`;
 }
 function status(m,bad){ const s=$("#status"); s.textContent=m; s.className=bad?"bad":""; }
 
@@ -418,6 +472,10 @@ window.addEventListener("DOMContentLoaded",()=>{
     $("#settings").close(); status("Endpoint saved. It stays in this browser.");};
   document.querySelectorAll("[data-preset]").forEach(b=>b.onclick=e=>{e.preventDefault();
     const p=PRESETS[b.dataset.preset]; $("#url").value=p.url; $("#model").value=p.model;});
+  $("#demo").onclick = showExample;
   drawRecent();
   status("Ready. Give it a GitHub username, or paste a profile.");
+  // A first-time visitor arrives with nothing to paste. Show them a real run
+  // rather than an empty page - it needs no model and no waiting.
+  if(!hist().length) showExample();
 });
