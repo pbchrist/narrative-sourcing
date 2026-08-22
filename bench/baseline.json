@@ -1,0 +1,47 @@
+{
+  "entails": {
+    "Led a team of 40 engineers || Led a team of engineers.": false,
+    "Left agency work behind || Joined a Series B to own a product end to end.": false,
+    "Left agency work behind || Left the agency after six years.": true,
+    "Moved from Java to Go || I moved from Java to Go over the last two years.": true,
+    "Now manages a team || Writes Go and Java every day.": false,
+    "Seeking roles building trading infrastructure || Currently working at Odum Research where I help building a modern trading platform.": false,
+    "Works on trading platform engineering || Currently working at Odum Research where I help building a modern trading platform.": true
+  },
+  "pipeline": {
+    "arc_confidence": 0.05,
+    "beat_confidences": [
+      0.85
+    ],
+    "dropped": [
+      [
+        "Left large-organisation politics behind",
+        "unsupported"
+      ],
+      [
+        "Moved toward smaller company work",
+        "fabricated"
+      ],
+      [
+        "Seeking work closer to payments",
+        "unsupported"
+      ]
+    ],
+    "kept": [
+      "Predictable weeks around family"
+    ],
+    "tension_evidence": [
+      "Now closer to the money side of things."
+    ],
+    "throughline": "Optimises for predictable, self-contained work.",
+    "throughline_evidence": [
+      "Two kids, so I optimise for predictable weeks."
+    ]
+  },
+  "verify": {
+    "She grew tired of the corporate treadmill.": false,
+    "Two kids, so I optimise for predictable weeks.": true,
+    "optimise": false,
+    "two kids so i optimise for predictable weeks": false
+  }
+}

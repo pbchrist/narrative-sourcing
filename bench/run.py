@@ -1,109 +1,136 @@
-"""Measure whether evidence verification catches anything.
+"""Does this codebase still behave the way it did when it was known good?
 
-The design of this tool rests on one empirical claim: that a model asked
-to cite a career profile will sometimes cite things the profile does not
-say, often enough that checking is worth the trouble. If the drop rate is
-near zero, the verification layer is ceremony and the tool is a wrapper.
+Not a test suite. The tests say each piece is correct in isolation; this says
+the whole pipeline still produces the SAME answers it produced on the day
+everything worked. A refactor that keeps every test green and quietly changes
+what a recruiter sees shows up here and nowhere else.
 
-Reports drops split by cause, because a quote rejected over formatting is
-not a hallucination caught, and counting it as one would overstate the
-result.
+The model is stubbed with a fixed response on purpose. We are benchmarking
+this code, not Qwen - a live model would make every run differ and the
+comparison would be worthless.
+
+    python bench/run.py             compare against the recorded baseline
+    python bench/run.py --update    re-record (only when a change is INTENDED)
 """
 
 import json
-import os
+import pathlib
 import sys
-import time
-from collections import Counter
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from src.intake import load_candidate, read_source  # noqa: E402
-from src.story import extract_arc_detailed  # noqa: E402
+from src.common.types import CandidateProfile           # noqa: E402
+from src.story import extract_arc_detailed              # noqa: E402
+from src.story.entails import entails                   # noqa: E402
+from src.story.verify import verify_span                # noqa: E402
+
+HERE = pathlib.Path(__file__).parent
+BASELINE = HERE / "baseline.json"
+
+PROFILE = """Marta Reyes - Berlin
+2019-2023  Senior Backend Engineer, Zalando
+2023-now   Backend Engineer, Pleo
+Worked on checkout and returns. Spent about eighteen months on a migration
+that got cancelled. Now closer to the money side of things. Two kids, so I
+optimise for predictable weeks. I keep bees."""
+
+# A fixed model response containing, deliberately, one of each failure the
+# gates exist to catch: a good beat, an intent claim backed by a doing quote,
+# a departure claim with no departure language, and an invented quote.
+RESPONSE = json.dumps({
+    "throughline": "Optimises for predictable, self-contained work.",
+    "throughline_evidence": ["Two kids, so I optimise for predictable weeks."],
+    "unresolved_tension": "Whether the move to a smaller company was the point.",
+    "tension_evidence": ["Now closer to the money side of things."],
+    "departures": [
+        {"description": "Left large-organisation politics behind",
+         "evidence": "Spent about eighteen months on a migration that got cancelled.",
+         "confidence": 0.9},
+        {"description": "Moved toward smaller company work",
+         "evidence": "She grew tired of the corporate treadmill.",   # not in the profile
+         "confidence": 0.8},
+    ],
+    "pursuits": [
+        {"description": "Predictable weeks around family",
+         "evidence": "Two kids, so I optimise for predictable weeks.",
+         "confidence": 0.85},
+        {"description": "Seeking work closer to payments",
+         "evidence": "Now closer to the money side of things.",
+         "confidence": 0.8},
+    ],
+})
+
+ENTAILS_CASES = [
+    ("Seeking roles building trading infrastructure",
+     "Currently working at Odum Research where I help building a modern trading platform."),
+    ("Works on trading platform engineering",
+     "Currently working at Odum Research where I help building a modern trading platform."),
+    ("Left agency work behind", "Left the agency after six years."),
+    ("Left agency work behind", "Joined a Series B to own a product end to end."),
+    ("Now manages a team", "Writes Go and Java every day."),
+    ("Led a team of 40 engineers", "Led a team of engineers."),
+    ("Moved from Java to Go", "I moved from Java to Go over the last two years."),
+]
+
+VERIFY_CASES = [
+    ("Two kids, so I optimise for predictable weeks.", True),
+    ("two kids so i optimise for predictable weeks", True),
+    ("She grew tired of the corporate treadmill.", False),
+    ("optimise", False),   # too short to mean anything
+]
 
 
-def run(paths, repeats=1, out_path=None):
-    rows = []
-    for path in paths:
-        for rep in range(repeats):
-            text, _ = read_source(path)
-            profile = load_candidate(text)
-            started = time.time()
-            try:
-                arc, report = extract_arc_detailed(profile)
-            except Exception as exc:
-                print(f"  {os.path.basename(path)} rep{rep}: FAILED {exc}")
-                rows.append({"profile": os.path.basename(path), "rep": rep,
-                             "kind": "error", "error": str(exc)})
-                continue
-            name = os.path.basename(path)
-            row = {
-                "profile": name,
-                "kind": ("dense" if name.startswith("dense")
-                         else "sparse" if name.startswith("sparse")
-                         else "real"),
-                "rep": rep,
-                "chars": len(text),
-                "proposed": report.proposed,
-                "kept": report.kept,
-                "drop_rate": report.drop_rate,
-                "arc_confidence": arc.confidence,
-                "elapsed": round(time.time() - started, 1),
-                "dropped": [
-                    {"reason": d.reason, "overlap": d.overlap,
-                     "description": d.description, "evidence": d.evidence}
-                    for d in report.dropped
-                ],
-            }
-            rows.append(row)
-            print(f"  {row['profile']} rep{rep}: proposed={row['proposed']} "
-                  f"kept={row['kept']} dropped={len(row['dropped'])} "
-                  f"({row['elapsed']}s)")
-            for d in report.dropped:
-                print(f"      [{d.reason} {d.overlap}] {d.evidence[:90]!r}")
-            if out_path:
-                with open(out_path, "w") as fh:
-                    json.dump(rows, fh, indent=2)
-    return rows
+def measure():
+    arc, report = extract_arc_detailed(
+        CandidateProfile(raw_text=PROFILE, name="Marta Reyes"),
+        complete=lambda *a, **k: RESPONSE)
+    return {
+        "pipeline": {
+            "throughline": arc.throughline,
+            "throughline_evidence": arc.throughline_evidence,
+            "tension_evidence": arc.tension_evidence,
+            "kept": sorted(b.description for b in arc.departures + arc.pursuits),
+            "dropped": sorted([d.description, d.reason] for d in report.dropped),
+            "arc_confidence": arc.confidence,
+            "beat_confidences": sorted(b.confidence for b in arc.departures + arc.pursuits),
+        },
+        "entails": {f"{c} || {q}": entails(c, q).ok for c, q in ENTAILS_CASES},
+        "verify": {q: verify_span(q, PROFILE) for q, _ in VERIFY_CASES},
+    }
 
 
-def summarise(rows):
-    ok = [r for r in rows if "error" not in r]
-    proposed = sum(r["proposed"] for r in ok)
-    dropped = sum(len(r["dropped"]) for r in ok)
-    reasons = Counter(d["reason"] for r in ok for d in r["dropped"])
+def flatten(d, prefix=""):
+    out = {}
+    for k, v in d.items():
+        key = f"{prefix}{k}"
+        if isinstance(v, dict):
+            out.update(flatten(v, key + "."))
+        else:
+            out[key] = v
+    return out
 
-    print("\n" + "=" * 62)
-    print(f"runs: {len(ok)}   claims proposed: {proposed}   dropped: {dropped}")
-    print(f"overall drop rate: {dropped / proposed:.1%}" if proposed else "n/a")
-    print("\nby cause:")
-    for reason, n in reasons.most_common():
-        print(f"  {reason:12} {n:3}  ({n / proposed:.1%} of all claims)")
 
-    # The honest headline: only paraphrase and fabricated are the model
-    # citing something the profile does not say.
-    real = reasons["paraphrase"] + reasons["fabricated"]
-    print(f"\ninvented citations (paraphrase + fabricated): {real}"
-          f"  = {real / proposed:.1%} of claims" if proposed else "")
+def main():
+    now = measure()
+    if "--update" in sys.argv or not BASELINE.exists():
+        BASELINE.write_text(json.dumps(now, indent=2, sort_keys=True) + "\n")
+        print(f"baseline recorded: {BASELINE}")
+        return 0
 
-    print("\nby profile density:")
-    for kind in ("dense", "sparse", "real"):
-        sub = [r for r in ok if r["kind"] == kind]
-        if not sub:
-            continue
-        p = sum(r["proposed"] for r in sub)
-        d = sum(len(r["dropped"]) for r in sub)
-        conf = sum(r["arc_confidence"] for r in sub) / len(sub)
-        print(f"  {kind:7} runs={len(sub)} proposed={p} dropped={d} "
-              f"rate={d / p:.1%} mean_arc_conf={conf:.2f}" if p else "")
+    was = flatten(json.loads(BASELINE.read_text()))
+    isnow = flatten(now)
+    diffs = [(k, was.get(k), isnow.get(k))
+             for k in sorted(set(was) | set(isnow)) if was.get(k) != isnow.get(k)]
+
+    if not diffs:
+        print(f"narrative-sourcing  SAME as known good  ({len(isnow)} checks)")
+        return 0
+    print(f"narrative-sourcing  CHANGED  ({len(diffs)} of {len(isnow)} checks differ)\n")
+    for k, a, b in diffs:
+        print(f"  {k}\n      was: {a}\n      now: {b}")
+    print("\nIf every change above is one you meant to make:  python bench/run.py --update")
+    return 1
 
 
 if __name__ == "__main__":
-    import glob
-    paths = sorted(glob.glob("bench/profiles/*.txt"))
-    if os.path.exists("/Users/user/Desktop/test1.pdf"):
-        paths.append("/Users/user/Desktop/test1.pdf")
-    reps = int(os.environ.get("BENCH_REPEATS", "1"))
-    print(f"{len(paths)} profiles x {reps} rep(s)\n")
-    rows = run(paths, repeats=reps, out_path="bench/results.json")
-    summarise(rows)
+    raise SystemExit(main())
