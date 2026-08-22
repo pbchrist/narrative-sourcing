@@ -263,6 +263,8 @@ async function run(){
                departures:keep(data.departures),pursuits:keep(data.pursuits)};
     arc.confidence=score([...arc.departures,...arc.pursuits]);
     renderArc(arc,raw,name);
+    remember(name || (raw.split("\n").find(l=>l.trim()) || "profile").trim().slice(0,46),
+             {arc, raw, name});
     const kept=arc.departures.length+arc.pursuits.length;
     const un = unsupported.length
       ? ` ${unsupported.length} had a real quote that did not support the claim (${unsupported[0].why})`
@@ -273,6 +275,82 @@ async function run(){
 }
 function status(m,bad){ const s=$("#status"); s.textContent=m; s.className=bad?"bad":""; }
 
+const HKEY = "ns.history";
+
+// ---- kinematic feel ---------------------------------------------------------
+// A synthesized click rather than an audio file: nothing to load, nothing for
+// the CSP to block, and it stays in step with the press animation. Two
+// transients ~12ms apart read as a switch closing; one alone reads as a beep.
+let AC = null;
+let SOUND = localStorage.getItem("ui.sound") !== "off";
+const QUIET = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function tick(){
+  if(!SOUND || QUIET()) return;
+  try{
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if(AC.state === "suspended") AC.resume();
+    const t = AC.currentTime;
+    for(const [at, freq, gain] of [[0, 1850, 0.055], [0.012, 1120, 0.03]]){
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = "square";
+      o.frequency.setValueAtTime(freq, t + at);
+      g.gain.setValueAtTime(gain, t + at);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.028);
+      o.connect(g); g.connect(AC.destination);
+      o.start(t + at); o.stop(t + at + 0.035);
+    }
+  }catch(e){ /* no audio on this device - the press animation still lands */ }
+}
+
+// ---- prior searches ---------------------------------------------------------
+// Kept OUT of the input boxes on purpose. Restoring the last run into the form
+// meant every new search started by deleting someone else's text.
+const HMAX = 8;
+function hist(){ try{ return JSON.parse(localStorage.getItem(HKEY)) || []; }catch{ return []; } }
+function remember(label, payload){
+  const h = hist().filter(e => e.label !== label);
+  h.unshift({label, when: Date.now(), payload});
+  try{ localStorage.setItem(HKEY, JSON.stringify(h.slice(0, HMAX))); }
+  catch(e){ /* quota - drop the oldest and try once */
+    try{ localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 3))); }catch(e2){}
+  }
+  drawRecent();
+}
+function drawRecent(){
+  const box = document.getElementById("recent"); if(!box) return;
+  const h = hist();
+  box.innerHTML = "";
+  box.hidden = !h.length;
+  if(!h.length) return;
+  const lbl = document.createElement("span");
+  lbl.className = "rlbl"; lbl.textContent = "Prior searches";
+  box.appendChild(lbl);
+  h.forEach(e => {
+    const c = document.createElement("button");
+    c.type = "button"; c.className = "chip";
+    c.textContent = e.label.length > 46 ? e.label.slice(0, 44) + "…" : e.label;
+    c.title = "Show this again — your boxes stay as they are";
+    c.onclick = () => replay(e);
+    box.appendChild(c);
+  });
+  const clr = document.createElement("button");
+  clr.type = "button"; clr.className = "chip clear"; clr.textContent = "Clear";
+  clr.onclick = () => { localStorage.removeItem(HKEY); drawRecent();
+                        status("Prior searches cleared."); };
+  box.appendChild(clr);
+}
+
+// One handler for the whole page, so anything button-shaped clicks.
+document.addEventListener("pointerdown", e => {
+  if(e.target.closest("button, .chip")) tick();
+}, true);
+
+function replay(e){
+  renderArc(e.payload.arc, e.payload.raw, e.payload.name);
+  status("Showing a prior arc. The boxes above are still yours.");
+}
+
 window.addEventListener("DOMContentLoaded",()=>{
   $("#run").onclick=run;
   $("#gear").onclick=()=>{const s=settings();$("#url").value=s.url||"";$("#key").value=s.key||"";$("#model").value=s.model||"";$("#settings").showModal();};
@@ -281,5 +359,6 @@ window.addEventListener("DOMContentLoaded",()=>{
     $("#settings").close(); status("Endpoint saved. It stays in this browser.");};
   document.querySelectorAll("[data-preset]").forEach(b=>b.onclick=e=>{e.preventDefault();
     const p=PRESETS[b.dataset.preset]; $("#url").value=p.url; $("#model").value=p.model;});
+  drawRecent();
   status("Ready. Give it a GitHub username, or paste a profile.");
 });
