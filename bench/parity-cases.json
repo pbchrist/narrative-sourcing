@@ -53,5 +53,23 @@
     "tech-titles-only": "Senior Backend Engineer\nStaff Engineer\nEngineering Manager",
     "bare-cvs-not-detected": "Marta Reyes - Berlin\n2023-now Backend Engineer, Pleo\n\nDevon Okonkwo - Austin\n2018-now Staff Embedded Engineer",
     "terse": "Sam Okafor\nSoftware engineer, mostly infrastructure."
+  },
+  "timeline_text": "Experience\n\nIconic\nFounder and Principal\nJanuary 2023 - Present\n\nGroupon\nTechnical Recruiter\n2015 - 2016\n\nNBCUniversal, Inc.\nScriptwriter\nOctober 2011 - January 2012\n\nFocus Features\nAcquisitions Executive\nMay 2005 - December 2005\n",
+  "timeline": {
+    "summary": null,
+    "proves_departure": [
+      "Focus Features Acquisitions Executive",
+      "Iconic Founder and Principal",
+      "I care about doing good work"
+    ],
+    "contradicts": [
+      "Moved from technical recruiting into scriptwriting",
+      "Moved from scriptwriting into technical recruiting",
+      "Worked as a technical recruiter"
+    ],
+    "confirms": [
+      "Moved from scriptwriting into technical recruiting",
+      "Moved from technical recruiting into scriptwriting"
+    ]
   }
 }

@@ -24,6 +24,10 @@ from src.common.types import CandidateProfile           # noqa: E402
 from src.story import extract_arc_detailed              # noqa: E402
 from src.story.entails import entails                   # noqa: E402
 from src.story.identity import one_person               # noqa: E402
+from src.story.timeline import (confirms_order, contradicts_order,  # noqa: E402
+                                extract as extract_timeline,
+                                proves_departure,
+                                summary as timeline_summary)
 from src.story.verify import verify_span                # noqa: E402
 
 HERE = pathlib.Path(__file__).parent
@@ -77,6 +81,18 @@ ENTAILS_CASES = [
 PARITY = json.loads((HERE / "parity-cases.json").read_text())
 
 
+def _timeline_answers():
+    spans = extract_timeline(PARITY["timeline_text"])
+    out = {"summary": timeline_summary(spans)}
+    for q in PARITY["timeline"]["proves_departure"]:
+        out["dep:" + q] = proves_departure(q, spans)
+    for q in PARITY["timeline"]["contradicts"]:
+        out["con:" + q] = contradicts_order(q, spans)
+    for q in PARITY["timeline"]["confirms"]:
+        out["cfm:" + q] = confirms_order(q, spans)
+    return out
+
+
 def parity():
     """The deployed page runs its own copy of these gates. A fix once landed in
     Python and never reached docs/app.js; the live page stayed wrong for hours
@@ -85,6 +101,7 @@ def parity():
         "entails": {f"{c} || {q}": entails(c, q).ok for c, q in PARITY["entails"]},
         "verify": {q: verify_span(q, PARITY["verify_text"]) for q in PARITY["verify"]},
         "onePerson": {k: one_person(v).ok for k, v in PARITY["onePerson"].items()},
+        "timeline": _timeline_answers(),
     }
     try:
         js = json.loads(subprocess.run(
@@ -122,6 +139,7 @@ def measure():
         "entails": {f"{c} || {q}": entails(c, q).ok for c, q in ENTAILS_CASES},
         "verify": {q: verify_span(q, PROFILE) for q, _ in VERIFY_CASES},
         "identity": {k: one_person(v).ok for k, v in PARITY["onePerson"].items()},
+        "timeline": _timeline_answers(),
     }
 
 

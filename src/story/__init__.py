@@ -12,8 +12,10 @@ from src.common import llm
 from src.common.parsing import ParseError, extract_json
 from src.common.types import Beat, CandidateProfile, CareerArc
 from src.story import prompt as prompt_mod
-from src.story.entails import entails
+from src.story.entails import Verdict, entails
 from src.story.identity import one_person
+from src.story.timeline import (confirms_order, contradicts_order,
+                                extract as extract_timeline, proves_departure)
 from src.story.verify import MIN_SPAN_CHARS, canonical, normalize, verify_span
 
 # A well-supported arc cites several different parts of the profile. Four
@@ -119,7 +121,7 @@ def _beat_confidence(reported, evidence: str) -> float:
     return round(min(value, ceiling), 2)
 
 
-def _verified_beats(raw_beats, raw_text: str, report=None) -> tuple[list[Beat], int]:
+def _verified_beats(raw_beats, raw_text: str, report=None, spans=None) -> tuple[list[Beat], int]:
     """Return the beats whose evidence genuinely appears in raw_text, plus
     the number proposed. Unverifiable beats are dropped, per Principle 1."""
     kept: list[Beat] = []
@@ -138,10 +140,29 @@ def _verified_beats(raw_beats, raw_text: str, report=None) -> tuple[list[Beat], 
                     overlap=overlap, reason=reason))
             continue
 
+        # The record can say a claim is simply the wrong way round. A CV that
+        # shows film work in 2005 and recruiting from 2015 has settled the
+        # direction; a claim running the other way is not a weak inference, it
+        # is contradicted by the document it came from.
+        if spans and contradicts_order(description, spans):
+            if report is not None:
+                report.dropped.append(DroppedBeat(
+                    description=description, evidence=evidence, overlap=1.0,
+                    reason="contradicts_dates",
+                    note="The dates in the profile run the other way."))
+            continue
+
         # The quote is genuinely theirs. Second gate: does it actually back
         # this claim? A real quote attached to an inference it does not
         # support is how a sourcing tool starts inventing motives.
         verdict = entails(description, evidence)
+        # A CV proves a departure with dates, not with the word "left". Holding
+        # out for departure language produced an empty "what they left" section
+        # for a career changer - the exact reader this tool is for.
+        if (not verdict.ok and spans and "leaving" in verdict.reason
+                and (proves_departure(evidence, spans)
+                     or confirms_order(description, spans))):
+            verdict = Verdict(True, "The record shows this role ended and other work followed.")
         if not verdict.ok:
             if report is not None:
                 report.dropped.append(DroppedBeat(
@@ -249,11 +270,12 @@ def extract_arc_detailed(
     if not throughline:
         raise StoryError("response contained no throughline")
 
+    spans = extract_timeline(profile.raw_text)
     departures, dep_proposed = _verified_beats(
-        data.get("departures"), profile.raw_text, report
+        data.get("departures"), profile.raw_text, report, spans
     )
     pursuits, pur_proposed = _verified_beats(
-        data.get("pursuits"), profile.raw_text, report
+        data.get("pursuits"), profile.raw_text, report, spans
     )
     beats = departures + pursuits
     report.proposed = dep_proposed + pur_proposed

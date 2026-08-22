@@ -10,6 +10,8 @@ every claim. The verification layer enforces the second regardless of what
 the prompt asks, but asking plainly raises the hit rate a lot.
 """
 
+from src.story import timeline
+
 SYSTEM = """You read a person's career history and identify the story in \
 it: not a summary of what they did, but the arc underneath it.
 
@@ -45,6 +47,14 @@ valid and useful answer."""
 
 def build(profile) -> str:
     parts = []
+    # The order things happened in, derived from the text rather than left to
+    # be inferred. LinkedIn exports print newest first, so a model reading the
+    # document top to bottom sees every career backwards - which is how someone
+    # who moved from film into recruiting comes back described as the reverse.
+    chronology = timeline.summary(timeline.extract(profile.raw_text))
+    if chronology:
+        parts += ["CHRONOLOGY (earliest first - this is the real order, "
+                  "whatever order the document below is in):", chronology, ""]
     if profile.name:
         parts.append(f"Candidate: {profile.name}")
     if profile.known_roles:

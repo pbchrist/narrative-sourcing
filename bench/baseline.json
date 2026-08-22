@@ -48,6 +48,17 @@
       "Two kids, so I optimise for predictable weeks."
     ]
   },
+  "timeline": {
+    "cfm:Moved from scriptwriting into technical recruiting": true,
+    "cfm:Moved from technical recruiting into scriptwriting": false,
+    "con:Moved from scriptwriting into technical recruiting": false,
+    "con:Moved from technical recruiting into scriptwriting": true,
+    "con:Worked as a technical recruiter": false,
+    "dep:Focus Features Acquisitions Executive": true,
+    "dep:I care about doing good work": false,
+    "dep:Iconic Founder and Principal": false,
+    "summary": "2005-2005: Focus Features \u2014 Acquisitions Executive\n2011-2012: Scriptwriter\n2015-2016: Groupon \u2014 Technical Recruiter\n2023-present: Iconic \u2014 Founder and Principal"
+  },
   "verify": {
     "She grew tired of the corporate treadmill.": false,
     "Two kids, so I optimise for predictable weeks.": true,

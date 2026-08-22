@@ -649,6 +649,102 @@ async function gatherSources(tokens){
   return {texts, failures, name};
 }
 
+// ---- when things actually happened ------------------------------------------
+// Nothing here knew careers happen in an order, and it broke the case this
+// tool exists for. A profile with twenty years in film followed by a decade in
+// recruiting produced an EMPTY "what they left" section: every departure claim
+// died saying "the quote never mentions leaving". The CV never says "I left".
+// It proves the departure the way real CVs do - with dates.
+//
+// LinkedIn exports also print newest first, so document order is the reverse
+// of career order. Read top to bottom, a pivot comes out backwards.
+const MONTHS = "January|February|March|April|May|June|July|August|September|"
+             + "October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec";
+const RANGE = new RegExp(
+  "^[\\s·•\\-–(\\[]*(?:(?:" + MONTHS + ")\\s+)?((?:19|20)\\d{2})"
+  + "\\s*(?:[-–—]|to)\\s*(?:(?:" + MONTHS + ")\\s+)?((?:19|20)\\d{2}|Present|Current|Now)"
+  + "[\\s)\\]·•]*$", "i");
+const NOT_A_LABEL = new Set(["experience","education","certifications","licenses",
+  "summary","about","contact","top skills","skills","honors","publications",
+  "recommendations","volunteering","projects","languages"]);
+
+function labelFor(lines, i){
+  const out = [];
+  for(let j = i - 1; j >= 0 && out.length < 2; j--){
+    const line = lines[j].replace(/^[\s·•\t]+|[\s·•\t]+$/g, "");
+    if(!line){ if(out.length) break; else continue; }
+    if(NOT_A_LABEL.has(line.toLowerCase().replace(/:$/, ""))) break;
+    if(line.length > 90 || /[.!?]$/.test(line)) break;
+    if(RANGE.test(line)) break;
+    out.push(line);
+  }
+  return out.reverse().join(" — ");
+}
+
+function extractTimeline(text){
+  if(typeof text !== "string" || !text.trim()) return [];
+  const lines = text.split("\n");
+  const spans = [];
+  lines.forEach((line, i) => {
+    const m = RANGE.exec(line.trim());
+    if(!m) return;
+    const end = /^\d/.test(m[2]) ? parseInt(m[2], 10) : null;
+    const label = labelFor(lines, i);
+    if(label) spans.push({label, start: parseInt(m[1], 10), end});
+  });
+  spans.sort((a,b) => (a.start - b.start) || ((a.end ?? 9999) - (b.end ?? 9999)));
+  return spans;
+}
+
+function timelineSummary(spans){
+  if(!spans || !spans.length) return "";
+  return spans.map(s => `${s.start}-${s.end === null ? "present" : s.end}: ${s.label}`).join("\n");
+}
+
+const TL_WEAK = new Set(["senior","staff","principal","lead","head","chief","director",
+  "manager","assistant","associate","consultant","coordinator","specialist","executive",
+  "officer","partner","founder","vp","inc","llc","ltd","the","and","for","via","at","of",
+  "to","from","into","moved","left","toward","towards","work","working","role","roles",
+  "career","job","jobs","then","now","later"]);
+
+function tlWords(text){
+  return new Set((String(text||"").toLowerCase().match(/[a-z0-9+#]+/g) || [])
+    .filter(w => !TL_WEAK.has(w) && w.length > 2));
+}
+
+// recruiting/recruiter and scriptwriting/scriptwriter are one word here.
+// Exact matching missed the pivot entirely.
+function tlSame(a, b){
+  if(a === b) return true;
+  let n = 0;
+  while(n < a.length && n < b.length && a[n] === b[n]) n++;
+  return n >= 6;
+}
+
+function tlMatch(text, spans){
+  const tw = [...tlWords(text)];
+  return (spans||[]).filter(s => [...tlWords(s.label)].some(a => tw.some(b => tlSame(a,b))));
+}
+
+function provesDeparture(quote, spans){
+  for(const s of tlMatch(quote, spans)){
+    if(s.end === null) continue;
+    if((spans||[]).some(o => o !== s && o.start >= s.end)) return true;
+  }
+  return false;
+}
+
+function tlDirection(claim, spans){
+  const text = " " + String(claim||"").toLowerCase().replace(/\s+/g," ") + " ";
+  const m = /\bfrom\b(.+?)\b(?:to|into|toward|towards)\b(.+)/.exec(text);
+  if(!m) return null;
+  const before = tlMatch(m[1], spans), after = tlMatch(m[2], spans);
+  if(!before.length || !after.length) return null;
+  return [Math.min(...before.map(s=>s.start)), Math.min(...after.map(s=>s.start))];
+}
+function confirmsOrder(claim, spans){ const d = tlDirection(claim, spans); return !!d && d[0] < d[1]; }
+function contradictsOrder(claim, spans){ const d = tlDirection(claim, spans); return !!d && d[1] < d[0]; }
+
 async function run(){
   const tokens = parseSources($("#gh").value);
   const pasted = $("#profile").value.trim();
@@ -673,7 +769,10 @@ async function run(){
     if(!who.ok) failures = failures.concat(
       [`heads up — ${who.why} (${who.evidence.join("; ")})`]);
     status("Reading the arc. This takes as long as your model takes.");
-    const data=extractJSON(await complete(`PROFILE TEXT (quote only from between these markers):\n---BEGIN PROFILE---\n${raw}\n---END PROFILE---`));
+    const chron = timelineSummary(extractTimeline(raw));
+    const data=extractJSON(await complete(
+      (chron ? `CHRONOLOGY (earliest first — this is the real order, whatever order the document below is in):\n${chron}\n\n` : "")
+      + `PROFILE TEXT (quote only from between these markers):\n---BEGIN PROFILE---\n${raw}\n---END PROFILE---`));
     processArc(data, raw, name);
     remember(name || (raw.split("\n").find(l=>l.trim()) || "profile").trim().slice(0,46),
              {arc: LAST_ARC, raw, name});
@@ -688,9 +787,19 @@ let LAST_ARC = null;
 function buildArc(data, raw){
     if(!data.throughline) throw new Error("No throughline came back.");
     const unsupported=[];
+    const spans = extractTimeline(raw);
     const keep=(arr)=>(arr||[]).filter(b=>{
         if(!b||!b.description||!verify(b.evidence,raw)) return false;
-        const v=entails(b.description,b.evidence);
+        // The record can say a claim is simply the wrong way round.
+        if(spans.length && contradictsOrder(b.description, spans)){
+          unsupported.push({d:b.description, why:"The dates in the profile run the other way."});
+          return false;
+        }
+        let v=entails(b.description,b.evidence);
+        // A CV proves a departure with dates, not with the word "left".
+        if(!v.ok && spans.length && /leaving/.test(v.reason)
+           && (provesDeparture(b.evidence, spans) || confirmsOrder(b.description, spans)))
+          v = {ok:true, reason:"The record shows this role ended and other work followed."};
         if(!v.ok){ unsupported.push({d:b.description,why:v.reason}); return false; }
         return true;
       })

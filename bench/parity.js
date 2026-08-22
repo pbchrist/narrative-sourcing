@@ -13,15 +13,24 @@ function slice(from, to) {
   return src.slice(a, b);
 }
 const seg = slice("const norm=", "function extractJSON")
-          + slice("const SECTIONS", "async function run(){");
+          + slice("const SECTIONS", "// ---- the worked example")
+          + slice("const MONTHS", "async function run(){");
 
 const api = {};
 new Function("exports", seg +
-  "\nexports.entails=entails;exports.verify=verify;exports.onePerson=onePerson;")(api);
+  "\nexports.entails=entails;exports.verify=verify;exports.onePerson=onePerson;"
+  + "exports.extractTimeline=extractTimeline;exports.timelineSummary=timelineSummary;"
+  + "exports.provesDeparture=provesDeparture;exports.confirmsOrder=confirmsOrder;"
+  + "exports.contradictsOrder=contradictsOrder;")(api);
 
 const C = JSON.parse(fs.readFileSync(__dirname + "/parity-cases.json", "utf8"));
-const out = { entails: {}, verify: {}, onePerson: {} };
+const out = { entails: {}, verify: {}, onePerson: {}, timeline: {} };
 for (const [claim, quote] of C.entails) out.entails[claim + " || " + quote] = api.entails(claim, quote).ok;
 for (const q of C.verify) out.verify[q] = api.verify(q, C.verify_text);
 for (const [id, text] of Object.entries(C.onePerson)) out.onePerson[id] = api.onePerson(text).ok;
+const spans = api.extractTimeline(C.timeline_text);
+out.timeline = { summary: api.timelineSummary(spans) };
+for (const q of C.timeline.proves_departure) out.timeline["dep:" + q] = api.provesDeparture(q, spans);
+for (const q of C.timeline.contradicts) out.timeline["con:" + q] = api.contradictsOrder(q, spans);
+for (const q of C.timeline.confirms) out.timeline["cfm:" + q] = api.confirmsOrder(q, spans);
 process.stdout.write(JSON.stringify(out, null, 2) + "\n");
