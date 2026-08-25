@@ -33,17 +33,24 @@ _PRE = rf"(?:{_MON}\s+|\d{{1,2}}[/.]\d{{1,2}}[/.]|\d{{1,2}}[/.])?\s*"
 _Y = r"(?:19|20)\d{2}"
 _OPEN = r"Present|Current|Now|Today|Ongoing"
 
+# LinkedIn prints how long the role lasted after the dates: "January 2023 -
+# Present (3 years 8 months)". Anchoring straight after the closing year meant
+# every dated role in a LinkedIn export was invisible - the only spans a real
+# export produced came from the education section, which has no durations. A
+# career the timeline cannot see is a career it cannot order.
+_DUR = r"(?:\s*\((?:less than a year|[^)]*\b(?:years?|months?|yrs?|mos?)\b[^)]*)\))?"
+
 _RANGE = re.compile(
-    rf"^[\s·•\-–(\[]*{_PRE}({_Y})\s*(?:[-–—]|to|until)\s*{_PRE}({_Y}|{_OPEN})[\s)\]·•]*$",
+    rf"^[\s·•\-–(\[]*{_PRE}({_Y})\s*(?:[-–—]|to|until)\s*{_PRE}({_Y}|{_OPEN}){_DUR}[\s)\]·•]*$",
     re.I)
 
 # "Since 2015" / "From 2015" - a start with no stated end.
-_SINCE = re.compile(rf"^[\s·•(\[]*(?:since|from)\s+{_PRE}({_Y})[\s)\]·•]*$", re.I)
+_SINCE = re.compile(rf"^[\s·•(\[]*(?:since|from)\s+{_PRE}({_Y}){_DUR}[\s)\]·•]*$", re.I)
 
 # A whole role on one line: "Acme, Engineer, 2015 - 2019".
 _INLINE = re.compile(
     rf"^(.{{3,90}}?)[,;·•\s]+{_PRE}({_Y})\s*(?:[-–—]|to|until)\s*{_PRE}({_Y}|{_OPEN})"
-    r"[\s)\]·•]*$", re.I)
+    rf"{_DUR}" r"[\s)\]·•]*$", re.I)
 
 # "Jan '15" is a year like any other; normalised before matching so the
 # patterns above only ever deal with four digits.

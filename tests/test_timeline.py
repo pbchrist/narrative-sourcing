@@ -101,3 +101,25 @@ def test_summary_of_nothing_is_empty():
 def test_a_span_knows_what_it_is():
     s = extract(CV)[0]
     assert isinstance(s, Span) and s.start == 2002 and s.end == 2003
+
+
+def test_reads_dates_that_carry_a_linkedin_duration():
+    # "January 2023 - Present (3 years 8 months)" is how every dated role in a
+    # LinkedIn export is written. Anchoring straight after the closing year
+    # matched none of them, so a real export produced spans only from the
+    # education section - and the departure gate, which needs the record to
+    # show a role ending, could never fire for an actual job.
+    spans = extract(
+        "Cruise\nSenior Technical Recruiter\nJanuary 2023 - Present (3 years 8 months)\n"
+        "\nIconic Talent\nFounder\nOctober 2014 - December 2022 (8 years 3 months)\n"
+        "\nOld Co\nAnalyst\n2015 - 2015 (less than a year)\n")
+    assert [(s.start, s.end) for s in spans] == [(2014, 2022), (2015, 2015), (2023, None)]
+    assert "Cruise" in summary(spans)
+    assert "Iconic Talent" in summary(spans)
+
+
+def test_a_duration_is_not_mistaken_for_a_label():
+    # Only a parenthetical that talks about elapsed time is a duration. Real
+    # trailing text still has to stop the match, or a note after the dates
+    # would be swallowed silently.
+    assert extract("Acme\nEngineer\n2015 - 2019 (contract via Initech)\n") == []

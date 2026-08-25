@@ -22,8 +22,32 @@ You are looking for:
 - pursuits: what they were visibly reaching toward
 - the unresolved tension: the open question their next move would answer
 
+Be thorough. A full career history contains many moves, not two. Work through
+the profile from the earliest entry to the latest and account for all of it:
+every change of employer, every change of title, every change in the kind of
+problem they took on, every subject they picked up and every one they put down.
+A twenty-year history should yield something like six to twelve departures and
+six to twelve pursuits. Return every one the text can support. Do not stop at
+the obvious ones, and do not merge several distinct moves into one summary
+claim - separate moves are separate entries.
+
 Hard rules:
 1. Every departure and pursuit must quote VERBATIM text from the profile as its evidence. Copy the characters exactly. Do not paraphrase or tidy the quote. A quote that does not appear word for word will be discarded automatically.
+1a. The quote must carry the claim, not merely sit near it. These are checked
+mechanically and a claim whose quote fails is deleted without appeal:
+   - If the claim says they LEFT or moved away from something, the quote has to
+     say so too. A quote showing only what they did there proves they did it,
+     not that they went. Quote the dates that closed the role, or the line that
+     names the move.
+   - If the claim says they WANT or are reaching for something, the quote has to
+     express intent. What they currently do is not what they are seeking.
+   - If the claim is about LEADING people, the quote has to mention leading,
+     managing, mentoring or hiring.
+   - If the claim says an event affected them, the quote has to say something
+     about the effect, not just that the event happened.
+   - Any number in the claim has to appear in the quote.
+Pick the quote that satisfies the rule. If no such quote exists, drop the claim
+and write a different one that your quote does support.
 2. If you cannot find verbatim text supporting a claim, omit the claim. An honest short arc beats a well-written invented one.
 3. You are inferring about a real person from partial evidence. Prefer the plainer reading.
 
@@ -851,11 +875,17 @@ const MONTHS = "January|February|March|April|May|June|July|August|September|"
 const PRE = "(?:(?:" + MONTHS + ")\\s+|\\d{1,2}[/.]\\d{1,2}[/.]|\\d{1,2}[/.])?\\s*";
 const Y = "(?:19|20)\\d{2}";
 const OPEN = "Present|Current|Now|Today|Ongoing";
+// LinkedIn prints how long the role lasted after the dates: "January 2023 -
+// Present (3 years 8 months)". Anchoring straight after the closing year meant
+// every dated role in a LinkedIn export was invisible - the only spans a real
+// export produced came from the education section, which has no durations. A
+// career the timeline cannot see is a career it cannot order.
+const DUR = "(?:\\s*\\((?:less than a year|[^)]*\\b(?:years?|months?|yrs?|mos?)\\b[^)]*)\\))?";
 const RANGE = new RegExp("^[\\s·•\\-–(\\[]*" + PRE + "(" + Y + ")"
-  + "\\s*(?:[-–—]|to|until)\\s*" + PRE + "(" + Y + "|" + OPEN + ")[\\s)\\]·•]*$", "i");
-const SINCE = new RegExp("^[\\s·•(\\[]*(?:since|from)\\s+" + PRE + "(" + Y + ")[\\s)\\]·•]*$", "i");
+  + "\\s*(?:[-–—]|to|until)\\s*" + PRE + "(" + Y + "|" + OPEN + ")" + DUR + "[\\s)\\]·•]*$", "i");
+const SINCE = new RegExp("^[\\s·•(\\[]*(?:since|from)\\s+" + PRE + "(" + Y + ")" + DUR + "[\\s)\\]·•]*$", "i");
 const INLINE = new RegExp("^(.{3,90}?)[,;·•\\s]+" + PRE + "(" + Y + ")"
-  + "\\s*(?:[-–—]|to|until)\\s*" + PRE + "(" + Y + "|" + OPEN + ")[\\s)\\]·•]*$", "i");
+  + "\\s*(?:[-–—]|to|until)\\s*" + PRE + "(" + Y + "|" + OPEN + ")" + DUR + "[\\s)\\]·•]*$", "i");
 const APOS = /'(\d{2})\b/g;
 const tlYear = s => { const n = parseInt(s, 10); return n >= 100 ? n : (n > 40 ? 1900 + n : 2000 + n); };
 const tlNormalise = s => s.replace(APOS, (m, y) => String(tlYear(y)));
@@ -1060,8 +1090,18 @@ function buildArc(data, raw){
     // entails() stops a quote that IS in the profile but does not back what the
     // headline says. These are the two lines a recruiter repeats out loud.
     const keepQuotes = (arr, claim) => (Array.isArray(arr)?arr:[arr])
-      .filter(q => typeof q === "string" && verify(q, raw)
-                   && (!claim || entails(claim, q).ok)).map(norm);
+      .filter(q => {
+        if(typeof q !== "string" || !verify(q, raw)) return false;
+        if(!claim) return true;
+        const v = entails(claim, q);
+        if(v.ok) return true;
+        // Same allowance the beats get: a career history proves someone left
+        // by showing the role ended and other work following it, which is how
+        // a CV says it. Withholding that here meant the headline was held to a
+        // stricter standard than the claims underneath it.
+        return spans.length && /leaving/.test(v.reason)
+               && (provesDeparture(q, spans, raw) || confirmsOrder(claim, spans));
+      }).map(norm);
     const arc={throughline:data.throughline,unresolved_tension:data.unresolved_tension||"",
                throughline_evidence:keepQuotes(data.throughline_evidence, data.throughline),
                tension_evidence:keepQuotes(data.tension_evidence, data.unresolved_tension||""),
