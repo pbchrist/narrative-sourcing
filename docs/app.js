@@ -60,11 +60,13 @@ Return ONLY JSON:
 
 confidence is 0-1 and should reflect genuine doubt.`;
 
-// What one request to the hosted bridge is allowed to weigh, system prompt
-// included; above this it answers 413. Somebody who pointed Settings at their
-// own model is not bound by our bridge's limit, so theirs is only a backstop
-// against pasting an entire book.
-const CAP = 24000;
+// What one request is allowed to weigh, system prompt included. The 24,000
+// this used to be was measured against a tunnel that turned out to front a
+// different service entirely; the model behind the real one carries a 131,072
+// token context, and a résumé that had to be truncated to fit six thousand
+// tokens was being cut for no reason at all. What is left is a backstop
+// against pasting an entire book, not a budget.
+const CAP = 120000;
 const OWN_CAP = 400000;
 
 // The endpoint measures the body that arrives, not the text that was typed,
@@ -94,6 +96,58 @@ function settings(){ let s={}; try{s=JSON.parse(localStorage.getItem(LS))||{};}c
 const norm=t=>String(t||"").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/\s+/g," ").trim();
 const canon=t=>norm(t).replace(/^(\.\.\.|…)+|(\.\.\.|…)+$/g,"").replace(/^[\s"'.,;:\-—–]+|[\s"'.,;:\-—–]+$/g,"").toLowerCase();
 function verify(ev, raw){ const n=canon(ev); return n.length>=12 && norm(raw).toLowerCase().includes(n); }
+
+// The model was told to copy and very nearly did - tidied a comma, dropped a
+// word, ran two lines of the profile together. The quote then fails the
+// verbatim check and a perfectly good claim is deleted, even though the
+// profile plainly contains the sentence it was reaching for. A smaller model
+// does this constantly: on one run thirty-seven claims came back and two
+// survived.
+//
+// The answer is not to loosen the check. It is to shorten the quote to the
+// longest run of its own words that IS in the source, character for
+// character, and let the unchanged check pass judgement on that. Nothing is
+// invented and nothing is stretched: what comes back is always a literal
+// substring of the profile, and always shorter than what the model claimed.
+// If too little of it survives, the claim still dies.
+// Matching has to ignore what the model tidied - a hyphen turned into a space,
+// a comma added, a stray bracket - while what comes back has to be the
+// profile's own characters. So both sides are flattened to letters, digits and
+// single spaces, with a map from every flattened position back to where it
+// came from, and the answer is cut out of the original using that map.
+function loosen(text){
+  const s = norm(text);
+  let out = "", map = [], space = true;
+  for(let i = 0; i < s.length; i++){
+    const c = s[i].toLowerCase();
+    if(/[a-z0-9]/.test(c)){ out += c; map.push(i); space = false; }
+    else if(!space){ out += " "; map.push(i); space = true; }
+  }
+  while(out.endsWith(" ")){ out = out.slice(0, -1); map.pop(); }
+  return {s, out, map};
+}
+
+function snap(quote, raw){
+  if(verify(quote, raw)) return quote;
+  const H = loosen(raw), Q = loosen(quote);
+  const words = Q.out.split(" ").filter(Boolean);
+  if(words.length < 3) return null;
+  const padded = " " + H.out + " ";
+  let best = "", at = -1;
+  for(let i = 0; i < words.length; i++){
+    for(let j = words.length; j > i; j--){
+      const run = words.slice(i, j).join(" ");
+      if(run.length <= best.length) break;       // cannot beat what we have
+      const k = padded.indexOf(" " + run + " "); // whole words only
+      if(k >= 0){ best = run; at = k; break; }
+    }
+  }
+  // Long enough to mean something, and most of what was claimed. A fragment
+  // rescued out of a quote that was largely invented is not evidence.
+  if(!best || best.length < 24 || best.length < Q.out.length * 0.55) return null;
+  const from = H.map[at], to = H.map[at + best.length - 1];
+  return H.s.slice(from, to + 1);              // the source's own characters
+}
 
 // ---- second gate: does the quote SUPPORT the claim, or just sit near it? ----
 // Live playtest caught this. The verifier confirmed "Currently working at Odum
@@ -1067,7 +1121,12 @@ function buildArc(data, raw){
     const unsupported=[];
     const spans = extractTimeline(raw);
     const keep=(arr)=>(arr||[]).filter(b=>{
-        if(!b||!b.description||!verify(b.evidence,raw)) return false;
+        if(!b||!b.description) return false;
+        if(!verify(b.evidence,raw)){
+          const fixed=snap(b.evidence,raw);
+          if(!fixed) return false;
+          b.evidence=fixed;                     // judged on what is really there
+        }
         // The record can say a claim is simply the wrong way round.
         if(spans.length && contradictsOrder(b.description, spans)){
           unsupported.push({d:b.description, why:"The dates in the profile run the other way."});
@@ -1091,7 +1150,12 @@ function buildArc(data, raw){
     // headline says. These are the two lines a recruiter repeats out loud.
     const keepQuotes = (arr, claim) => (Array.isArray(arr)?arr:[arr])
       .filter(q => {
-        if(typeof q !== "string" || !verify(q, raw)) return false;
+        if(typeof q !== "string") return false;
+        if(!verify(q, raw)){
+          const fixed = snap(q, raw);
+          if(!fixed) return false;
+          q = fixed;
+        }
         if(!claim) return true;
         const v = entails(claim, q);
         if(v.ok) return true;
@@ -1101,7 +1165,7 @@ function buildArc(data, raw){
         // stricter standard than the claims underneath it.
         return spans.length && /leaving/.test(v.reason)
                && (provesDeparture(q, spans, raw) || confirmsOrder(claim, spans));
-      }).map(norm);
+      }).map(q => norm(snap(q, raw) || q));
     const arc={throughline:data.throughline,unresolved_tension:data.unresolved_tension||"",
                throughline_evidence:keepQuotes(data.throughline_evidence, data.throughline),
                tension_evidence:keepQuotes(data.tension_evidence, data.unresolved_tension||""),
