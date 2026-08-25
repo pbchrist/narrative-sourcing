@@ -39,8 +39,12 @@ function buildNodes(arc){
     const R=200+(1-conf)*220;                 // less certain, further out
     const n=beats.length, t=n>1?(i/(n-1)-0.5):0;
     const ang=t*1.45;
+    // The vertical span has to grow with the cast. Fixed at 200 it was fine
+    // for the two or three claims that used to survive and became a stack of
+    // unreadable labels the moment a full career came through.
+    const spread=Math.max(200, n*54);
     nodes.push({
-      x:dir*Math.cos(ang)*R, y:t*200, z:Math.sin(ang)*R*0.7,
+      x:dir*Math.cos(ang)*R, y:t*spread, z:Math.sin(ang)*R*0.7,
       r:6+conf*6, c:dir<0?C.dep:C.pur,
       kind:dir<0?"departure":"pursuit",
       label:short(b.description||""), full:b.description||"",
@@ -185,6 +189,11 @@ function mountArc(canvas, arc, onPick){
     }
 
     const drawn=nodes.map(n=>({n,p:proj(n)})).filter(o=>o.p.d>1).sort((a,b)=>b.p.d-a.p.d);
+    // Where a label has already been written. A label drawn over another one
+    // is worse than no label: both become unreadable, and the reader cannot
+    // tell which node either belongs to.
+    const taken=[];
+    const clear=(b)=>!taken.some(t=>b.x0<t.x1&&b.x1>t.x0&&b.y0<t.y1&&b.y1>t.y0);
     for(const {n,p} of drawn){
       const lit=hot===n, dim=hot&&!lit;
       const rad=n.r*p.s*(lit?1.45:1);
@@ -208,7 +217,23 @@ function mountArc(canvas, arc, onPick){
         const up=(n.lift??1)>0; ctx.textBaseline=up?"bottom":"top";
         ctx.fillStyle=n.kind==="person"?C.person:(n.kind==="mine"?C.mine:C.ink);
         const half=ctx.measureText(n.label).width/2+8;
-        ctx.fillText(n.label,Math.max(half,Math.min(W-half,p.sx)),up?p.sy-rad-9:p.sy+rad+9);
+        const cx=Math.max(half,Math.min(W-half,p.sx));
+        const h=fs*1.15;
+        // Step away from the node until the line is clear, first the way it
+        // wanted to go, then the other way. If nothing is free it is dropped
+        // rather than stacked - the dot is still there to hover.
+        let y=null;
+        for(const dir of up?[-1,1]:[1,-1]){
+          for(let k=0;k<9;k++){
+            const ty=p.sy+dir*(rad+9+k*(h+3));
+            const b={x0:cx-half,x1:cx+half,
+                     y0:dir<0?ty-h:ty, y1:dir<0?ty:ty+h};
+            if(b.y0<4||b.y1>H-24) break;
+            if(clear(b)){ y=ty; ctx.textBaseline=dir<0?"bottom":"top"; taken.push(b); break; }
+          }
+          if(y!==null) break;
+        }
+        if(y!==null) ctx.fillText(n.label,cx,y);
       }
     }
     ctx.globalAlpha=1;
