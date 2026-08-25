@@ -36,6 +36,32 @@ Return ONLY JSON:
 
 confidence is 0-1 and should reflect genuine doubt.`;
 
+// What one request to the hosted bridge is allowed to weigh, system prompt
+// included; above this it answers 413. Somebody who pointed Settings at their
+// own model is not bound by our bridge's limit, so theirs is only a backstop
+// against pasting an entire book.
+const CAP = 24000;
+const OWN_CAP = 400000;
+
+// The endpoint measures the body that arrives, not the text that was typed,
+// and JSON encoding is not free - a newline costs two characters, a control
+// character costs six, and an emoji costs four bytes. That first pair is how a
+// nineteen thousand character file became a hundred thousand byte request.
+const BYTES = new TextEncoder();
+const weigh = t => BYTES.encode(JSON.stringify(String(t == null ? "" : t))).length;
+
+// The longest opening stretch of `text` that still fits `room` once encoded,
+// pulled back to a line break so the text never stops mid-sentence.
+function fitTo(text, room){
+  if(weigh(text) <= room) return text;
+  let keep = Math.min(text.length, room);
+  for(let i = 0; i < 8 && keep > 0 && weigh(text.slice(0, keep)) > room; i++)
+    keep = Math.floor(keep * room / weigh(text.slice(0, keep))) - 8;
+  keep = Math.max(0, keep);
+  const brk = text.lastIndexOf("\n", keep);
+  return text.slice(0, brk > keep - 400 ? brk : keep);
+}
+
 function settings(){ let s={}; try{s=JSON.parse(localStorage.getItem(LS))||{};}catch{}
   if(!s.url) s={...HOSTED};
   return s; }
@@ -308,6 +334,9 @@ async function loadExample(){
 // The browser's network error is not a sentence anybody should have to read.
 function friendly(err){
   const m = String((err && err.message) || err || "");
+  if(/^413\b/.test(m) || /too long/i.test(m))
+    return "That was too much text for one request. Trim the profile down to the "
+         + "parts that matter and run it again.";
   if(/failed to fetch|networkerror|load failed|err_/i.test(m))
     return "Could not reach the model — it runs on a machine that is not always on. "
          + "The worked example still works; it needs nothing.";
@@ -365,7 +394,7 @@ async function readDocx(bytes){
         .replace(/<w:tab[^>]*\/>/g, "\t")
         .replace(/<[^>]+>/g, "")
         .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+        .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'")
         .replace(/\n{3,}/g, "\n\n").trim();
     }
     off += 46 + nlen + elen + clen;
@@ -423,45 +452,130 @@ function parseCMap(text){
         map.set((lo + i).toString(16).padStart(w,"0").toLowerCase(), hexToText(it.slice(1,-1))));
     }
   }
+  // How wide one code is, in hex digits. Taking it from whichever key happened
+  // to be inserted first gets it wrong whenever a table mixes widths; the
+  // width most of the table agrees on is the one the page is drawn in.
+  const tally = new Map();
+  for(const k of map.keys()) tally.set(k.length, (tally.get(k.length) || 0) + 1);
+  let best = 4, seen = -1;
+  for(const [width, n] of tally) if(n > seen){ seen = n; best = width; }
+  map.w = best;
   return map;
 }
 
-function decodeHex(hex, map){
-  if(!map || !map.size) return hexToText(hex);
-  const w = [...map.keys()][0].length || 4;
+// tally counts glyphs this run could and could not turn back into letters.
+// Without it a PDF whose font tables cannot be read still returns a full page
+// of characters - they are just glyph numbers wearing the wrong clothes, and
+// that is worse than an error, because the rest of this app will treat them as
+// the person's own words.
+function decodeHex(hex, map, tally){
+  if(!map || !map.size){
+    if(tally) tally.unmapped += Math.ceil(hex.length / 4);
+    return hexToText(hex);
+  }
+  const w = map.w || 4;
   let out = "";
   for(let i = 0; i < hex.length; i += w){
     const code = hex.slice(i, i + w).toLowerCase();
-    out += map.has(code) ? map.get(code) : "";
+    if(map.has(code)){ out += map.get(code); if(tally) tally.mapped++; }
+    else if(tally) tally.unmapped++;
+  }
+  return out;
+}
+
+// Simple fonts (a résumé printed from Word or Pages) draw with one byte per
+// glyph inside an ordinary (string), and those bytes are subset glyph numbers
+// too: byte 0x21 is the first glyph the document happened to use, not "!".
+// Their ToUnicode table is keyed the same way, so it applies here as well.
+// The bullet at the front of every résumé line is usually SymbolMT with
+// /Encoding /MacRomanEncoding and no ToUnicode table at all - properly
+// encoded, just not in the encoding a browser reads bytes in. Byte 0xA5 is a
+// bullet there and a yen sign in Latin-1, which is why the impact section came
+// out filed under Japanese currency. Only the punctuation that actually turns
+// up in documents is listed; anything else stays as it was.
+const MACROMAN = {0xA5:"\u2022",0xC9:"\u2026",0xD0:"\u2013",0xD1:"\u2014",
+  0xD2:"\u201C",0xD3:"\u201D",0xD4:"\u2018",0xD5:"\u2019",0xA0:"\u2020",
+  0xA6:"\u00B6",0xA9:"\u00A9",0xA8:"\u00AE",0xAA:"\u2122",0xC7:"\u00AB",
+  0xC8:"\u00BB",0xD9:"\u0178",0xE1:"\u00B7"};
+
+function decodeBytes(s, map, tally){
+  if(!map) return s;
+  if(map.macroman)
+    return s.replace(/[\u0080-\u00FF]/g, c => MACROMAN[c.charCodeAt(0)] || c);
+  // A font known to be unreadable: the characters are handed back rather than
+  // dropped, in case the judgement was wrong, but they are counted as what
+  // they are so a page mostly set in one gets refused instead of believed.
+  if(map.blind){ if(tally) tally.unmapped += s.replace(/\s/g, "").length; return s; }
+  if(map.w !== 2) return s;
+  let out = "";
+  for(const ch of s){
+    const c = ch.charCodeAt(0);
+    const code = c.toString(16).padStart(2, "0");
+    if(map.has(code)){ out += map.get(code); if(tally) tally.mapped++; }
+    else if(c === 9 || c === 10 || c === 32) out += ch;
+    else if(tally) tally.unmapped++;
   }
   return out;
 }
 
 // Pull text out of one content stream, switching decoder whenever the page
 // switches font.
-function pdfTextFrom(str, fontMaps){
-  let out = "", cur = null;
-  const re = /\/([A-Za-z0-9]+)\s+[\d.]+\s+Tf|\((?:[^()\\]|\\.)*\)\s*Tj|<([0-9A-Fa-f\s]*)>\s*Tj|\[(?:[^\[\]]*)\]\s*TJ|ET|T\*/g;
+//
+// A line ends where the baseline moves, and nowhere else. Ending one at every
+// draw call instead looks right until it meets a PDF printed from Pages or
+// Word, which splits a single line into a text object per kerning pair: "time
+// -to-hire" arrives as five separate draws on one baseline, and a break after
+// each turns the résumé into confetti. Every hyphenated word in it came out
+// broken, and those broken words are what a quote would have been cut from.
+function pdfTextFrom(str, fontMaps, tally){
+  let out = "", cur = null, y = null, x = null;
+  const N = "([-\\d.]+)\\s+";
+  const re = new RegExp(
+      "\\/([A-Za-z0-9]+)\\s+[\\d.]+\\s+Tf"          // font
+    + "|" + N + N + N + N + N + N + "Tm"          // absolute text matrix
+    + "|" + N + N + "T[dD]"                       // relative move
+    + "|\\((?:[^()\\\\]|\\\\.)*\\)\\s*Tj"
+    + "|<([0-9A-Fa-f\\s]*)>\\s*Tj"
+    // A kerned run is an array of strings and numbers, and a string in it may
+    // itself contain a bracket. Matching "anything that is not a bracket"
+    // stops at the first one and loses the whole line - which is how a job
+    // title here and an employer there went missing with nothing to show it.
+    + "|\\[(?:\\((?:[^()\\\\]|\\\\.)*\\)|<[0-9A-Fa-f\\s]*>|[^\\[\\]])*\\]\\s*TJ"
+    + "|T\\*|BT", "g");
   let m;
   while((m = re.exec(str))){
     const tok = m[0];
     if(m[1] !== undefined){ cur = fontMaps.get(m[1]) || null; continue; }
-    if(tok === "ET" || tok === "T*"){ out += "\n"; continue; }
+    if(m[7] !== undefined){                       // ... Tm
+      const [nx, ny] = [parseFloat(m[6]), parseFloat(m[7])];
+      // The baseline moved, or the pen went back to the left of where it was:
+      // either way that is a new line. The second test matters because the
+      // matrix is read raw, without the page transform in front of it, so two
+      // runs under different transforms can share a y that means nothing.
+      if(y !== null && (Math.abs(ny - y) > 0.6 || nx < x - 1)) out += "\n";
+      y = ny; x = nx; continue;
+    }
+    if(m[9] !== undefined){                       // ... Td / TD
+      if(Math.abs(parseFloat(m[9])) > 0.6){ out += "\n"; if(y !== null) y += parseFloat(m[9]); }
+      continue;
+    }
+    if(tok === "BT") continue;
+    if(tok === "T*"){ out += "\n"; continue; }
     if(tok.startsWith("<")){
-      out += decodeHex((m[2] || "").replace(/\s/g, ""), cur);
+      out += decodeHex((m[10] || "").replace(/\s/g, ""), cur, tally);
       continue;
     }
     if(tok.startsWith("[")){
       const items = tok.match(/<[0-9A-Fa-f\s]*>|\((?:[^()\\]|\\.)*\)/g) || [];
       for(const it of items){
         out += it.startsWith("<")
-          ? decodeHex(it.slice(1,-1).replace(/\s/g,""), cur)
-          : pdfEscapes(it.slice(1,-1));
+          ? decodeHex(it.slice(1,-1).replace(/\s/g,""), cur, tally)
+          : decodeBytes(pdfEscapes(it.slice(1,-1)), cur, tally);
       }
       continue;
     }
     const lit = tok.match(/\((?:[^()\\]|\\.)*\)/);
-    if(lit) out += pdfEscapes(lit[0].slice(1,-1)) + "\n";
+    if(lit) out += decodeBytes(pdfEscapes(lit[0].slice(1,-1)), cur, tally);
   }
   return out;
 }
@@ -471,23 +585,32 @@ function pdfTextFrom(str, fontMaps){
 // trailing junk rather than ignoring it - which is why this silently returned
 // nothing until it was traced.
 function streamEnd(latin, dict, from, objAt){
-  // /Length is either a number or a reference to one. The obvious regex for
-  // "a number NOT followed by N R" backtracks: given "/Length 78 0 R" it
-  // happily matches "/Length 7" and slices seven bytes out of a twelve
-  // thousand byte stream. Every LinkedIn export failed this way, because
-  // Apache FOP writes indirect lengths.
+  // /Length is either a number or a reference to one, and Apache FOP - which
+  // writes every LinkedIn export - uses the reference. Two traps in a row.
+  // First: the obvious regex for "a number NOT followed by N R" backtracks,
+  // so "/Length 78 0 R" matches "/Length 7" and slices seven bytes out of a
+  // twelve thousand byte stream. Second: in "/Length 227 0 R" the object being
+  // referenced is 227, the number in front; the 0 is the generation. Following
+  // the generation looks up object 0, which never exists, so every indirect
+  // length fell through to the scan below without ever saying so.
   const m = /\/Length\s+(\d+)(\s+(\d+)\s+R)?/.exec(dict);
   if(m && !m[2]) return from + parseInt(m[1], 10);
   if(m && m[2] && objAt){
-    const at = objAt.get(m[3]);
+    const at = objAt.get(m[1]);
     if(at){
       const v = /obj\s*(\d+)/.exec(latin.slice(at[0], at[1]));
       if(v) return from + parseInt(v[1], 10);
     }
   }
+  // And the scan is only a guess, because compressed bytes are not text: the
+  // single end-of-line the spec puts before "endstream" is separator, but a
+  // 0x09 or 0x20 in front of it is data. Eating every trailing whitespace byte
+  // truncated the stream by one and inflate refused the whole thing - which is
+  // exactly how a LinkedIn export came out as glyph numbers.
   let to = latin.indexOf("endstream", from);
   if(to < 0) return -1;
-  while(to > from && /[\r\n \t]/.test(latin[to - 1])) to--;
+  if(latin[to - 1] === "\n") to--;
+  if(latin[to - 1] === "\r") to--;
   return to;
 }
 
@@ -518,35 +641,70 @@ async function readPdf(bytes){
     catch(e){ return ""; }
   };
 
-  // /F4 -> font object -> its ToUnicode table.
+  // /F4 -> font object -> its ToUnicode table. The resource dictionary is
+  // either written inline (/Font << /F4 12 0 R >>) or kept as an object of its
+  // own and pointed at (/Font 27 0 R). LibreOffice writes the second kind, and
+  // reading only the first left those files with no font tables at all.
   const fontObj = new Map();
+  const named = (block) => {
+    const pr = /\/([A-Za-z0-9]+)\s+(\d+)\s+0\s+R/g;
+    let g; while((g = pr.exec(block))) fontObj.set(g[1], g[2]);
+  };
   const fr = /\/Font\s*<<([\s\S]*?)>>/g;
   let fm;
-  while((fm = fr.exec(latin))){
-    const pr = /\/([A-Za-z0-9]+)\s+(\d+)\s+0\s+R/g;
-    let g; while((g = pr.exec(fm[1]))) fontObj.set(g[1], g[2]);
+  while((fm = fr.exec(latin))) named(fm[1]);
+  const fir = /\/Font\s+(\d+)\s+0\s+R/g;
+  while((fm = fir.exec(latin))){
+    const at = objAt.get(fm[1]);
+    if(at) named(latin.slice(at[0], at[1]));
   }
   const fontMaps = new Map();
+  const BLIND = new Map(); BLIND.blind = true;
   for(const [name, num] of fontObj){
     const at = objAt.get(String(num));
     if(!at) continue;
-    const tu = /\/ToUnicode\s+(\d+)\s+0\s+R/.exec(latin.slice(at[0], at[1]));
-    if(!tu) continue;
-    const cmap = await streamOf(tu[1]);
-    if(cmap) fontMaps.set(name, parseCMap(cmap));
+    const dict = latin.slice(at[0], at[1]);
+    const tu = /\/ToUnicode\s+(\d+)\s+0\s+R/.exec(dict);
+    if(tu){
+      const cmap = await streamOf(tu[1]);
+      if(cmap){ fontMaps.set(name, parseCMap(cmap)); continue; }
+    }
+    // "ABCDEF+Helvetica" is a subset: the six-letter tag is the spec's way of
+    // saying the font in this file is a cut-down copy with its own numbering.
+    // One that carries neither a ToUnicode table nor a named encoding has
+    // taken the key away with it, so its bytes are glyph numbers and cannot be
+    // read back - by construction, not by bad luck.
+    if(/\/Encoding\s*\/MacRomanEncoding/.test(dict)){
+      const mac = new Map(); mac.macroman = true; fontMaps.set(name, mac); continue;
+    }
+    if(/\/BaseFont\s*\/[A-Z]{6}\+/.test(dict)
+       && !/\/Encoding\s*\/\w/.test(dict) && !/\/Differences/.test(dict))
+      fontMaps.set(name, BLIND);
   }
 
+  // Walk the objects, not every occurrence of the word "stream" - "endstream"
+  // contains one too, so scanning for the bare word finds two hits per stream
+  // and judges the second one by a 400-character window of compressed bytes.
+  // That window is also how whole paragraphs went missing: a content stream
+  // whose neighbour happened to mention /ToUnicode was skipped entirely, and
+  // the résumé simply came out without them. An object's own dictionary is the
+  // thing that says what it holds.
   let text = "";
-  const re = /stream\r?\n?/g;
-  let m;
-  while((m = re.exec(latin))){
-    const head = latin.slice(Math.max(0, m.index - 400), m.index);
-    if(/\/Image|\/DCTDecode|\/JPXDecode|\/CCITTFaxDecode|beginbfchar|\/ToUnicode/.test(head)) continue;
-    const from = m.index + m[0].length;
-    const end = streamEnd(latin, head, from, objAt);
-    if(end < 0) continue;
+  const tally = { mapped: 0, unmapped: 0 };
+  for(const at of objAt.values()){
+    const obj = latin.slice(at[0], at[1]);
+    const sm = /stream\r?\n?/.exec(obj);
+    if(!sm) continue;
+    const dict = obj.slice(0, sm.index);
+    // Fonts, font programs, images, and the tables that decode them are not
+    // page text. /Length1 is what marks an embedded font program.
+    if(/\/Type\s*\/(Font|XObject|Metadata|ObjStm|XRef)|\/ToUnicode|\/FontFile|\/Length1|\/Image|\/DCTDecode|\/JPXDecode|\/CCITTFaxDecode|beginbfchar/.test(dict))
+      continue;
+    const from = at[0] + sm.index + sm[0].length;
+    const end = streamEnd(latin, dict, from, objAt);
+    if(end < 0 || end <= from) continue;
     let body;
-    if(/\/FlateDecode/.test(head)){
+    if(/\/FlateDecode/.test(dict)){
       try { body = new TextDecoder("latin1").decode(
               await inflate(bytes.subarray(from, end), "deflate")); }
       catch(e){ continue; }
@@ -554,7 +712,7 @@ async function readPdf(bytes){
       body = latin.slice(from, end);
     }
     if(!/Tj|TJ/.test(body)) continue;
-    text += pdfTextFrom(body, fontMaps);
+    text += pdfTextFrom(body, fontMaps, tally);
   }
   // Typographic ligatures come back as single characters and would otherwise
   // show up inside quotes as "ﬁnd".
@@ -562,7 +720,31 @@ async function readPdf(bytes){
   text = text.replace(/[\uFB00-\uFB06]/g, c => LIG[c] || c)
              .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"')
              .replace(/[ \t]+/g, " ").replace(/ ?\n ?/g, "\n")
+             // A word the page broke across two lines is still one word, and a
+             // quote is only verbatim if it says so: "hiring-\nmanager
+             // partnerships" has to come back as "hiring-manager
+             // partnerships". Only a lower-case letter closes the join, so a
+             // real trailing dash keeps its line.
+             .replace(/-\n([a-z])/g, "-$1")
              .replace(/\n{3,}/g, "\n\n").trim();
+  // Refusing beats handing back nonsense. A PDF that draws with a subset font
+  // and no readable ToUnicode table produces a full page of characters that
+  // are glyph numbers, not letters - and every gate downstream would then
+  // verify quotes against gibberish and report that nothing was deleted.
+  const seen = tally.mapped + tally.unmapped;
+  if(seen > 40 && tally.unmapped / seen > 0.2)
+    throw new Error("that PDF stores its text as numbered shapes from a cut-down font "
+                  + "and does not carry the table that maps them back to letters, so "
+                  + "what came out was not words. Save it as .docx, or open it and "
+                  + "paste the text in");
+  // Belt and braces for whatever the counters do not see: real prose does not
+  // arrive as control bytes.
+  const solid = text.replace(/\s/g, "");
+  const noise = (solid.match(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g) || []).length;
+  if(solid.length && noise / solid.length > 0.02)
+    throw new Error("that PDF came out as control characters rather than text — its "
+                  + "fonts could not be read. Save it as .docx, or paste the text in");
+  text = text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "");
   if(text.replace(/\s/g, "").length < 40)
     throw new Error("no text could be read out of that PDF — if it is a scan, it is a "
                   + "picture of words rather than words, and needs OCR first");
@@ -585,20 +767,24 @@ async function addFiles(files){
   const list = [...files];
   if(!list.length) return;
   status(`Reading ${list.length} file${list.length>1?"s":""}…`);
-  const got = [], failed = [];
+  const got = [], read = [], failed = [];
   for(const f of list){
     try{
       const text = await readAnyFile(f);
-      if(text) got.push(text); else failed.push(`${f.name} (it was empty)`);
+      if(text){ got.push(text); read.push(`${f.name} — ${text.length.toLocaleString()} characters`); }
+      else failed.push(`${f.name} (it was empty)`);
     }catch(e){ failed.push(`${f.name} — ${e.message}`); }
   }
   if(got.length){
     const box = $("#profile");
     box.value = (box.value.trim() ? box.value.trim() + "\n\n" : "") + got.join("\n\n");
   }
+  // The character count is not decoration. A file that came out unreadable can
+  // still look like almost nothing in the box while carrying twenty thousand
+  // characters of it, and the number is the only thing that says so.
   status(failed.length
-    ? `Read ${got.length} of ${list.length}. Could not read: ${failed.join("; ")}`
-    : `Read ${got.length} file${got.length>1?"s":""} into the box. Have a look before you run it.`,
+    ? `Read ${read.join("; ") || "nothing"}. Could not read: ${failed.join("; ")}`
+    : `Read ${read.join("; ")}. Have a look before you run it.`,
     failed.length && !got.length ? 1 : 0);
 }
 
@@ -810,12 +996,28 @@ async function run(){
       name = name || g.name;
     }
     if(!parts.length) throw new Error("Nothing could be read. " + failures.join("; "));
-    const raw = parts.join("\n\n");
+    let raw = parts.join("\n\n");
+    let chron = timelineSummary(extractTimeline(raw));
+    // One request has a size, and a LinkedIn export is bigger than people
+    // expect. Trim `raw` itself rather than only the prompt: every quote is
+    // checked back against `raw`, so sending less than was verified against
+    // would let a quote pass that the model was never shown - a silent
+    // inconsistency in the one part of this that is supposed to have none.
+    const whole = raw.length;
+    const mine = settings().url;
+    const cap = (!mine || /\.trycloudflare\.com/.test(mine)) ? CAP : OWN_CAP;
+    raw = fitTo(raw, Math.max(0, cap - weigh(SYSTEM) - weigh(chron) - 500));
+    const cut = whole - raw.length;
+    if(cut > 0){
+      chron = timelineSummary(extractTimeline(raw));   // shorter text, shorter chronology
+      failures = failures.concat(
+        [`only the first ${raw.length.toLocaleString()} characters were read — `
+         + `${cut.toLocaleString()} more would not fit in one request`]);
+    }
     const who = onePerson(raw);
     if(!who.ok) failures = failures.concat(
       [`heads up — ${who.why} (${who.evidence.join("; ")})`]);
     status("Reading the arc. This takes as long as your model takes.");
-    const chron = timelineSummary(extractTimeline(raw));
     const data=extractJSON(await complete(
       (chron ? `CHRONOLOGY (earliest first — this is the real order, whatever order the document below is in):\n${chron}\n\n` : "")
       + `PROFILE TEXT (quote only from between these markers):\n---BEGIN PROFILE---\n${raw}\n---END PROFILE---`));
