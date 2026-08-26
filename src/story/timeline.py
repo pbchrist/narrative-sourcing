@@ -47,6 +47,19 @@ _RANGE = re.compile(
 # "Since 2015" / "From 2015" - a start with no stated end.
 _SINCE = re.compile(rf"^[\s·•(\[]*(?:since|from)\s+{_PRE}({_Y}){_DUR}[\s)\]·•]*$", re.I)
 
+# The other way round, and just as common in a plain-text CV:
+# "2016-2019  Data Analyst, Shopify". The label follows the dates instead of
+# preceding them, and every pattern here wanted it in front - so a whole
+# familiar résumé layout produced no timeline at all, and with no timeline the
+# departure gate cannot use dates to prove a role ended. Twelve of the twelve
+# ablation profiles are written this way.
+_LEADING = re.compile(
+    rf"^[\s·•(\[]*{_PRE}({_Y})\s*(?:[-–—]|to|until)\s*{_PRE}({_Y}|{_OPEN})"
+    # The label has to begin with a word. A parenthetical after the dates is a
+    # note about the role, not the name of it, and treating it as the label
+    # threw away the better one sitting on the lines above.
+    rf"{_DUR}[\s)\]·•:,\-–]+([A-Za-z0-9].{{2,89}}?)[\s.]*$", re.I)
+
 # A whole role on one line: "Acme, Engineer, 2015 - 2019".
 _INLINE = re.compile(
     rf"^(.{{3,90}}?)[,;·•\s]+{_PRE}({_Y})\s*(?:[-–—]|to|until)\s*{_PRE}({_Y}|{_OPEN})"
@@ -135,6 +148,15 @@ def extract(text) -> list:
             if label:
                 spans.append(Span(label=label, start=_year(m.group(1)), end=None, line=i))
             continue
+        m = _LEADING.match(bare)
+        if m:
+            label = m.group(3).strip(" ,;·•-–")
+            if label and label.lower() not in _NOT_A_LABEL:
+                spans.append(Span(label=label, start=_year(m.group(1)),
+                                  end=_year(m.group(2)) if m.group(2)[:1].isdigit() else None,
+                                  line=i))
+                continue
+
         m = _INLINE.match(bare)
         if m:
             label = m.group(1).strip(" ,;·•-\u2013")

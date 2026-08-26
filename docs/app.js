@@ -1034,6 +1034,15 @@ const DUR = "(?:\\s*\\((?:less than a year|[^)]*\\b(?:years?|months?|yrs?|mos?)\
 const RANGE = new RegExp("^[\\s·•\\-–(\\[]*" + PRE + "(" + Y + ")"
   + "\\s*(?:[-–—]|to|until)\\s*" + PRE + "(" + Y + "|" + OPEN + ")" + DUR + "[\\s)\\]·•]*$", "i");
 const SINCE = new RegExp("^[\\s·•(\\[]*(?:since|from)\\s+" + PRE + "(" + Y + ")" + DUR + "[\\s)\\]·•]*$", "i");
+// The other way round, and just as common in a plain-text CV:
+// "2016-2019  Data Analyst, Shopify". Every pattern here wanted the label in
+// front, so a whole familiar résumé layout produced no timeline at all - and
+// with no timeline the departure gate cannot use dates to prove a role ended.
+// The label has to begin with a word: a parenthetical after the dates is a
+// note about the role, not the name of it.
+const LEADING = new RegExp("^[\\s·•(\\[]*" + PRE + "(" + Y + ")"
+  + "\\s*(?:[-–—]|to|until)\\s*" + PRE + "(" + Y + "|" + OPEN + ")" + DUR
+  + "[\\s)\\]·•:,\\-–]+([A-Za-z0-9].{2,89}?)[\\s.]*$", "i");
 const INLINE = new RegExp("^(.{3,90}?)[,;·•\\s]+" + PRE + "(" + Y + ")"
   + "\\s*(?:[-–—]|to|until)\\s*" + PRE + "(" + Y + "|" + OPEN + ")" + DUR + "[\\s)\\]·•]*$", "i");
 const APOS = /'(\d{2})\b/g;
@@ -1074,6 +1083,15 @@ function extractTimeline(text){
       const label = labelFor(lines, i);
       if(label) spans.push({label, start: tlYear(m[1]), end: null, line: i});
       return;
+    }
+    m = LEADING.exec(bare);
+    if(m){
+      const label = m[3].replace(/^[\s,;·•\-–]+|[\s,;·•\-–]+$/g, "");
+      if(label && !NOT_A_LABEL.has(label.toLowerCase())){
+        spans.push({label, start: tlYear(m[1]),
+                    end: /^\d/.test(m[2]) ? tlYear(m[2]) : null, line: i});
+        return;
+      }
     }
     m = INLINE.exec(bare);
     if(m){

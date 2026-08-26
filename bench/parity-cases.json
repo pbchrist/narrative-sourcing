@@ -181,7 +181,11 @@
       "apostrophe": "Acme\nEngineer\nJan '15 - Mar '19",
       "since": "Acme\nEngineer\nSince 2015",
       "inline": "Acme, Engineer, 2015 - 2019",
-      "present": "Acme\nEngineer\n2015 - Present"
+      "present": "Acme\nEngineer\n2015 - Present",
+      "dates_first": "Priya Raghunathan - Toronto\n2016-2019  Data Analyst, Shopify\n2019-2022  Senior Analyst, Wealthsimple\n",
+      "dates_first_colon": "Marcus Delaney\n2003 - 2011: Manufacturing Engineer, Ford\n2011 - 2019: Senior Engineer, Boeing\n",
+      "dates_first_open": "Sam\n2022-now   Analytics Engineer, Faire\n",
+      "trailing_note": "Acme\nEngineer\n2015 - 2019 (contract via Initech)\n"
     },
     "owning": {
       "text": "Experience\n\nIconic\nFounder\nJanuary 2023 - Present\nRuns it day to day.\n\nFocus Features\nAcquisitions Executive\nMay 2005 - December 2005\nRead scripts and bought films.\n",
