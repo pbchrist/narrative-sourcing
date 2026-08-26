@@ -80,6 +80,14 @@ details.shape.ungrounded[open] summary::before{content:"\25BE "}
 .beat q{display:block;margin-top:8px;color:var(--ink2);font-style:normal;font-size:13.5px;
  border-left:2px solid var(--rule);padding-left:11px}
 .none{color:var(--ink3);font-size:14px}
+details.shown-rejects{border:1px solid var(--rule);border-left:3px solid var(--red);
+  border-radius:3px;background:var(--bg2);padding:12px 16px;margin:18px 0}
+details.shown-rejects summary{cursor:pointer;font:11px/1.4 "IBM Plex Mono",monospace;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+details.shown-rejects .beat.reject{background:transparent;border-style:dashed;margin-top:10px}
+details.shown-rejects .beat.reject q{color:var(--ink3);border-left-color:var(--rule)}
+details.shown-rejects .why{display:block;margin-top:8px;color:var(--red);
+  font:11px/1.5 "IBM Plex Mono",monospace}
 footer{margin-top:52px;border-top:1px solid var(--rule);padding-top:18px;color:var(--ink3);font-size:13.5px}
 footer a{color:var(--teal)}
 dialog{background:var(--card);color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:24px;max-width:460px;width:92vw}
@@ -144,6 +152,12 @@ what someone left, what they are reaching for, what is still unresolved. <b>Ever
 quote the source word for word</b> — anything the model cannot quote is deleted, not flagged.
 It produces a brief for you to write from. It will not write the message.</p>
 
+<p class="sub">There is no account, no server, and nothing here reads your candidates but you:
+the page runs in your browser against a model you point it at &mdash; your own, or a key you
+hold. <b>Start with <a href="#" id="jump">the worked example</a></b>, which needs no model at
+all, then <a href="./evidence.html">see whether the rule actually does anything</a> &mdash;
+including where that measurement is weak.</p>
+
 <label class="f" id="droplabel">
   <span>Their profile — paste it, or drop a file in</span>
   <textarea id="profile" placeholder="Paste a LinkedIn profile, a résumé, anything they wrote about their work.&#10;&#10;Or drag a PDF, Word doc or text file straight onto this box."></textarea>
@@ -164,8 +178,8 @@ It produces a brief for you to write from. It will not write the message.</p>
 
 <input type="file" id="file" accept=".pdf,.docx,.txt,.md,.markdown,text/plain" hidden multiple>
 <div class="row">
-  <button class="btn primary" id="run" type="button">Read the arc</button>
-  <button class="btn" id="demo" type="button">See a worked example</button>
+  <button class="btn primary" id="demo" type="button">See it work</button>
+  <button class="btn" id="run" type="button">Read a profile of your own</button>
   <span id="status"></span>
 </div>
 
@@ -187,9 +201,12 @@ It produces a brief for you to write from. It will not write the message.</p>
 
 <dialog id="settings">
   <h2>Point it at a model</h2>
-  <p class="note">Runs entirely in your browser against an endpoint you control.</p>
+  <p class="note">Runs entirely in your browser against an endpoint you control. Nothing
+    is sent anywhere else, because there is nowhere else &mdash; this page has no server.
+    <b>My box</b> is a single machine that answers one request at a time and is often
+    busy or off; it is there for curiosity, not for work.</p>
   <div class="presets">
-    <button class="btn" data-preset="hosted" type="button">Hosted (default)</button>
+    <button class="btn" data-preset="hosted" type="button">My box (one at a time)</button>
     <button class="btn" data-preset="openai" type="button">OpenAI</button>
     <button class="btn" data-preset="anthropic" type="button">Anthropic</button>
     <button class="btn" data-preset="local" type="button">Local (llama.cpp)</button>

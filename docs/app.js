@@ -88,9 +88,23 @@ function fitTo(text, room){
   return text.slice(0, brk > keep - 400 ? brk : keep);
 }
 
+// Nobody's model is the default any more, least of all mine.
+//
+// The box behind the hosted address is two consumer GPUs in a house, serving
+// one request at a time at roughly a minute each. That is fine for one person
+// and it is a smoking crater the moment this page is in front of a crowd:
+// visitor two waits a minute, visitor fifty waits an hour, and an open
+// inference endpoint is an invitation to spend somebody else's electricity.
+//
+// It is also the wrong shape for what this argues. The claim is that a
+// recruiter should not hand candidates to a service and trust what comes
+// back. Running a service that reads candidates would contradict it. So the
+// page ships the part that proves the rule - the worked example and the
+// ablation - with no model at all, and the live read runs against whatever
+// endpoint the person at the keyboard chose.
 function settings(){ let s={}; try{s=JSON.parse(localStorage.getItem(LS))||{};}catch{}
-  if(!s.url) s={...HOSTED};
   return s; }
+const configured = () => !!settings().url;
 
 // ---- the verbatim check, same rule as the CLI -------------------------------
 const norm=t=>String(t||"").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/\s+/g," ").trim();
@@ -267,6 +281,8 @@ async function endpointFor(s, fallback){
 
 async function complete(prompt){
   const s=settings();
+  if(!s.url) throw new Error("No model is set up yet — click Settings and point this "
+    + "at one. The worked example needs nothing and shows what the rule does.");
   const url=await endpointFor(s, HOSTED.url);
   if(!url) throw new Error("Point it at a model first — click Settings.");
   const anth=/anthropic\.com/.test(url);
@@ -323,6 +339,24 @@ async function fromGithub(login){
 function chips(a,cls){ return `<div class="terms ${cls||""}">`+(a||[]).map(x=>`<span class="term">${esc(x)}</span>`).join("")+"</div>"; }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
+// The deleted claims, with the sentence the model offered and the reason it
+// was not good enough. This is the only part of the page that shows the tool
+// failing, which is exactly why it belongs on the page: a deletion counter
+// asks to be trusted, and a list of what was deleted does not have to be.
+function rejects(list){
+  if(!list || !list.length) return "";
+  const rows = list.map(u => `<div class="beat reject">
+      <div class="bh"><b>${esc(u.d)}</b><span class="pill">deleted</span></div>
+      ${u.q ? `<q>${esc(u.q)}</q>` : ""}
+      <span class="why">${esc(u.why)}</span>
+    </div>`).join("");
+  return `<details class="shown-rejects"><summary>${list.length}
+      claim${list.length>1?"s were":" was"} deleted &mdash; see them and why</summary>
+    <p class="none">These are the model's own words, thrown away by the checks rather than
+      shown to you as findings. Every tool in this category will show you what it produced.
+      This is what it was not allowed to produce.</p>${rows}</details>`;
+}
+
 function renderArc(arc, raw, name){
   // The throughline and the tension are the two highest-value inferences in
   // the whole system and neither can be quote-checked directly - they are
@@ -373,11 +407,12 @@ function renderArc(arc, raw, name){
       <span class="hint">hover a node for the quote &middot; click empty space to add one &middot;
         shift-drag to connect &middot; double-click yours to delete</span>
     </div>
-    <div class="bar"><span>${arc.departures.length+arc.pursuits.length} claims survived the verbatim check
+    <div class="bar"><span>${arc.departures.length+arc.pursuits.length} claim${arc.departures.length+arc.pursuits.length===1?"":"s"} survived the verbatim check
       &middot; confidence <b>${arc.confidence}</b></span></div>
     <div id="detail" class="detail"><span class="lbl">Click any node</span>
       <p>Every claim here quotes the source word for word. Anything the model could not
       quote was deleted, not flagged.</p></div>
+    ${rejects(arc._unsupported)}
     <div class="cols">
       <div><span class="lbl">What they left</span><div id="deps"></div></div>
       <div><span class="lbl">What they are reaching for</span><div id="purs"></div></div>
@@ -1126,6 +1161,11 @@ async function run(){
   const pasted = $("#profile").value.trim();
   if(!tokens.length && pasted.length < 80){
     status("Paste a profile, drop a file onto the box, or add a link.", 1); return; }
+  if(!configured()){
+    status("This runs against a model you choose — click Settings to point it at one. "
+         + "The worked example needs nothing and is the honest demonstration anyway.", 1);
+    $("#settings").showModal(); return;
+  }
   $("#run").disabled=true;
   try{
     let name = $("#name").value.trim();
@@ -1198,12 +1238,20 @@ function buildArc(data, raw){
         if(!b||!b.description) return false;
         if(!verify(b.evidence,raw)){
           const fixed=snap(b.evidence,raw);
-          if(!fixed) return false;
+          if(!fixed){
+            // The loudest rejection there is, and it used to happen in
+            // silence: the model produced a sentence and attributed it to
+            // someone who never wrote it.
+            unsupported.push({d:b.description, q:b.evidence,
+              why:"No such sentence appears in the profile. The model wrote it."});
+            return false;
+          }
           b.evidence=fixed;                     // judged on what is really there
         }
         // The record can say a claim is simply the wrong way round.
         if(spans.length && contradictsOrder(b.description, spans)){
-          unsupported.push({d:b.description, why:"The dates in the profile run the other way."});
+          unsupported.push({d:b.description, q:b.evidence,
+            why:"The dates in the profile run the other way."});
           return false;
         }
         let v=entails(b.description,b.evidence);
@@ -1211,7 +1259,7 @@ function buildArc(data, raw){
         if(!v.ok && spans.length && /leaving/.test(v.reason)
            && (provesDeparture(b.evidence, spans, raw) || confirmsOrder(b.description, spans)))
           v = {ok:true, reason:"The record shows this role ended and other work followed."};
-        if(!v.ok){ unsupported.push({d:b.description,why:v.reason}); return false; }
+        if(!v.ok){ unsupported.push({d:b.description, q:b.evidence, why:v.reason}); return false; }
         return true;
       })
       .map(b=>({description:b.description,evidence:norm(b.evidence),
@@ -1262,7 +1310,7 @@ function statusFor(data, raw){
   const un = arc._unsupported.length
     ? ` ${arc._unsupported.length} had a real quote that did not support the claim (${arc._unsupported[0].why})`
     : "";
-  return `${kept} of ${arc._proposed} claims survived. ${arc._proposed-kept} deleted.${un}`;
+  return `${kept} of ${arc._proposed} claim${arc._proposed===1?"":"s"} survived. ${arc._proposed-kept} deleted.${un}`;
 }
 function status(m,bad,action){
   const s=$("#status"); s.textContent=m; s.className=bad?"bad":"";
@@ -1461,6 +1509,9 @@ window.addEventListener("DOMContentLoaded",()=>{
   $("#pick").onclick = e => { e.preventDefault(); $("#file").click(); };
   $("#file").onchange = e => { addFiles(e.target.files); e.target.value = ""; };
   drawRecent();
+
+  const jump = document.getElementById("jump");
+  if(jump) jump.onclick = e => { e.preventDefault(); showExample(); };
 
   // Prior searches, off by choice. Turning it on clears what is already kept
   // rather than merely stopping new entries, because the reason to turn it on
