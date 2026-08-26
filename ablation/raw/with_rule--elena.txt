@@ -1,16 +1,16 @@
 {
-  "throughline": "Elena Vasquez consistently seeks out chaotic, pre-structured environments to build order from the ground up.",
-  "unresolved_tension": "The profile ends with her current role at Merqueo, leaving open whether she will continue this pattern of escalating complexity or if this position represents the culmination of her preference for 'messy' environments.",
+  "throughline": "The career is defined by a deliberate escalation of operational complexity, moving from coordination to management to leadership in increasingly chaotic environments.",
+  "unresolved_tension": "The profile ends with a current role that is presumably the messiest yet, leaving open whether this specific level of disorder will eventually yield to structure or if the pursuit of chaos is an endless trajectory.",
   "departures": [
     {
-      "description": "Moving away from established, stable logistics structures toward more chaotic operational roles.",
-      "evidence": "Every job I have taken has been messier than the last one",
+      "description": "Moving away from established, functional systems toward environments where processes are not yet defined.",
+      "evidence": "Every job I have taken has been messier than the last one and that is on purpose.",
       "confidence": 0.95
     }
   ],
   "pursuits": [
     {
-      "description": "Actively seeking out the initial phase of organizational development where systems are not yet functional.",
+      "description": "Actively seeking out the initial, unstructured phase of building or fixing operations.",
       "evidence": "I like the part where nothing works yet.",
       "confidence": 0.98
     }

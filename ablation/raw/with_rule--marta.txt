@@ -1,18 +1,28 @@
 {
-  "throughline": "Marta Reyes consistently prioritizes backend stability and predictable work rhythms over high-risk technical adventures.",
-  "unresolved_tension": "Whether her move to Pleo represents a permanent shift toward financial domain expertise or simply a tactical retreat to a more stable environment after a failed migration.",
+  "throughline": "Marta Reyes has consistently prioritized stability and predictability in her career choices, shifting from complex backend infrastructure to a role that aligns with her personal life constraints.",
+  "unresolved_tension": "Whether her move to Pleo represents a permanent retreat from high-complexity engineering challenges in favor of work-life balance, or a temporary pause before seeking new technical pursuits.",
   "departures": [
     {
-      "description": "Moving away from complex, long-term infrastructure projects that may not materialize.",
+      "description": "Moving away from large-scale, uncertain infrastructure projects that did not yield tangible results.",
       "evidence": "Spent about eighteen months on a migration that got cancelled.",
       "confidence": 0.9
+    },
+    {
+      "description": "Shifting focus from general backend systems to financial transaction logic.",
+      "evidence": "Now closer to the money side of things.",
+      "confidence": 0.8
     }
   ],
   "pursuits": [
     {
-      "description": "Seeking roles with clear business impact and stable schedules to accommodate family life.",
-      "evidence": "Now closer to the money side of things. Two kids, so I optimise for predictable weeks.",
-      "confidence": 0.85
+      "description": "Seeking a work environment that offers consistent schedules to accommodate family responsibilities.",
+      "evidence": "Two kids, so I optimise for predictable weeks.",
+      "confidence": 0.95
+    },
+    {
+      "description": "Engaging with core business logic related to payments and transactions.",
+      "evidence": "Now closer to the money side of things.",
+      "confidence": 0.7
     }
   ]
 }

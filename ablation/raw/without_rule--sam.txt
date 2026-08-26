@@ -1,17 +1,17 @@
 {
-  "throughline": "The profile suggests a consistent focus on foundational technical systems, moving from one major infrastructure-heavy organization to another.",
-  "unresolved_tension": "The move from a fintech bank (Monzo) to a global edge network (Cloudflare) raises the question of whether the engineer is prioritizing broader global scale or deeper domain-specific infrastructure challenges.",
+  "throughline": "The profile suggests a consistent focus on foundational technical systems, moving from a major fintech to a global edge network provider.",
+  "unresolved_tension": "It is unclear whether the move to Cloudflare represents a shift toward broader internet-scale infrastructure or a specific pursuit of high-performance networking challenges.",
   "departures": [
     {
-      "description": "Moving away from the specific domain of financial services infrastructure.",
+      "description": "Moving away from the fintech sector to the broader internet infrastructure sector.",
       "evidence": "Previously at Monzo, now at Cloudflare.",
-      "confidence": 0.6
+      "confidence": 0.9
     }
   ],
   "pursuits": [
     {
-      "description": "Continuing to work in core infrastructure roles, likely seeking a different scale or type of distributed systems challenge.",
-      "evidence": "Software engineer, mostly infrastructure. Previously at Monzo, now at Cloudflare.",
+      "description": "Continuing to work on core infrastructure systems, potentially at a larger global scale.",
+      "evidence": "Software engineer, mostly infrastructure.",
       "confidence": 0.8
     }
   ]

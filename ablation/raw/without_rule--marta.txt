@@ -1,28 +1,28 @@
 {
-  "throughline": "Marta Reyes has consistently prioritized stability and predictability in her career choices, shifting from high-complexity infrastructure work to roles that align with her family life.",
-  "unresolved_tension": "Whether her move to Pleo represents a permanent settlement into a predictable routine or a strategic pause before pursuing a different kind of technical challenge.",
+  "throughline": "Marta Reyes consistently prioritizes technical stability and personal predictability over high-risk or high-visibility engineering projects.",
+  "unresolved_tension": "Whether her move to Pleo represents a permanent shift toward financial domain expertise or a temporary compromise to accommodate her family's need for predictable weeks.",
   "departures": [
     {
-      "description": "Moving away from large-scale, long-term infrastructure projects that carry high risk of cancellation or instability.",
+      "description": "Moving away from large-scale, long-term infrastructure projects that carry high cancellation risk.",
       "evidence": "Spent about eighteen months on a migration that got cancelled.",
-      "confidence": 0.9
+      "confidence": 0.95
     },
     {
-      "description": "Leaving a role that likely required irregular hours or high unpredictability to accommodate family responsibilities.",
-      "evidence": "Two kids, so I optimise for predictable weeks.",
-      "confidence": 0.85
+      "description": "Stepping back from the complex, high-traffic user-facing logic of checkout and returns to a more stable backend role.",
+      "evidence": "Worked on checkout and returns... Now closer to the money side of things.",
+      "confidence": 0.7
     }
   ],
   "pursuits": [
     {
-      "description": "Seeking a work environment that offers consistent schedules and lower volatility to support parenting.",
+      "description": "Seeking a work environment that offers reliable, predictable schedules to support family life.",
       "evidence": "Two kids, so I optimise for predictable weeks.",
-      "confidence": 0.95
+      "confidence": 0.98
     },
     {
-      "description": "Shifting focus toward business-critical, revenue-adjacent systems rather than pure infrastructure.",
+      "description": "Pivoting toward the financial or payment infrastructure side of the business.",
       "evidence": "Now closer to the money side of things.",
-      "confidence": 0.7
+      "confidence": 0.85
     }
   ]
 }

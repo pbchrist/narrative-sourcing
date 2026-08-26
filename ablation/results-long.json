@@ -1,5 +1,5 @@
 {
-  "endpoint": "https://schedule-searched-satin-truly.trycloudflare.com/v1/chat/completions",
+  "endpoint": "https://lift-should-wondering-batch.trycloudflare.com/v1/chat/completions",
   "profiles": 4,
   "runs": [
     {
@@ -9,22 +9,22 @@
       "verbatim": 4,
       "graded": [
         {
-          "claim": "Moving away from a focus on specific technologies or theoretical planning in favor of practical, on-the-floor execution.",
-          "evidence": "I care more about takt time discipline than about any particular technology. People who have worked for me will tell you I am relentless about standard work and impatient with slide decks.",
-          "verbatim": true
-        },
-        {
-          "claim": "Transitioning from a foundational role in stamping and body-in-white to a focus on assembly automation and inspection.",
+          "claim": "Moving away from a sole focus on stamping and body-in-white processes toward broader assembly automation and inspection systems.",
           "evidence": "My background is in stamping and body-in-white but the last six years have been mostly assembly automation and vision inspection.",
           "verbatim": true
         },
         {
-          "claim": "Scaling engineering teams and managing significant capital investments to bring new production lines to market.",
-          "evidence": "Led the ME organisation for the R1T body shop through launch, growing the team from 14 to 61 engineers and technicians.\n- Owned the capital plan for two additional lines, roughly $180M across FY22 and FY23.",
+          "claim": "Shifting focus from specific technological solutions to the underlying rhythm and discipline of production flow.",
+          "evidence": "I care more about takt time discipline than about any particular technology.",
           "verbatim": true
         },
         {
-          "claim": "Implementing rigorous quality control and defect reduction strategies through process rebuilding and retraining.",
+          "claim": "Building scalable organizational structures and teams that maintain high standards independently of the leader's physical presence.",
+          "evidence": "Introduced a daily tiering structure that survived my departure from the plant floor.",
+          "verbatim": true
+        },
+        {
+          "claim": "Driving significant improvements in quality and efficiency through rigorous standardization and retraining rather than just new hardware.",
           "evidence": "Cut first-time-through defects on the underbody from 12.4% to 3.1% over eleven months by rebuilding the fixturing standard and retraining the weld engineering group.",
           "verbatim": true
         }
@@ -37,22 +37,22 @@
       "verbatim": 4,
       "graded": [
         {
-          "claim": "Moving away from reliance on centralized coordination services in favor of decentralized protocols.",
-          "evidence": "replaced the previous ZooKeeper-backed path",
+          "claim": "Moving away from ZooKeeper-based coordination in favor of native metadata reconciliation.",
+          "evidence": "Designed and shipped the metadata reconciliation protocol that replaced the previous ZooKeeper-backed path.",
           "verbatim": true
         },
         {
-          "claim": "Abandoning the pursuit of building complex caching layers when the architectural decision was to not build them.",
+          "claim": "Abandoning a caching layer project that was deemed unnecessary, suggesting a departure from speculative optimization.",
           "evidence": "Wrote the internal design doc for a caching layer that was ultimately not built, which was the right call.",
           "verbatim": true
         },
         {
-          "claim": "Seeking problems where the definition of correctness is not yet established, requiring the engineer to define the standard.",
+          "claim": "Seeking problems where the definition of correctness is undefined and must be established.",
           "evidence": "I am at my best on problems where the correct answer is not yet known and somebody has to write down what \"correct\" even means.",
           "verbatim": true
         },
         {
-          "claim": "Focusing on the invisible, critical infrastructure components that only become apparent during failure.",
+          "claim": "Focusing on the invisible, critical infrastructure components that define system reliability.",
           "evidence": "I work on the parts of systems that only get noticed when they break.",
           "verbatim": true
         }
@@ -65,22 +65,22 @@
       "verbatim": 4,
       "graded": [
         {
-          "claim": "Moving away from generic agency recruitment and passive sourcing toward active process design.",
+          "claim": "Moving away from generic agency recruitment and volume-based sourcing toward specialized, process-heavy internal roles.",
           "evidence": "Recruitment Consultant\nMichael Page\n2014 - 2018 \u00b7 Madrid",
           "verbatim": true
         },
         {
-          "claim": "Rejecting the industry norm of relying on employer branding to fix hiring issues.",
+          "claim": "Rejecting the industry norm of relying on employer branding to mask poor interview processes.",
           "evidence": "I do not believe in employer branding as a substitute for a good interview process.",
           "verbatim": true
         },
         {
-          "claim": "Seeking roles where they can build systems from scratch at the point of organizational transition.",
+          "claim": "Seeking roles where she can design systems that function without individual heroics, specifically at the transition point from founder-led to structured hiring.",
           "evidence": "Three times now I have joined a company at the point where founder-led hiring stopped working and had to design something that could survive without heroics.",
           "verbatim": true
         },
         {
-          "claim": "Focusing on the diagnostic root causes of hiring failures rather than surface-level metrics.",
+          "claim": "Focusing on the diagnostic aspect of recruiting to identify root causes like unclear scorecards rather than blaming sourcing channels.",
           "evidence": "What I actually enjoy is the diagnostic part - working out why a pipeline is failing, which is almost never the sourcing channel everyone blames.",
           "verbatim": true
         }
@@ -93,12 +93,12 @@
       "verbatim": 4,
       "graded": [
         {
-          "claim": "Moving away from direct bedside care to administrative leadership, while maintaining a self-perception rooted in clinical origins.",
-          "evidence": "I came up on the floor. I did eleven years of bedside before I took an administrative role and I still think that is the only reason anyone listens to me.",
+          "claim": "Moving away from direct bedside care to administrative leadership roles.",
+          "evidence": "I did eleven years of bedside before I took an administrative role",
           "verbatim": true
         },
         {
-          "claim": "Rejecting the common industry assumption that staffing contracts are the root cause of facility performance issues.",
+          "claim": "Rejecting the notion that external staffing solutions are the root cause of operational failure.",
           "evidence": "The difference was never the staffing agency contract.",
           "verbatim": true
         },
@@ -108,7 +108,7 @@
           "verbatim": true
         },
         {
-          "claim": "Improving staff retention and working conditions through structural changes to scheduling and overtime policies.",
+          "claim": "Improving staff retention and well-being by removing punitive scheduling practices.",
           "evidence": "Reduced RN turnover from 71% annualised to 38% by rebuilding the scheduling model and killing mandatory overtime.",
           "verbatim": true
         }
@@ -117,27 +117,37 @@
     {
       "condition": "without_rule",
       "profile": "long_marcus",
-      "claims": 4,
-      "verbatim": 3,
+      "claims": 6,
+      "verbatim": 4,
       "graded": [
         {
-          "claim": "Moving away from a focus on specific hardware or technology solutions toward a focus on process discipline and standard work.",
+          "claim": "Moving away from a reliance on specific hardware or technology in favor of process discipline.",
           "evidence": "I care more about takt time discipline than about any particular technology.",
           "verbatim": true
         },
         {
-          "claim": "Rejecting abstract or theoretical presentations in favor of practical, on-the-floor execution.",
+          "claim": "Rejecting abstract or theoretical management approaches in favor of practical, on-floor execution.",
           "evidence": "impatient with slide decks",
           "verbatim": true
         },
         {
-          "claim": "Scaling engineering organizations and managing significant capital investments to bring new production lines to market.",
-          "evidence": "growing the team from 14 to 61 engineers and technicians... Owned the capital plan for two additional lines, roughly $180M",
+          "claim": "Transitioning from a long tenure at a legacy OEM (Ford) to a newer, high-growth startup environment.",
+          "evidence": "Ford Motor Company 2003 - 2014 ... Rivian Automotive Jan 2021 - Present",
           "verbatim": false
         },
         {
-          "claim": "Improving quality metrics through rigorous standardization and retraining rather than just adding new equipment.",
+          "claim": "Scaling engineering teams and managing significant capital investments to bring new production lines to market.",
+          "evidence": "growing the team from 14 to 61 engineers and technicians. Owned the capital plan for two additional lines, roughly $180M across FY22 and FY23.",
+          "verbatim": false
+        },
+        {
+          "claim": "Implementing rigorous quality control and defect reduction strategies through standardized processes.",
           "evidence": "Cut first-time-through defects on the underbody from 12.4% to 3.1% over eleven months by rebuilding the fixturing standard and retraining the weld engineering group.",
+          "verbatim": true
+        },
+        {
+          "claim": "Establishing sustainable operational structures that persist beyond individual leadership.",
+          "evidence": "Introduced a daily tiering structure that survived my departure from the plant floor.",
           "verbatim": true
         }
       ]
@@ -145,27 +155,32 @@
     {
       "condition": "without_rule",
       "profile": "long_yuki",
-      "claims": 4,
-      "verbatim": 4,
+      "claims": 5,
+      "verbatim": 5,
       "graded": [
         {
-          "claim": "Moving away from ZooKeeper-based coordination mechanisms in favor of more modern, self-contained metadata protocols.",
-          "evidence": "Designed and shipped the metadata reconciliation protocol that replaced the previous ZooKeeper-backed path.",
-          "verbatim": true
-        },
-        {
-          "claim": "Stepping back from projects where the technical challenge is purely execution-based rather than definitional.",
+          "claim": "Moving away from roles where the technical problem is already solved and the work is purely execution-based.",
           "evidence": "I am at my worst on projects where the requirements are settled and the work is execution - I get bored and I am not proud of that.",
           "verbatim": true
         },
         {
-          "claim": "Seeking out problems where the definition of 'correct' behavior is not yet established, requiring the engineer to write the specification as well as the code.",
+          "claim": "Leaving the Cloudera role to join AWS, likely to escape a phase where the core storage problems were less novel or where the operational scale required different engagement.",
+          "evidence": "Software Engineer\nCloudera\n2014 - 2017",
+          "verbatim": true
+        },
+        {
+          "claim": "Seeking out problems where the definition of 'correct' is ambiguous and requires new protocol design or semantic definition.",
           "evidence": "I am at my best on problems where the correct answer is not yet known and somebody has to write down what \"correct\" even means.",
           "verbatim": true
         },
         {
-          "claim": "Focusing on the resilience and operational blast radius of systems, particularly in the context of storage and consensus.",
-          "evidence": "That incident changed how I think about operational blast radius more than anything else in my career.",
+          "claim": "Focusing on the invisible, foundational layers of systems that handle failure and consistency, rather than user-facing features.",
+          "evidence": "I work on the parts of systems that only get noticed when they break. Consensus, replication, failure detection.",
+          "verbatim": true
+        },
+        {
+          "claim": "Continuously returning to storage engine work despite attempts to diversify, indicating a deep intrinsic pull toward that specific domain.",
+          "evidence": "I have spent most of my career on storage engines and I keep ending up back there even when I try to leave.",
           "verbatim": true
         }
       ]
@@ -174,26 +189,26 @@
       "condition": "without_rule",
       "profile": "long_bea",
       "claims": 4,
-      "verbatim": 4,
+      "verbatim": 3,
       "graded": [
         {
-          "claim": "Moving away from traditional agency recruitment and high-volume sourcing tactics toward internal process design and diagnostic problem-solving.",
+          "claim": "Moving away from traditional agency recruitment and high-volume sourcing toward internal process design and diagnostic problem-solving.",
+          "evidence": "I build recruiting functions, not requisition queues... What I actually enjoy is the diagnostic part - working out why a pipeline is failing, which is almost never the sourcing channel everyone blames.",
+          "verbatim": false
+        },
+        {
+          "claim": "Rejecting the reliance on employer branding as a primary driver of hiring success in favor of rigorous interview processes.",
           "evidence": "I do not believe in employer branding as a substitute for a good interview process. Candidates can tell.",
           "verbatim": true
         },
         {
-          "claim": "Leaving the role of a sole technical recruiter to build a team and a scalable function, indicating a departure from individual heroics to systemic leadership.",
-          "evidence": "Sole technical recruiter for the first year, then built a team of six.",
-          "verbatim": true
-        },
-        {
-          "claim": "Pursuing the creation of sustainable, non-heroic hiring systems that can survive the departure of founders or key individuals.",
+          "claim": "Scaling teams through structured, repeatable systems that remove dependency on individual 'heroics' or founder-led intuition.",
           "evidence": "Three times now I have joined a company at the point where founder-led hiring stopped working and had to design something that could survive without heroics.",
           "verbatim": true
         },
         {
-          "claim": "Focusing on the diagnostic root causes of hiring failures, specifically targeting unclear job definitions and interviewer calibration rather than sourcing channels.",
-          "evidence": "What I actually enjoy is the diagnostic part - working out why a pipeline is failing, which is almost never the sourcing channel everyone blames. Usually it is an unclear scorecard or a hiring manager who cannot describe what good looks like.",
+          "claim": "Implementing rigorous, data-backed evaluation methods such as structured scorecards and work samples to ensure hiring accuracy.",
+          "evidence": "Replaced the interview loop end to end: structured scorecards, calibrated interviewers, a work sample that mirrors the actual job.",
           "verbatim": true
         }
       ]
@@ -205,22 +220,22 @@
       "verbatim": 4,
       "graded": [
         {
-          "claim": "He moved away from direct bedside care to administrative leadership, a transition he frames as a loss of primary authority but a gain in systemic influence.",
-          "evidence": "I came up on the floor. I did eleven years of bedside before I took an administrative role and I still think that is the only reason anyone listens to me.",
+          "claim": "He moved away from direct bedside care to administrative roles, a transition he frames as a necessary step to gain the authority to implement systemic changes.",
+          "evidence": "I did eleven years of bedside before I took an administrative role and I still think that is the only reason anyone listens to me.",
           "verbatim": true
         },
         {
-          "claim": "He explicitly rejected the common industry solution of relying on staffing agencies to solve operational problems, choosing instead to address internal cultural and structural issues.",
-          "evidence": "The difference was never the staffing agency contract. It was whether the charge nurses trusted that reporting a problem would not end badly for them.",
+          "claim": "He explicitly rejected the common industry reliance on staffing agencies as the solution to operational problems, instead focusing on internal cultural and structural fixes.",
+          "evidence": "The difference was never the staffing agency contract.",
           "verbatim": true
         },
         {
-          "claim": "He actively pursued the creation of a safe reporting culture where clinical staff feel protected when identifying risks, viewing this as the primary driver of quality outcomes.",
+          "claim": "He actively pursued the creation of a psychologically safe environment where staff feel empowered to report issues without fear of retaliation.",
           "evidence": "It was whether the charge nurses trusted that reporting a problem would not end badly for them.",
           "verbatim": true
         },
         {
-          "claim": "He sought to humanize the workforce by eliminating exploitative labor practices, specifically targeting mandatory overtime as a barrier to staff retention and well-being.",
+          "claim": "He sought to stabilize high-turnover environments by addressing the root causes of burnout, specifically through scheduling reforms and eliminating mandatory overtime.",
           "evidence": "Reduced RN turnover from 71% annualised to 38% by rebuilding the scheduling model and killing mandatory overtime.",
           "verbatim": true
         }
@@ -236,11 +251,11 @@
     "profiles_fully_invented": 0
   },
   "without_rule": {
-    "claims": 16,
-    "verbatim": 15,
-    "fabricated": 1,
-    "fabrication_rate": 0.062,
-    "profiles_fully_clean": 3,
+    "claims": 19,
+    "verbatim": 16,
+    "fabricated": 3,
+    "fabrication_rate": 0.158,
+    "profiles_fully_clean": 2,
     "profiles_fully_invented": 0
   }
 }

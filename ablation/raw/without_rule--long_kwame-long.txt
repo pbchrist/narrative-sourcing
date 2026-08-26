@@ -1,26 +1,26 @@
 {
-  "throughline": "Kwame Asante’s career is defined by a consistent effort to build institutional trust and psychological safety for frontline nurses, using his clinical credibility to protect staff from systemic failures.",
-  "unresolved_tension": "The profile ends with a successful operational turnaround at a large facility, leaving open the question of whether he will continue to optimize existing systems or move into a role focused on systemic policy change or education to address the root causes of the crises he has repeatedly fixed.",
+  "throughline": "Kwame Asante’s career is defined by a consistent effort to translate frontline clinical empathy into administrative systems that protect staff trust and patient safety.",
+  "unresolved_tension": "The profile ends at the Director of Nursing level, leaving open whether he will remain in facility-specific operations or leverage his proven turnaround skills to influence policy or leadership at a larger health system level.",
   "departures": [
     {
-      "description": "He moved away from direct bedside care to administrative leadership, a transition he frames as a loss of primary authority but a gain in systemic influence.",
-      "evidence": "I came up on the floor. I did eleven years of bedside before I took an administrative role and I still think that is the only reason anyone listens to me.",
+      "description": "He moved away from direct bedside care to administrative roles, a transition he frames as a necessary step to gain the authority to implement systemic changes.",
+      "evidence": "I did eleven years of bedside before I took an administrative role and I still think that is the only reason anyone listens to me.",
       "confidence": 0.95
     },
     {
-      "description": "He explicitly rejected the common industry solution of relying on staffing agencies to solve operational problems, choosing instead to address internal cultural and structural issues.",
-      "evidence": "The difference was never the staffing agency contract. It was whether the charge nurses trusted that reporting a problem would not end badly for them.",
+      "description": "He explicitly rejected the common industry reliance on staffing agencies as the solution to operational problems, instead focusing on internal cultural and structural fixes.",
+      "evidence": "The difference was never the staffing agency contract.",
       "confidence": 0.9
     }
   ],
   "pursuits": [
     {
-      "description": "He actively pursued the creation of a safe reporting culture where clinical staff feel protected when identifying risks, viewing this as the primary driver of quality outcomes.",
+      "description": "He actively pursued the creation of a psychologically safe environment where staff feel empowered to report issues without fear of retaliation.",
       "evidence": "It was whether the charge nurses trusted that reporting a problem would not end badly for them.",
       "confidence": 0.95
     },
     {
-      "description": "He sought to humanize the workforce by eliminating exploitative labor practices, specifically targeting mandatory overtime as a barrier to staff retention and well-being.",
+      "description": "He sought to stabilize high-turnover environments by addressing the root causes of burnout, specifically through scheduling reforms and eliminating mandatory overtime.",
       "evidence": "Reduced RN turnover from 71% annualised to 38% by rebuilding the scheduling model and killing mandatory overtime.",
       "confidence": 0.9
     }

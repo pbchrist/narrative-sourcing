@@ -1,27 +1,27 @@
 {
-  "throughline": "The career arc is defined by a progressive shift from consuming data through visualizations to engineering the foundational data models that enable those visualizations.",
-  "unresolved_tension": "The profile ends with a self-taught acquisition of dbt skills, leaving open the question of whether this technical depth will lead to a formal transition into a pure data engineering role or if it remains a tool to enhance her current analytics position.",
+  "throughline": "Priya is systematically moving from the presentation layer of data to the foundational engineering layer, seeking to own the logic that generates insights rather than just visualizing them.",
+  "unresolved_tension": "The profile suggests a desire for deeper technical ownership, but it remains unclear if she is seeking a pure engineering role or a hybrid position that allows her to influence data strategy beyond just model building.",
   "departures": [
     {
-      "description": "Moving away from the creation and maintenance of user-facing dashboards.",
+      "description": "Moving away from dashboard creation and visualization as the primary focus of her work.",
       "evidence": "I started in dashboards and I have been running away from dashboards ever since.",
       "confidence": 0.95
     },
     {
-      "description": "Leaving roles where the focus was on analysis and reporting rather than data infrastructure.",
-      "evidence": "Now I build the models other people's dashboards sit on top of.",
-      "confidence": 0.9
+      "description": "Leaving environments where she lacked the resources or support to implement modern data engineering tools.",
+      "evidence": "I taught myself dbt on nights and weekends because nobody at Wealthsimple would pay for it.",
+      "confidence": 0.85
     }
   ],
   "pursuits": [
     {
-      "description": "Developing the underlying data models and infrastructure that support analytical tools.",
+      "description": "Building the underlying data models and infrastructure that support downstream analytics.",
       "evidence": "Now I build the models other people's dashboards sit on top of.",
       "confidence": 0.95
     },
     {
-      "description": "Acquiring specific technical engineering skills (dbt) to facilitate model building, despite institutional barriers.",
-      "evidence": "I taught myself dbt on nights and weekends because nobody at Wealthsimple would pay for it.",
+      "description": "Adopting and mastering modern data engineering frameworks like dbt to increase technical depth.",
+      "evidence": "I taught myself dbt on nights and weekends",
       "confidence": 0.9
     }
   ]

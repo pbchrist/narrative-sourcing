@@ -6,6 +6,12 @@ No install. A GitHub username or a pasted profile in, the career arc out — wit
 every claim quoting the source word for word, and a graph of the arc you can
 turn. Runs in your browser against a model you choose.
 
+**Does the rule actually do anything?** I ran the ablation and
+[published the result](https://pbchrist.github.io/narrative-sourcing/evidence.html),
+including the part where the effect is smaller than I expected and not
+statistically significant. The grading is done by the same deterministic check
+the product ships. No model judges it, including me.
+
 
 Every AI sourcing tool scores candidates against a job description like a
 resume is a bag of keywords. It isn't. It's a plot with the connective

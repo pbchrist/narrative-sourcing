@@ -1,28 +1,38 @@
 {
   "throughline": "Marcus Delaney consistently prioritizes the discipline of standard work and takt time over specific technologies or organizational prestige to ensure production reliability.",
-  "unresolved_tension": "The profile highlights a shift from the traditional stamping and body-in-white expertise of his early career to assembly automation and vision inspection in recent years, leaving open whether he is fully committed to this new technical domain or if it is merely a tactical adaptation to current industry trends.",
+  "unresolved_tension": "The profile highlights a shift from traditional stamping to assembly automation and a move to a startup (Rivian), leaving open whether his next move will involve scaling this automated approach further or returning to the stability of legacy OEM structures.",
   "departures": [
     {
-      "description": "Moving away from a focus on specific hardware or technology solutions toward a focus on process discipline and standard work.",
+      "description": "Moving away from a reliance on specific hardware or technology in favor of process discipline.",
       "evidence": "I care more about takt time discipline than about any particular technology.",
       "confidence": 0.95
     },
     {
-      "description": "Rejecting abstract or theoretical presentations in favor of practical, on-the-floor execution.",
+      "description": "Rejecting abstract or theoretical management approaches in favor of practical, on-floor execution.",
       "evidence": "impatient with slide decks",
       "confidence": 0.9
+    },
+    {
+      "description": "Transitioning from a long tenure at a legacy OEM (Ford) to a newer, high-growth startup environment.",
+      "evidence": "Ford Motor Company 2003 - 2014 ... Rivian Automotive Jan 2021 - Present",
+      "confidence": 0.85
     }
   ],
   "pursuits": [
     {
-      "description": "Scaling engineering organizations and managing significant capital investments to bring new production lines to market.",
-      "evidence": "growing the team from 14 to 61 engineers and technicians... Owned the capital plan for two additional lines, roughly $180M",
-      "confidence": 0.85
+      "description": "Scaling engineering teams and managing significant capital investments to bring new production lines to market.",
+      "evidence": "growing the team from 14 to 61 engineers and technicians. Owned the capital plan for two additional lines, roughly $180M across FY22 and FY23.",
+      "confidence": 0.9
     },
     {
-      "description": "Improving quality metrics through rigorous standardization and retraining rather than just adding new equipment.",
+      "description": "Implementing rigorous quality control and defect reduction strategies through standardized processes.",
       "evidence": "Cut first-time-through defects on the underbody from 12.4% to 3.1% over eleven months by rebuilding the fixturing standard and retraining the weld engineering group.",
-      "confidence": 0.9
+      "confidence": 0.95
+    },
+    {
+      "description": "Establishing sustainable operational structures that persist beyond individual leadership.",
+      "evidence": "Introduced a daily tiering structure that survived my departure from the plant floor.",
+      "confidence": 0.8
     }
   ]
 }

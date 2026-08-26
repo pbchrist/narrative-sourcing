@@ -1,21 +1,21 @@
 {
   "throughline": "A sustained commitment to low-level, real-time systems engineering, specifically within the domain of physical motion control.",
-  "unresolved_tension": "Whether the current role at Applied Materials allows for the same depth of engagement with 'real-time servo loops' as the previous role, or if the move represents a necessary trade-off for career stability.",
+  "unresolved_tension": "Whether the current role at Applied Materials allows for the same depth of engagement with 'real-time servo loops' that the subject identified as their peak professional experience.",
   "departures": [
     {
-      "description": "Explicit rejection of high-level software development and web technologies.",
+      "description": "Explicit rejection of high-level software development and web technologies in favor of embedded systems.",
       "evidence": "I have never worked on a web application and I do not intend to.",
       "confidence": 0.95
     }
   ],
   "pursuits": [
     {
-      "description": "Continued focus on hardware-adjacent firmware and control systems.",
+      "description": "Continued focus on the intersection of hardware and software for industrial machinery.",
       "evidence": "I write C for motion control on semiconductor deposition tools.",
       "confidence": 0.9
     },
     {
-      "description": "Preference for real-time system design over other engineering tasks.",
+      "description": "Valuing the specific technical challenge of real-time control systems over other engineering tasks.",
       "evidence": "I spent four years on real-time servo loops and I still think that was the best work I have done.",
       "confidence": 0.85
     }

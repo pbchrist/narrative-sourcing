@@ -1,26 +1,26 @@
 {
-  "throughline": "The candidate consistently prioritizes diagnosing and fixing broken internal hiring processes over passive sourcing or branding.",
-  "unresolved_tension": "Whether the candidate can successfully scale a recruiting function beyond the specific context of high-growth tech companies, given the profile's heavy emphasis on engineering and rapid headcount growth.",
+  "throughline": "The candidate consistently prioritizes diagnosing and fixing broken internal hiring processes over executing high-volume sourcing or branding.",
+  "unresolved_tension": "Whether she can successfully scale this diagnostic, low-volume approach to a larger organization without reverting to the 'heroics' she explicitly rejects.",
   "departures": [
     {
-      "description": "Moving away from generic agency recruitment and passive sourcing toward active process design.",
+      "description": "Moving away from generic agency recruitment and volume-based sourcing toward specialized, process-heavy internal roles.",
       "evidence": "Recruitment Consultant\nMichael Page\n2014 - 2018 · Madrid",
       "confidence": 0.85
     },
     {
-      "description": "Rejecting the industry norm of relying on employer branding to fix hiring issues.",
+      "description": "Rejecting the industry norm of relying on employer branding to mask poor interview processes.",
       "evidence": "I do not believe in employer branding as a substitute for a good interview process.",
       "confidence": 0.95
     }
   ],
   "pursuits": [
     {
-      "description": "Seeking roles where they can build systems from scratch at the point of organizational transition.",
+      "description": "Seeking roles where she can design systems that function without individual heroics, specifically at the transition point from founder-led to structured hiring.",
       "evidence": "Three times now I have joined a company at the point where founder-led hiring stopped working and had to design something that could survive without heroics.",
       "confidence": 0.9
     },
     {
-      "description": "Focusing on the diagnostic root causes of hiring failures rather than surface-level metrics.",
+      "description": "Focusing on the diagnostic aspect of recruiting to identify root causes like unclear scorecards rather than blaming sourcing channels.",
       "evidence": "What I actually enjoy is the diagnostic part - working out why a pipeline is failing, which is almost never the sourcing channel everyone blames.",
       "confidence": 0.95
     }

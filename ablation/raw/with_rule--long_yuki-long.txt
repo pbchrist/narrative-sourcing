@@ -1,28 +1,28 @@
 {
-  "throughline": "A persistent return to the foundational mechanics of data durability and consistency, specifically within storage engines, despite attempts to move away from them.",
-  "unresolved_tension": "The conflict between a deep preference for defining correctness in ambiguous systems and a stated boredom with settled requirements, leaving open whether the next role will provide enough novelty or if the candidate will struggle with execution-heavy phases.",
+  "throughline": "A persistent return to the foundational mechanics of data durability and consistency, even when attempting to move away from them.",
+  "unresolved_tension": "The conflict between a deep preference for defining correctness in ambiguous systems and a stated boredom with settled, execution-heavy work, which may limit long-term satisfaction in stable infrastructure roles.",
   "departures": [
     {
-      "description": "Moving away from reliance on centralized coordination services in favor of decentralized protocols.",
-      "evidence": "replaced the previous ZooKeeper-backed path",
-      "confidence": 0.9
+      "description": "Moving away from ZooKeeper-based coordination in favor of native metadata reconciliation.",
+      "evidence": "Designed and shipped the metadata reconciliation protocol that replaced the previous ZooKeeper-backed path.",
+      "confidence": 0.95
     },
     {
-      "description": "Abandoning the pursuit of building complex caching layers when the architectural decision was to not build them.",
+      "description": "Abandoning a caching layer project that was deemed unnecessary, suggesting a departure from speculative optimization.",
       "evidence": "Wrote the internal design doc for a caching layer that was ultimately not built, which was the right call.",
-      "confidence": 0.8
+      "confidence": 0.85
     }
   ],
   "pursuits": [
     {
-      "description": "Seeking problems where the definition of correctness is not yet established, requiring the engineer to define the standard.",
+      "description": "Seeking problems where the definition of correctness is undefined and must be established.",
       "evidence": "I am at my best on problems where the correct answer is not yet known and somebody has to write down what \"correct\" even means.",
-      "confidence": 0.95
+      "confidence": 0.98
     },
     {
-      "description": "Focusing on the invisible, critical infrastructure components that only become apparent during failure.",
+      "description": "Focusing on the invisible, critical infrastructure components that define system reliability.",
       "evidence": "I work on the parts of systems that only get noticed when they break.",
-      "confidence": 0.9
+      "confidence": 0.95
     }
   ]
 }

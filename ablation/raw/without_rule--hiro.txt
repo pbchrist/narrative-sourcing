@@ -1,23 +1,23 @@
 {
-  "throughline": "The subject has consistently prioritized the diagnosis of mechanical failure modes over the speed of production, evolving from designing components to explicitly managing their reliability.",
-  "unresolved_tension": "The profile suggests a potential conflict between the subject's deep personal interest in failure analysis and the practical, schedule-driven constraints of their current role, leaving open whether they will remain in a corporate reliability capacity or move toward a more independent or academic focus on root cause analysis.",
+  "throughline": "The professional identity is defined by a persistent obsession with the root causes of mechanical failure rather than the successful operation of the machine.",
+  "unresolved_tension": "The tension between the analytical, evidence-based nature of reliability engineering and the commercial pressure to ship on schedule remains an active, daily conflict that has not been resolved by the career move.",
   "departures": [
     {
-      "description": "Moving away from the creative or constructive aspect of engineering (designing new machines) toward a defensive, analytical role (preventing failures).",
-      "evidence": "2013-2018 Mechanical Designer, Kubota; 2018-now Reliability Engineer, Daikin",
-      "confidence": 0.9
+      "description": "Moving away from the creative or constructive phase of product development (designing the machine) toward the defensive or diagnostic phase (analyzing why it breaks).",
+      "evidence": "2013-2018 Mechanical Designer, Kubota ... 2018-now Reliability Engineer, Daikin",
+      "confidence": 0.85
     }
   ],
   "pursuits": [
     {
-      "description": "A deep, perhaps obsessive, engagement with the root causes of mechanical breakdown, treating failure analysis as a primary intellectual interest rather than just a job requirement.",
-      "evidence": "I look at why machines fail. ... I read failure reports for fun, which my wife finds concerning.",
-      "confidence": 0.85
+      "description": "A deep, intrinsic interest in failure analysis that extends beyond professional duty into personal leisure, suggesting a pursuit of understanding systemic breakdowns.",
+      "evidence": "I read failure reports for fun, which my wife finds concerning.",
+      "confidence": 0.95
     },
     {
-      "description": "A commitment to quality and safety standards that overrides production timelines, evidenced by the subject's self-described role as an obstacle to shipping schedules.",
+      "description": "A pursuit of technical rigor and truth over commercial convenience, evidenced by the willingness to conflict with stakeholders to ensure reliability.",
       "evidence": "Most of my job is arguing with people who want to ship on schedule.",
-      "confidence": 0.95
+      "confidence": 0.9
     }
   ]
 }

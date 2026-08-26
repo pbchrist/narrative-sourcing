@@ -1,18 +1,28 @@
 {
-  "throughline": "Aisha Bello’s career is defined by a commitment to grounding clinical leadership in direct, recent patient care to ensure the validity of her guidance.",
-  "unresolved_tension": "The profile leaves open whether her insistence on maintaining frontline shifts is a sustainable personal practice or a necessary structural safeguard against the detachment of her current leadership role.",
+  "throughline": "Aisha Bello’s career is defined by a commitment to grounding clinical leadership in direct, recent patient care experience rather than abstract administrative authority.",
+  "unresolved_tension": "The profile leaves open whether her insistence on maintaining hands-on shifts will eventually conflict with the expanding demands of her Clinical Quality Lead role, or if she will find a sustainable balance between the two.",
   "departures": [
     {
-      "description": "She moved away from a purely bedside clinical role into a leadership position focused on quality and guidance.",
-      "evidence": "2023-now   Clinical Quality Lead",
+      "description": "She moved away from a purely bedside clinical role to a leadership position, suggesting a departure from individual patient care as her primary mode of impact.",
+      "evidence": "2017-2020 Registered Nurse, Lagos University Teaching Hospital\n2020-2023 Charge Nurse, ICU\n2023-now Clinical Quality Lead",
       "confidence": 0.95
+    },
+    {
+      "description": "She explicitly rejects the common trajectory of leaders who detach from the frontline, moving away from the assumption that seniority grants the right to dictate practice without current experience.",
+      "evidence": "I do not trust guidance written by people who have not done the work recently.",
+      "confidence": 0.9
     }
   ],
   "pursuits": [
     {
-      "description": "She is actively pursuing a leadership style that remains tethered to the practical realities of the hospital floor to maintain credibility and accuracy.",
+      "description": "She is actively pursuing a leadership style that validates quality standards through personal, ongoing engagement with the clinical environment.",
       "evidence": "I still take shifts on the floor twice a month because I do not trust guidance written by people who have not done the work recently.",
-      "confidence": 0.98
+      "confidence": 0.95
+    },
+    {
+      "description": "She is reaching toward a role where her authority is derived from demonstrated, current competence rather than just title or tenure.",
+      "evidence": "2023-now Clinical Quality Lead\nI still take shifts on the floor twice a month",
+      "confidence": 0.85
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
-  "throughline": "A consistent drive to bridge the gap between theoretical design and practical, real-world functionality.",
-  "unresolved_tension": "Whether the role of Commissioning Manager at Vattenfall represents the final destination of this shift from design to operations, or if it is merely the latest step in a broader move toward full-scale project leadership.",
+  "throughline": "A consistent drive to bridge the gap between theoretical design and physical reality.",
+  "unresolved_tension": "Whether the role of Commissioning Manager at Vattenfall will allow for the same level of direct engagement with physical systems as previous roles, or if it will shift further toward administrative oversight.",
   "departures": [
     {
       "description": "Moving away from the abstract phase of structural design.",
@@ -8,20 +8,20 @@
       "confidence": 0.95
     },
     {
-      "description": "Rejecting the primacy of theoretical plans in favor of physical reality.",
+      "description": "Leaving behind a focus on theoretical plans in favor of practical outcomes.",
       "evidence": "I find that more interesting than the drawings.",
       "confidence": 0.9
     }
   ],
   "pursuits": [
     {
-      "description": "Seeking the intersection where design meets operational reality.",
-      "evidence": "Commissioning is where the drawings meet reality",
+      "description": "Seeking roles where the physical functionality of built environments is verified.",
+      "evidence": "making sure they actually work once built",
       "confidence": 0.95
     },
     {
-      "description": "Focusing on the verification of functional performance.",
-      "evidence": "making sure they actually work once built",
+      "description": "Pursuing the intersection of planning and execution.",
+      "evidence": "Commissioning is where the drawings meet reality",
       "confidence": 0.9
     }
   ]

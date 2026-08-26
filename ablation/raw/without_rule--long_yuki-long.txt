@@ -1,27 +1,32 @@
 {
-  "throughline": "Yuki Nakamura consistently gravitates toward the foundational, often invisible layers of distributed systems where correctness is undefined and failure modes must be rigorously defined.",
-  "unresolved_tension": "The profile reveals a deep conflict between a passion for defining correctness in complex systems and a stated boredom with settled requirements, leaving it unclear if the next move will be a departure from engineering into architecture/leadership or a return to a more research-oriented role.",
+  "throughline": "Yuki Nakamura consistently seeks out and defines the foundational correctness and failure semantics of distributed storage systems, even when it means leaving comfortable execution roles.",
+  "unresolved_tension": "The profile highlights a deep aversion to settled requirements and execution-heavy work, yet the current role involves maintaining and refining an established subsystem (Kafka tiered storage), raising the question of whether this position will eventually trigger the same boredom that drove previous departures.",
   "departures": [
     {
-      "description": "Moving away from ZooKeeper-based coordination mechanisms in favor of more modern, self-contained metadata protocols.",
-      "evidence": "Designed and shipped the metadata reconciliation protocol that replaced the previous ZooKeeper-backed path.",
+      "description": "Moving away from roles where the technical problem is already solved and the work is purely execution-based.",
+      "evidence": "I am at my worst on projects where the requirements are settled and the work is execution - I get bored and I am not proud of that.",
       "confidence": 0.95
     },
     {
-      "description": "Stepping back from projects where the technical challenge is purely execution-based rather than definitional.",
-      "evidence": "I am at my worst on projects where the requirements are settled and the work is execution - I get bored and I am not proud of that.",
-      "confidence": 0.9
+      "description": "Leaving the Cloudera role to join AWS, likely to escape a phase where the core storage problems were less novel or where the operational scale required different engagement.",
+      "evidence": "Software Engineer\nCloudera\n2014 - 2017",
+      "confidence": 0.4
     }
   ],
   "pursuits": [
     {
-      "description": "Seeking out problems where the definition of 'correct' behavior is not yet established, requiring the engineer to write the specification as well as the code.",
+      "description": "Seeking out problems where the definition of 'correct' is ambiguous and requires new protocol design or semantic definition.",
       "evidence": "I am at my best on problems where the correct answer is not yet known and somebody has to write down what \"correct\" even means.",
+      "confidence": 0.9
+    },
+    {
+      "description": "Focusing on the invisible, foundational layers of systems that handle failure and consistency, rather than user-facing features.",
+      "evidence": "I work on the parts of systems that only get noticed when they break. Consensus, replication, failure detection.",
       "confidence": 0.95
     },
     {
-      "description": "Focusing on the resilience and operational blast radius of systems, particularly in the context of storage and consensus.",
-      "evidence": "That incident changed how I think about operational blast radius more than anything else in my career.",
+      "description": "Continuously returning to storage engine work despite attempts to diversify, indicating a deep intrinsic pull toward that specific domain.",
+      "evidence": "I have spent most of my career on storage engines and I keep ending up back there even when I try to leave.",
       "confidence": 0.85
     }
   ]

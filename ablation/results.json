@@ -1,5 +1,5 @@
 {
-  "endpoint": "https://schedule-searched-satin-truly.trycloudflare.com/v1/chat/completions",
+  "endpoint": "https://lift-should-wondering-batch.trycloudflare.com/v1/chat/completions",
   "profiles": 8,
   "runs": [
     {
@@ -9,17 +9,17 @@
       "verbatim": 3,
       "graded": [
         {
-          "claim": "Moving away from creating visual dashboards to building the underlying data models.",
+          "claim": "Moving away from creating visual interfaces and dashboards.",
           "evidence": "I started in dashboards and I have been running away from dashboards ever since.",
           "verbatim": true
         },
         {
-          "claim": "Developing the foundational data models that support other teams' visualizations.",
+          "claim": "Building the underlying data models and infrastructure that support analytics.",
           "evidence": "Now I build the models other people's dashboards sit on top of.",
           "verbatim": true
         },
         {
-          "claim": "Acquiring specific technical skills (dbt) independently to fill a gap in the organization.",
+          "claim": "Self-directed acquisition of specific technical skills (dbt) to enable deeper work.",
           "evidence": "I taught myself dbt on nights and weekends because nobody at Wealthsimple would pay for it.",
           "verbatim": true
         }
@@ -32,17 +32,17 @@
       "verbatim": 3,
       "graded": [
         {
-          "claim": "Explicit rejection of high-level software development and web technologies.",
+          "claim": "Explicit rejection of high-level software development and web technologies in favor of embedded systems.",
           "evidence": "I have never worked on a web application and I do not intend to.",
           "verbatim": true
         },
         {
-          "claim": "Continued focus on hardware-adjacent firmware and control systems.",
+          "claim": "Continued focus on the intersection of hardware and software for industrial machinery.",
           "evidence": "I write C for motion control on semiconductor deposition tools.",
           "verbatim": true
         },
         {
-          "claim": "Preference for real-time system design over other engineering tasks.",
+          "claim": "Valuing the specific technical challenge of real-time control systems over other engineering tasks.",
           "evidence": "I spent four years on real-time servo loops and I still think that was the best work I have done.",
           "verbatim": true
         }
@@ -51,17 +51,27 @@
     {
       "condition": "with_rule",
       "profile": "marta",
-      "claims": 2,
-      "verbatim": 2,
+      "claims": 4,
+      "verbatim": 4,
       "graded": [
         {
-          "claim": "Moving away from complex, long-term infrastructure projects that may not materialize.",
+          "claim": "Moving away from large-scale, uncertain infrastructure projects that did not yield tangible results.",
           "evidence": "Spent about eighteen months on a migration that got cancelled.",
           "verbatim": true
         },
         {
-          "claim": "Seeking roles with clear business impact and stable schedules to accommodate family life.",
-          "evidence": "Now closer to the money side of things. Two kids, so I optimise for predictable weeks.",
+          "claim": "Shifting focus from general backend systems to financial transaction logic.",
+          "evidence": "Now closer to the money side of things.",
+          "verbatim": true
+        },
+        {
+          "claim": "Seeking a work environment that offers consistent schedules to accommodate family responsibilities.",
+          "evidence": "Two kids, so I optimise for predictable weeks.",
+          "verbatim": true
+        },
+        {
+          "claim": "Engaging with core business logic related to payments and transactions.",
+          "evidence": "Now closer to the money side of things.",
           "verbatim": true
         }
       ]
@@ -78,18 +88,18 @@
           "verbatim": true
         },
         {
-          "claim": "Rejecting the primacy of theoretical plans in favor of physical reality.",
+          "claim": "Leaving behind a focus on theoretical plans in favor of practical outcomes.",
           "evidence": "I find that more interesting than the drawings.",
           "verbatim": true
         },
         {
-          "claim": "Seeking the intersection where design meets operational reality.",
-          "evidence": "Commissioning is where the drawings meet reality",
+          "claim": "Seeking roles where the physical functionality of built environments is verified.",
+          "evidence": "making sure they actually work once built",
           "verbatim": true
         },
         {
-          "claim": "Focusing on the verification of functional performance.",
-          "evidence": "making sure they actually work once built",
+          "claim": "Pursuing the intersection of planning and execution.",
+          "evidence": "Commissioning is where the drawings meet reality",
           "verbatim": true
         }
       ]
@@ -101,12 +111,12 @@
       "verbatim": 2,
       "graded": [
         {
-          "claim": "She moved away from purely bedside execution to a role focused on systemic oversight and standards.",
+          "claim": "Moving away from purely bedside care into a role that involves creating guidance and oversight.",
           "evidence": "Clinical Quality Lead",
           "verbatim": true
         },
         {
-          "claim": "She actively pursues maintaining firsthand clinical competence to validate her leadership decisions.",
+          "claim": "Actively maintaining direct, recent clinical experience to validate her professional authority.",
           "evidence": "I still take shifts on the floor twice a month because I do not trust guidance written by people who have not done the work recently.",
           "verbatim": true
         }
@@ -119,17 +129,17 @@
       "verbatim": 3,
       "graded": [
         {
-          "claim": "Moving away from the creative act of building machines toward the analytical task of diagnosing their defects.",
+          "claim": "Moving from the creative phase of designing machinery to the analytical phase of ensuring its durability.",
           "evidence": "2013-2018  Mechanical Designer, Kubota",
           "verbatim": true
         },
         {
-          "claim": "A deep, almost obsessive engagement with the forensic analysis of why systems break down.",
+          "claim": "A deep, almost obsessive engagement with the root causes of mechanical breakdown.",
           "evidence": "I read failure reports for fun, which my wife finds concerning.",
           "verbatim": true
         },
         {
-          "claim": "Actively challenging production timelines to ensure reliability standards are met.",
+          "claim": "Prioritizing technical reliability over commercial timelines.",
           "evidence": "Most of my job is arguing with people who want to ship on schedule.",
           "verbatim": true
         }
@@ -142,12 +152,12 @@
       "verbatim": 2,
       "graded": [
         {
-          "claim": "Moving away from a specific fintech context to a broader infrastructure provider.",
+          "claim": "Moving away from a specific financial services context to a broader internet infrastructure context.",
           "evidence": "Previously at Monzo, now at Cloudflare.",
           "verbatim": true
         },
         {
-          "claim": "A sustained commitment to infrastructure engineering over other software disciplines.",
+          "claim": "A sustained commitment to low-level system engineering rather than application-level development.",
           "evidence": "Software engineer, mostly infrastructure.",
           "verbatim": true
         }
@@ -160,12 +170,12 @@
       "verbatim": 2,
       "graded": [
         {
-          "claim": "Moving away from established, stable logistics structures toward more chaotic operational roles.",
-          "evidence": "Every job I have taken has been messier than the last one",
+          "claim": "Moving away from established, functional systems toward environments where processes are not yet defined.",
+          "evidence": "Every job I have taken has been messier than the last one and that is on purpose.",
           "verbatim": true
         },
         {
-          "claim": "Actively seeking out the initial phase of organizational development where systems are not yet functional.",
+          "claim": "Actively seeking out the initial, unstructured phase of building or fixing operations.",
           "evidence": "I like the part where nothing works yet.",
           "verbatim": true
         }
@@ -178,23 +188,23 @@
       "verbatim": 4,
       "graded": [
         {
-          "claim": "Moving away from the creation and maintenance of user-facing dashboards.",
+          "claim": "Moving away from dashboard creation and visualization as the primary focus of her work.",
           "evidence": "I started in dashboards and I have been running away from dashboards ever since.",
           "verbatim": true
         },
         {
-          "claim": "Leaving roles where the focus was on analysis and reporting rather than data infrastructure.",
-          "evidence": "Now I build the models other people's dashboards sit on top of.",
-          "verbatim": true
-        },
-        {
-          "claim": "Developing the underlying data models and infrastructure that support analytical tools.",
-          "evidence": "Now I build the models other people's dashboards sit on top of.",
-          "verbatim": true
-        },
-        {
-          "claim": "Acquiring specific technical engineering skills (dbt) to facilitate model building, despite institutional barriers.",
+          "claim": "Leaving environments where she lacked the resources or support to implement modern data engineering tools.",
           "evidence": "I taught myself dbt on nights and weekends because nobody at Wealthsimple would pay for it.",
+          "verbatim": true
+        },
+        {
+          "claim": "Building the underlying data models and infrastructure that support downstream analytics.",
+          "evidence": "Now I build the models other people's dashboards sit on top of.",
+          "verbatim": true
+        },
+        {
+          "claim": "Adopting and mastering modern data engineering frameworks like dbt to increase technical depth.",
+          "evidence": "I taught myself dbt on nights and weekends",
           "verbatim": true
         }
       ]
@@ -202,22 +212,17 @@
     {
       "condition": "without_rule",
       "profile": "devon",
-      "claims": 3,
-      "verbatim": 3,
+      "claims": 2,
+      "verbatim": 2,
       "graded": [
         {
-          "claim": "Explicit rejection of high-level software development and web technologies.",
+          "claim": "Explicit rejection of web development and high-level software engineering paths.",
           "evidence": "I have never worked on a web application and I do not intend to.",
           "verbatim": true
         },
         {
-          "claim": "Continued focus on real-time embedded systems and motion control within the semiconductor industry.",
-          "evidence": "I write C for motion control on semiconductor deposition tools.",
-          "verbatim": true
-        },
-        {
-          "claim": "A preference for the specific technical challenge of real-time servo loops over other engineering tasks.",
-          "evidence": "I spent four years on real-time servo loops and I still think that was the best work I have done.",
+          "claim": "Continued focus on real-time servo loops and motion control within the semiconductor industry.",
+          "evidence": "I write C for motion control on semiconductor deposition tools. I spent four years on real-time servo loops and I still think that was the best work I have done.",
           "verbatim": true
         }
       ]
@@ -226,25 +231,25 @@
       "condition": "without_rule",
       "profile": "marta",
       "claims": 4,
-      "verbatim": 4,
+      "verbatim": 3,
       "graded": [
         {
-          "claim": "Moving away from large-scale, long-term infrastructure projects that carry high risk of cancellation or instability.",
+          "claim": "Moving away from large-scale, long-term infrastructure projects that carry high cancellation risk.",
           "evidence": "Spent about eighteen months on a migration that got cancelled.",
           "verbatim": true
         },
         {
-          "claim": "Leaving a role that likely required irregular hours or high unpredictability to accommodate family responsibilities.",
+          "claim": "Stepping back from the complex, high-traffic user-facing logic of checkout and returns to a more stable backend role.",
+          "evidence": "Worked on checkout and returns... Now closer to the money side of things.",
+          "verbatim": false
+        },
+        {
+          "claim": "Seeking a work environment that offers reliable, predictable schedules to support family life.",
           "evidence": "Two kids, so I optimise for predictable weeks.",
           "verbatim": true
         },
         {
-          "claim": "Seeking a work environment that offers consistent schedules and lower volatility to support parenting.",
-          "evidence": "Two kids, so I optimise for predictable weeks.",
-          "verbatim": true
-        },
-        {
-          "claim": "Shifting focus toward business-critical, revenue-adjacent systems rather than pure infrastructure.",
+          "claim": "Pivoting toward the financial or payment infrastructure side of the business.",
           "evidence": "Now closer to the money side of things.",
           "verbatim": true
         }
@@ -257,23 +262,23 @@
       "verbatim": 4,
       "graded": [
         {
-          "claim": "Moving away from the theoretical and design-focused aspects of engineering.",
+          "claim": "Moving away from pure structural design and theoretical engineering.",
           "evidence": "I moved from designing structures to making sure they actually work once built.",
           "verbatim": true
         },
         {
-          "claim": "Leaving the focus on static structural integrity for dynamic system performance.",
+          "claim": "Leaving the focus on the planning and construction phase for the operational phase.",
           "evidence": "Commissioning is where the drawings meet reality and I find that more interesting than the drawings.",
           "verbatim": true
         },
         {
-          "claim": "Seeking roles that validate the practical application of engineering plans in the real world.",
-          "evidence": "making sure they actually work once built",
+          "claim": "Seeking roles that bridge the gap between design intent and physical performance.",
+          "evidence": "Commissioning is where the drawings meet reality and I find that more interesting than the drawings.",
           "verbatim": true
         },
         {
-          "claim": "Pursuing the intersection of technical planning and physical execution.",
-          "evidence": "Commissioning is where the drawings meet reality",
+          "claim": "Pursuing a career in energy and utility infrastructure, indicated by the move to a major energy company.",
+          "evidence": "2021-now   Commissioning Manager, Vattenfall",
           "verbatim": true
         }
       ]
@@ -281,17 +286,27 @@
     {
       "condition": "without_rule",
       "profile": "aisha",
-      "claims": 2,
-      "verbatim": 2,
+      "claims": 4,
+      "verbatim": 4,
       "graded": [
         {
-          "claim": "She moved away from a purely bedside clinical role into a leadership position focused on quality and guidance.",
-          "evidence": "2023-now   Clinical Quality Lead",
+          "claim": "She moved away from a purely bedside clinical role to a leadership position, suggesting a departure from individual patient care as her primary mode of impact.",
+          "evidence": "2017-2020 Registered Nurse, Lagos University Teaching Hospital\n2020-2023 Charge Nurse, ICU\n2023-now Clinical Quality Lead",
           "verbatim": true
         },
         {
-          "claim": "She is actively pursuing a leadership style that remains tethered to the practical realities of the hospital floor to maintain credibility and accuracy.",
+          "claim": "She explicitly rejects the common trajectory of leaders who detach from the frontline, moving away from the assumption that seniority grants the right to dictate practice without current experience.",
+          "evidence": "I do not trust guidance written by people who have not done the work recently.",
+          "verbatim": true
+        },
+        {
+          "claim": "She is actively pursuing a leadership style that validates quality standards through personal, ongoing engagement with the clinical environment.",
           "evidence": "I still take shifts on the floor twice a month because I do not trust guidance written by people who have not done the work recently.",
+          "verbatim": true
+        },
+        {
+          "claim": "She is reaching toward a role where her authority is derived from demonstrated, current competence rather than just title or tenure.",
+          "evidence": "2023-now Clinical Quality Lead\nI still take shifts on the floor twice a month",
           "verbatim": true
         }
       ]
@@ -300,20 +315,20 @@
       "condition": "without_rule",
       "profile": "hiro",
       "claims": 3,
-      "verbatim": 1,
+      "verbatim": 2,
       "graded": [
         {
-          "claim": "Moving away from the creative or constructive aspect of engineering (designing new machines) toward a defensive, analytical role (preventing failures).",
-          "evidence": "2013-2018 Mechanical Designer, Kubota; 2018-now Reliability Engineer, Daikin",
+          "claim": "Moving away from the creative or constructive phase of product development (designing the machine) toward the defensive or diagnostic phase (analyzing why it breaks).",
+          "evidence": "2013-2018 Mechanical Designer, Kubota ... 2018-now Reliability Engineer, Daikin",
           "verbatim": false
         },
         {
-          "claim": "A deep, perhaps obsessive, engagement with the root causes of mechanical breakdown, treating failure analysis as a primary intellectual interest rather than just a job requirement.",
-          "evidence": "I look at why machines fail. ... I read failure reports for fun, which my wife finds concerning.",
-          "verbatim": false
+          "claim": "A deep, intrinsic interest in failure analysis that extends beyond professional duty into personal leisure, suggesting a pursuit of understanding systemic breakdowns.",
+          "evidence": "I read failure reports for fun, which my wife finds concerning.",
+          "verbatim": true
         },
         {
-          "claim": "A commitment to quality and safety standards that overrides production timelines, evidenced by the subject's self-described role as an obstacle to shipping schedules.",
+          "claim": "A pursuit of technical rigor and truth over commercial convenience, evidenced by the willingness to conflict with stakeholders to ensure reliability.",
           "evidence": "Most of my job is arguing with people who want to ship on schedule.",
           "verbatim": true
         }
@@ -326,13 +341,13 @@
       "verbatim": 2,
       "graded": [
         {
-          "claim": "Moving away from the specific domain of financial services infrastructure.",
+          "claim": "Moving away from the fintech sector to the broader internet infrastructure sector.",
           "evidence": "Previously at Monzo, now at Cloudflare.",
           "verbatim": true
         },
         {
-          "claim": "Continuing to work in core infrastructure roles, likely seeking a different scale or type of distributed systems challenge.",
-          "evidence": "Software engineer, mostly infrastructure. Previously at Monzo, now at Cloudflare.",
+          "claim": "Continuing to work on core infrastructure systems, potentially at a larger global scale.",
+          "evidence": "Software engineer, mostly infrastructure.",
           "verbatim": true
         }
       ]
@@ -344,12 +359,12 @@
       "verbatim": 2,
       "graded": [
         {
-          "claim": "Moving away from established, structured logistics processes toward more ambiguous operational roles.",
+          "claim": "Moving away from established, optimized logistics processes toward more complex, less defined operational challenges.",
           "evidence": "Every job I have taken has been messier than the last one and that is on purpose.",
           "verbatim": true
         },
         {
-          "claim": "Actively seeking out the early-stage challenge of creating order where none exists.",
+          "claim": "Actively seeking out the initial, chaotic phase of organizational or process development where systems are not yet functional.",
           "evidence": "I like the part where nothing works yet.",
           "verbatim": true
         }
@@ -357,19 +372,19 @@
     }
   ],
   "with_rule": {
-    "claims": 21,
-    "verbatim": 21,
+    "claims": 23,
+    "verbatim": 23,
     "fabricated": 0,
     "fabrication_rate": 0.0,
     "profiles_fully_clean": 8,
     "profiles_fully_invented": 0
   },
   "without_rule": {
-    "claims": 24,
-    "verbatim": 22,
+    "claims": 25,
+    "verbatim": 23,
     "fabricated": 2,
-    "fabrication_rate": 0.083,
-    "profiles_fully_clean": 7,
+    "fabrication_rate": 0.08,
+    "profiles_fully_clean": 6,
     "profiles_fully_invented": 0
   }
 }

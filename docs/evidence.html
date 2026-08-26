@@ -79,23 +79,38 @@ check the product ships. No model judges this, including me.</p>
 <div class="scroll">
 <table>
 <tr><th>condition</th><th class="n">claims</th><th class="n">verbatim</th><th class="n">fabricated</th><th class="n">rate</th></tr>
-<tr><td>with the rule</td><td class="n">37</td><td class="n">37</td><td class="n">0</td><td class="n">0.0%</td></tr>
-<tr><td>without the rule</td><td class="n">40</td><td class="n">37</td><td class="n">3</td><td class="n">7.5%</td></tr>
+<tr><td>with the rule</td><td class="n">39</td><td class="n">39</td><td class="n">0</td><td class="n">0.0%</td></tr>
+<tr><td>without the rule</td><td class="n">44</td><td class="n">39</td><td class="n">5</td><td class="n">11.4%</td></tr>
 </table>
 </div>
 
 <div class="card warn">
   <span class="k">the honest caveat</span>
-  <p style="margin:0">Fisher exact, two-tailed: <b>p = 0.241</b>. At 77 claims this
-  difference is <b>not statistically significant</b>. The rule may help. This
-  experiment does not prove it does.</p>
+  <p style="margin:0">Fisher exact, two-tailed: <b>p = 0.057</b>. At 83 claims this
+  difference is <b>still not statistically significant</b> at the conventional
+  threshold, though it is a great deal closer than it was. The rule may help.
+  This experiment does not prove it does, and I would rather print the number
+  than a verdict.</p>
 </div>
 
 <p>I was originally going to publish a much larger number, carried over from an
-earlier run. It did not reproduce when I measured it again. That is why this page
-shows 7.5% instead, and why <a href="https://github.com/pbchrist/narrative-sourcing/tree/main/ablation">the
-raw model output for all 24 runs</a> is committed next to the code — so the numbers
-can be checked rather than believed.</p>
+earlier run. It did not reproduce when I measured it again. That is why
+<a href="https://github.com/pbchrist/narrative-sourcing/tree/main/ablation">the raw
+model output for all 24 runs</a> is committed next to the code — so the numbers can
+be checked rather than believed.</p>
+
+<div class="card warn">
+  <span class="k">what changed since the first measurement</span>
+  <p style="margin:0">These figures were re-measured after a round of fixes, and they
+  are not a clean comparison with the ones this page carried before (0 of 37 against
+  3 of 40, p&nbsp;=&nbsp;0.241). The system prompt changed in between: it now asks for
+  a full account of a career rather than whatever the model volunteered, so both
+  conditions produce more claims than they used to. More claims in the ablated
+  condition means more opportunities to invent one. The direction did not change and
+  the rule-abiding condition is still at zero, but a rate measured under one prompt
+  and a rate measured under another are two different measurements, and I am not
+  going to present them as one.</p>
+</div>
 
 <h2>The interesting part is not the rate</h2>
 

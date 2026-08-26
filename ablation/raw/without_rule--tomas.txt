@@ -1,28 +1,28 @@
 {
-  "throughline": "A progressive shift from abstract design to tangible operational reality, prioritizing the functional performance of built assets over their theoretical construction.",
-  "unresolved_tension": "Whether this trajectory represents a permanent settlement into the operational phase of the asset lifecycle or a stepping stone toward a broader leadership role in energy infrastructure management.",
+  "throughline": "The professional arc is defined by a shift from abstract design to tangible operational reality, prioritizing the functional performance of built assets over their theoretical construction.",
+  "unresolved_tension": "The profile ends at the current role of Commissioning Manager, leaving open whether this represents a final destination in the lifecycle of infrastructure or a stepping stone toward broader asset management or sustainability leadership.",
   "departures": [
     {
-      "description": "Moving away from the theoretical and design-focused aspects of engineering.",
+      "description": "Moving away from pure structural design and theoretical engineering.",
       "evidence": "I moved from designing structures to making sure they actually work once built.",
       "confidence": 0.95
     },
     {
-      "description": "Leaving the focus on static structural integrity for dynamic system performance.",
+      "description": "Leaving the focus on the planning and construction phase for the operational phase.",
       "evidence": "Commissioning is where the drawings meet reality and I find that more interesting than the drawings.",
       "confidence": 0.9
     }
   ],
   "pursuits": [
     {
-      "description": "Seeking roles that validate the practical application of engineering plans in the real world.",
-      "evidence": "making sure they actually work once built",
+      "description": "Seeking roles that bridge the gap between design intent and physical performance.",
+      "evidence": "Commissioning is where the drawings meet reality and I find that more interesting than the drawings.",
       "confidence": 0.95
     },
     {
-      "description": "Pursuing the intersection of technical planning and physical execution.",
-      "evidence": "Commissioning is where the drawings meet reality",
-      "confidence": 0.9
+      "description": "Pursuing a career in energy and utility infrastructure, indicated by the move to a major energy company.",
+      "evidence": "2021-now   Commissioning Manager, Vattenfall",
+      "confidence": 0.85
     }
   ]
 }

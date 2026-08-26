@@ -1,18 +1,18 @@
 {
-  "throughline": "Aisha Bello’s career is defined by a refusal to let administrative distance erode her clinical authority, maintaining a direct link to patient care even as she ascends into leadership.",
-  "unresolved_tension": "The profile leaves open whether her insistence on taking shifts is a sustainable personal practice or a necessary corrective to a systemic failure in quality oversight that she has not yet been able to resolve through policy alone.",
+  "throughline": "Aisha Bello’s career is defined by a refusal to let administrative distance erode the credibility of her clinical judgment.",
+  "unresolved_tension": "The tension lies in whether her insistence on maintaining direct patient contact will eventually conflict with the strategic demands of her current leadership role.",
   "departures": [
     {
-      "description": "She moved away from purely bedside execution to a role focused on systemic oversight and standards.",
+      "description": "Moving away from purely bedside care into a role that involves creating guidance and oversight.",
       "evidence": "Clinical Quality Lead",
-      "confidence": 0.95
+      "confidence": 0.9
     }
   ],
   "pursuits": [
     {
-      "description": "She actively pursues maintaining firsthand clinical competence to validate her leadership decisions.",
+      "description": "Actively maintaining direct, recent clinical experience to validate her professional authority.",
       "evidence": "I still take shifts on the floor twice a month because I do not trust guidance written by people who have not done the work recently.",
-      "confidence": 0.98
+      "confidence": 0.95
     }
   ]
 }
