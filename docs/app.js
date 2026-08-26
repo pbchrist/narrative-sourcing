@@ -159,29 +159,64 @@ function snap(quote, raw){
 const INTENT=["seeking","seeks","wants to","want to","looking for","looking to",
   "hopes to","hoping to","aims to","aiming to","aspires","is pursuing","intends to",
   "would like to","ready to","eager to","open to"];
+// A CV says someone left in more ways than this list first allowed. "I stopped
+// working on dashboards" is a departure stated outright, and the gate deleted
+// the claim attached to it for never mentioning leaving - a false negative that
+// quietly threw away sound claims all day. All of these state the ending
+// rather than merely implying it.
 const DEPARTURE=["left","leaving","departed","moved away","moved on","stepped away",
   "stepped back","exited","quit","walked away","gave up","abandoned","moved from",
-  "transitioned from","shifted from","away from"];
-const LEADERSHIP=["lead","leads","leading","led","manage","manages","managing","managed",
-  "head of","heads","director","supervis","mentor","hired","reports"];
+  "transitioned from","shifted from","away from",
+  "stopped","no longer","ceased","wound down","handed off","handed over",
+  "gave notice","resigned","retired from","closed out","wrapped up",
+  "stepped down","parted ways","switched from","pivoted from",
+  "before moving","until","formerly","previously"];
+// What makes a CLAIM one about leading is not what makes a QUOTE prove it.
+// "Pursued a career in film, starting with assisting a director" contains
+// "director" and is not a claim about leading anyone - the title belongs to
+// somebody else and the subject is the assistant. Trigger on what the subject
+// is said to DO; accept a bare title as proof only on the quote side.
+const LEADS_CLAIM=["led ","leads ","leading ","leadership","manage","manages",
+  "managing","managed","head of","heads ","supervis","mentor","hired",
+  "hiring manager","built a team","grew the team","direct reports"];
+// Every way a quote can SHOW leadership, including each way a claim can assert
+// it - a quote saying the very words the claim used has to be able to prove it.
+const LEADERSHIP=["lead","leads","leading","led","leadership","manage","manages",
+  "managing","managed","head of","heads","director","supervis","mentor","hired",
+  "reports","built a team","grew the team","team of","direct reports","hiring manager"];
 // A claim that an event caused, affected or upset someone needs a quote that
 // speaks that way. Live failure: "the lingering impact of a long, cancelled
 // project" cited by a line that only says the project was cancelled.
 const CONSEQUENCE=["because","due to","as a result","resulted in","led to","caused",
-  "prompted","impact","affect","lingering","legacy of","in the wake of","shaped by",
+  // "impact" and "affect" bare caught "documentary content with social
+  // impact", which names a subject rather than an effect on anyone.
+  "prompted","impact on","impacted","impact of","affected","affects",
+  "lingering","legacy of","in the wake of","shaped by",
   "frustrated","burned out","burnt out","demorali","disillusioned","tired of","weary",
   "resent","bitter","scarred","soured","jaded"];
 const has=(t,ns)=>{const s=" "+norm(t).toLowerCase()+" ";return ns.some(n=>s.includes(n));};
 const nums=t=>new Set((String(t).replace(/,/g,"").match(/\d+/g)||[]));
+
+const FROM_TO=/\bfrom\b(.{2,80}?)\b(?:to|into|toward|towards)\b/i;
+function directional(claim){
+  const m=FROM_TO.exec(" "+norm(claim)+" ");
+  // "grew the team from 3 to 12" and "from 2019 to 2022" measure rather than
+  // move. A number on either side means it is a range, not a departure.
+  return !!m && !/\d/.test(m[0]);
+}
 
 function entails(claim, quote){
   claim=(claim||"").trim(); quote=(quote||"").trim();
   if(!claim||!quote) return {ok:false,reason:"Nothing to check."};
   if(has(claim,INTENT)&&!has(quote,INTENT))
     return {ok:false,reason:"The quote shows what they do, not what they want."};
-  if(has(claim,DEPARTURE)&&!has(quote,DEPARTURE))
+  // "Shifting focus from general tech to healthcare" is a departure claim
+  // naming no departure verb, and it slipped the gate entirely while a quote
+  // about a current focus stood as proof of leaving. A claim shaped "from X to
+  // Y" asserts the move whatever verb it reaches for.
+  if((has(claim,DEPARTURE)||directional(claim))&&!has(quote,DEPARTURE))
     return {ok:false,reason:"The claim says they left something; the quote never mentions leaving."};
-  if(has(claim,LEADERSHIP)&&!has(quote,LEADERSHIP))
+  if(has(claim,LEADS_CLAIM)&&!has(quote,LEADERSHIP))
     return {ok:false,reason:"The claim is about leading people; the quote does not mention it."};
   if(has(claim,CONSEQUENCE)&&!has(quote,CONSEQUENCE))
     return {ok:false,reason:"The claim says the event affected them; the quote only says it happened."};
@@ -240,7 +275,13 @@ async function complete(prompt){
     h["anthropic-dangerous-direct-browser-access"]="true";
     body={model:s.model||"claude-sonnet-4-5",max_tokens:4000,system:SYSTEM,messages:[{role:"user",content:prompt}]};
   } else { if(s.key) h.Authorization="Bearer "+s.key;
-    body={messages:[{role:"system",content:SYSTEM},{role:"user",content:prompt}],temperature:0.2,max_tokens:8000};
+    // Same profile, same answer. At 0.2 the same résumé produced three
+    // surviving claims one minute and four the next, one of them a departure
+    // the other run never proposed - and a recruiter cannot be handed two
+    // different careers for the same person and told both were evidenced.
+    // seed is honoured by llama.cpp and ignored by everyone else.
+    body={messages:[{role:"system",content:SYSTEM},{role:"user",content:prompt}],
+          temperature:0,top_p:1,seed:7,max_tokens:8000};
     if(s.model) body.model=s.model; }
   const r=await fetch(url,{method:"POST",headers:h,body:JSON.stringify(body)});
   if(!r.ok) throw new Error(`${r.status} from your endpoint. ${(await r.text()).slice(0,180)}`);
@@ -1103,7 +1144,9 @@ async function run(){
       [`heads up — ${who.why} (${who.evidence.join("; ")})`]);
     status("Reading the arc. This takes as long as your model takes.");
     const data=extractJSON(await complete(
-      (chron ? `CHRONOLOGY (earliest first — this is the real order, whatever order the document below is in):\n${chron}\n\n` : "")
+      (chron ? `CHRONOLOGY (earliest first — this is the real order, whatever order the document below is in). `
+             + `This list was assembled from the dates below and is NOT part of the profile: never quote from it, `
+             + `because a quote taken from here is not the person's own words and will be discarded.\n${chron}\n\n` : "")
       + `PROFILE TEXT (quote only from between these markers):\n---BEGIN PROFILE---\n${raw}\n---END PROFILE---`));
     processArc(data, raw, name);
     remember(name || (raw.split("\n").find(l=>l.trim()) || "profile").trim().slice(0,46),
@@ -1190,7 +1233,14 @@ function statusFor(data, raw){
     : "";
   return `${kept} of ${arc._proposed} claims survived. ${arc._proposed-kept} deleted.${un}`;
 }
-function status(m,bad){ const s=$("#status"); s.textContent=m; s.className=bad?"bad":""; }
+function status(m,bad,action){
+  const s=$("#status"); s.textContent=m; s.className=bad?"bad":"";
+  if(action){
+    const b=document.createElement("button");
+    b.type="button"; b.className="linky"; b.textContent=action;
+    b.onclick=unstash; s.appendChild(b);
+  }
+}
 
 const HKEY = "ns.history";
 
@@ -1264,8 +1314,32 @@ document.addEventListener("pointerdown", e => {
 }, true);
 
 function replay(e){
+  // The source comes back with the analysis, always. Leaving whoever was in
+  // the box where they were put one person's profile directly above another
+  // person's conclusions, with every individual line on screen perfectly
+  // plausible - the hardest kind of mistake to notice and the worst kind to
+  // make about a real candidate. Saying "the boxes above are still yours" in
+  // the status line acknowledged the mismatch without preventing it.
+  const box = $("#profile"), name = $("#name"), gh = $("#gh");
+  if(box.value.trim() && box.value.trim() !== String(e.payload.raw || "").trim())
+    STASH = {raw: box.value, name: name.value, gh: gh.value};
+  box.value = e.payload.raw || "";
+  name.value = e.payload.name || "";
+  gh.value = "";                       // sources were already folded into raw
   renderArc(e.payload.arc, e.payload.raw, e.payload.name);
-  status("Showing a prior arc. The boxes above are still yours.");
+  status(`Showing ${e.label} — the profile above is ${e.label}'s too.`
+         + (STASH ? "  ·  " : ""), 0, STASH ? "Put back what I was working on" : null);
+}
+
+// What was in the boxes before a prior search replaced it, so restoring the
+// source is not the same as losing the thing you were part-way through.
+let STASH = null;
+function unstash(){
+  if(!STASH) return;
+  $("#profile").value = STASH.raw; $("#name").value = STASH.name; $("#gh").value = STASH.gh;
+  STASH = null;
+  $("#out").innerHTML = "";
+  status("Back to what you were working on.");
 }
 
 window.addEventListener("DOMContentLoaded",()=>{

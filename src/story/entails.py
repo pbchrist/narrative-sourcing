@@ -40,10 +40,19 @@ INTENT = (
     "aspires", "is pursuing", "pursuing a", "intends to", "would like to",
     "ready to", "eager to", "open to",
 )
+# A CV says someone left in more ways than this list first allowed. "I stopped
+# working on dashboards" is a departure stated outright, and the gate deleted
+# the claim attached to it for never mentioning leaving - a false negative that
+# quietly threw away sound claims all day. The words below are all ones that
+# state the ending, not ones that merely imply it.
 DEPARTURE = (
     "left", "leaving", "departed", "moved away", "moved on", "stepped away",
     "stepped back", "exited", "quit", "walked away", "gave up", "abandoned",
     "moved from", "transitioned from", "shifted from", "away from",
+    "stopped", "no longer", "ceased", "wound down", "handed off", "handed over",
+    "gave notice", "resigned", "retired from", "closed out", "wrapped up",
+    "stepped down", "parted ways", "switched from", "pivoted from",
+    "before moving", "until", "formerly", "previously",
 )
 # A second live failure, this one from the unresolved tension rather than a
 # beat: "the lingering impact of a long, cancelled project" cited by "Spent
@@ -52,14 +61,33 @@ DEPARTURE = (
 # cannot observe.
 CONSEQUENCE = (
     "because", "due to", "as a result", "resulted in", "led to", "caused",
-    "prompted", "impact", "affect", "lingering", "legacy of", "in the wake of",
+    # "impact" and "affect" as bare words caught "documentary content with
+    # social impact", which names a subject rather than an effect on anyone.
+    # The consequence sense needs the grammar of consequence.
+    "prompted", "impact on", "impacted", "impact of", "affected", "affects",
+    "lingering", "legacy of", "in the wake of",
     "shaped by", "frustrated", "burned out", "burnt out", "demorali",
     "disillusioned", "tired of", "weary", "resent", "bitter", "scarred",
     "soured", "jaded",
 )
+# What makes a CLAIM one about leading is not the same as what makes a QUOTE
+# prove it. "Pursued a career in film, starting with assisting a director"
+# contains "director" and is not a claim about leading anybody - the title
+# belongs to someone else, and the person in question is the assistant. Trigger
+# on what the subject is said to DO; accept a title as proof only in the quote.
+LEADS_CLAIM = (
+    "led ", "leads ", "leading ", "leadership", "manage", "manages",
+    "managing", "managed", "head of", "heads ", "supervis", "mentor",
+    "hired", "hiring manager", "built a team", "grew the team",
+    "reports to them", "direct reports",
+)
+# Every way a quote can SHOW leadership, including each way a claim can assert
+# it - a quote saying the very words the claim used has to be able to prove it.
 LEADERSHIP = (
-    "lead", "leads", "leading", "led", "manage", "manages", "managing",
-    "managed", "head of", "heads", "director", "supervis", "mentor",
+    "lead", "leads", "leading", "led", "leadership", "manage", "manages",
+    "managing", "managed", "head of", "heads", "director", "supervis", "mentor",
+    "built a team", "grew the team", "team of", "direct reports",
+    "hiring manager",
     "built a team", "hired", "reports",
 )
 
@@ -79,6 +107,19 @@ def _numbers(text: str) -> set:
     return set(re.findall(r"\d[\d,]*", text.replace(",", "")))
 
 
+_FROM_TO = re.compile(r"\bfrom\b(.{2,80}?)\b(?:to|into|toward|towards)\b", re.I)
+
+
+def _directional(claim: str) -> bool:
+    """A claim that moves the subject from one thing to another."""
+    m = _FROM_TO.search(" " + " ".join(str(claim or "").split()) + " ")
+    if not m:
+        return False
+    # "grew the team from 3 to 12" and "from 2019 to 2022" are ranges, not
+    # departures. A number on either side means it is measuring, not moving.
+    return not re.search(r"\d", m.group(0))
+
+
 def entails(claim: str, quote: str) -> Verdict:
     """True when the quote supports the claim in the same mode it asserts it."""
     claim = (claim or "").strip()
@@ -91,12 +132,16 @@ def entails(claim: str, quote: str) -> Verdict:
                        "The quote shows what they do, not what they want. Doing "
                        "something is not evidence of seeking it.")
 
-    if _has(claim, DEPARTURE) and not _has(quote, DEPARTURE):
+    # "Shifting focus from general tech to healthcare" is a departure claim
+    # that names no departure verb, and it slipped the gate entirely while a
+    # quote about a current focus stood as proof of leaving. A claim shaped
+    # "from X to Y" asserts the move whatever verb it uses.
+    if (_has(claim, DEPARTURE) or _directional(claim)) and not _has(quote, DEPARTURE):
         return Verdict(False,
                        "The claim says they left something, and the quote never "
                        "mentions leaving anything.")
 
-    if _has(claim, LEADERSHIP) and not _has(quote, LEADERSHIP):
+    if _has(claim, LEADS_CLAIM) and not _has(quote, LEADERSHIP):
         return Verdict(False,
                        "The claim is about leading people, and the quote does not "
                        "mention leading, managing or hiring anyone.")
