@@ -404,7 +404,8 @@ function renderArc(arc, raw, name){
         <b>big &amp; close</b> = the profile says it plainly &middot;
         <b>small &amp; far</b> = inferred</span>
       <span class="k"><i class="mine"></i>yours, not evidenced</span>
-      <span class="hint">hover a node for the quote &middot; click empty space to add one &middot;
+      <span class="hint">hover a claim or its label for the quote &middot; or press Tab and use
+        the arrow keys &middot; click empty space to add one &middot;
         shift-drag to connect &middot; double-click yours to delete</span>
     </div>
     <div class="bar"><span>${arc.departures.length+arc.pursuits.length} claim${arc.departures.length+arc.pursuits.length===1?"":"s"} survived the verbatim check

@@ -84,6 +84,7 @@ function mountArc(canvas, arc, onPick){
 
   let W=0,H=0,yaw=0.30,pitch=0.20,dist=560;
   let drag=false,lx=0,ly=0,moved=0,hot=null,link=null,booted=false,mx=0,my=0;
+  let over=false, focused=-1;
   const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function size(){const d=Math.min(devicePixelRatio||1,2);
@@ -167,7 +168,10 @@ function mountArc(canvas, arc, onPick){
 
   function frame(){
     requestAnimationFrame(frame);
-    if(!drag&&!reduced&&!hot) yaw+=0.0011;      // stops spinning while you read
+    // Stops spinning while you read, and also while you are on your way: a
+    // target that drifts out from under the cursor as you approach it is the
+    // whole of why these were hard to hit.
+    if(!drag&&!reduced&&!hot&&!over&&focused<0) yaw+=0.0011;
     ctx.clearRect(0,0,W,H); ctx.fillStyle="#0C1017"; ctx.fillRect(0,0,W,H);
     ringsAndAxes();
 
@@ -233,7 +237,15 @@ function mountArc(canvas, arc, onPick){
           }
           if(y!==null) break;
         }
-        if(y!==null) ctx.fillText(n.label,cx,y);
+        if(y!==null){
+          ctx.fillText(n.label,cx,y);
+          // The label is the thing a reader aims at - it is the part they can
+          // actually see and read. Aiming at it and getting nothing, while a
+          // nine-pixel dot beside it is the real target, is the interface
+          // disagreeing with itself.
+          const top = ctx.textBaseline==="bottom" ? y-h : y;
+          n._lab = {x0:cx-half, x1:cx+half, y0:top, y1:top+h};
+        } else n._lab = null;
       }
     }
     ctx.globalAlpha=1;
@@ -246,6 +258,11 @@ function mountArc(canvas, arc, onPick){
     for(const n of nodes){if(n._x===undefined)continue;
       const d=Math.hypot(x-n._x,y-n._y);
       if(d<Math.max(n._r+10,16)&&d<bd){bd=d;best=n;}}
+    // Nothing under the dot: try the words. A label is a far bigger target
+    // than the node it names, and it is the one people aim for.
+    if(!best) for(const n of nodes){
+      const b=n._lab;
+      if(b&&x>=b.x0&&x<=b.x1&&y>=b.y0&&y<=b.y1){best=n;break;}}
     return best;};
   const rel=e=>{const r=canvas.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];};
 
@@ -255,6 +272,41 @@ function mountArc(canvas, arc, onPick){
     if(e.shiftKey&&n){ link=nodes.indexOf(n); return; }   // shift-drag = connect
     drag=true;moved=0;lx=e.clientX;ly=e.clientY;canvas.setPointerCapture(e.pointerId);
   });
+  // Keyboard, because a map you can only reach with a mouse is a map some
+  // people cannot read at all - and every claim in it is also written out in
+  // the two lists underneath, which is where a screen reader is sent.
+  canvas.tabIndex = 0;
+  canvas.setAttribute("role", "application");
+  canvas.setAttribute("aria-label",
+    "Career map. Arrow keys or Tab move between claims, Enter opens one, "
+    + "Escape closes it. Every claim here is also listed as text below the map.");
+
+  const focusNode = i => {
+    // Ordinarily only what has been drawn can be reached, so the order matches
+    // what is on screen. But nothing is drawn until a frame runs, and a frame
+    // does not run in a background tab or before the first paint - and a
+    // keyboard user who arrives first should not find an inert map.
+    let live = nodes.filter(n => n._x !== undefined);
+    if(!live.length) live = nodes.slice();
+    if(!live.length) return;
+    focused = (i + live.length) % live.length;
+    hot = live[focused];
+    if(onPick) onPick(hot);
+  };
+  canvas.addEventListener("keydown", e => {
+    if(e.key === "Escape"){ hot = null; focused = -1; canvas.blur(); return; }
+    if(e.key === "ArrowRight" || e.key === "ArrowDown"){ focusNode(focused + 1); e.preventDefault(); return; }
+    if(e.key === "ArrowLeft"  || e.key === "ArrowUp"){   focusNode(focused - 1); e.preventDefault(); return; }
+    if(e.key === "Enter" || e.key === " "){
+      if(focused < 0) focusNode(0); else if(hot && onPick) onPick(hot);
+      e.preventDefault();
+    }
+  });
+  canvas.addEventListener("focus", () => { if(focused < 0) focusNode(0); });
+  canvas.addEventListener("blur",  () => { if(!over){ hot = null; focused = -1; } });
+  canvas.addEventListener("pointerenter", () => { over = true; });
+  canvas.addEventListener("pointerleave", () => { over = false; });
+
   canvas.addEventListener("pointermove",e=>{
     const [x,y]=rel(e); mx=x;my=y;
     if(drag){moved+=Math.abs(e.clientX-lx)+Math.abs(e.clientY-ly);
