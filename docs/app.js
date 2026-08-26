@@ -333,23 +333,34 @@ function renderArc(arc, raw, name){
   // and when nothing survived, they are labelled unsupported rather than
   // shown as findings.
   const kept = arc.departures.length + arc.pursuits.length;
+  // A line nobody could source is not a finding, and printing it in the
+  // largest type on the page with a warning underneath makes the warning lose
+  // an argument it should not be having. Unsupported synthesis is folded away
+  // and named for what it is; opening it is a deliberate act.
   const ground = (quotes, what) => {
     if (quotes && quotes.length){
       const q = quotes.map(x=>`<q>${esc(x)}</q>`).join("");
       return `<span class="ground ok">anchored in the profile's own words
                 &middot; confidence ${arc.confidence}</span>${q}`;
     }
-    return `<span class="ground bad">NOT ANCHORED &mdash; the model could not quote
-      anything in the profile that supports this ${what}. Every claim below may
-      check out and this line still be invented. Treat it as a guess.</span>`;
+    return `<span class="ground bad">Nothing in the profile could be quoted to
+      support this ${what}, so it is the model's guess and nothing more. It
+      carries no confidence score, because there is nothing to score.</span>`;
   };
-  const support = ground(arc.throughline_evidence, "reading");
-  const tsupport = ground(arc.tension_evidence, "question");
+  // The whole block, not just its footnote: a supported line reads as a
+  // finding, an unsupported one reads as a question somebody asked.
+  const shape = (cls, label, line, quotes, what) => {
+    if (quotes && quotes.length)
+      return `<div class="shape ${cls}"><span class="lbl">${label}</span>
+        <p>${esc(line)}</p>${ground(quotes, what)}</div>`;
+    return `<details class="shape ${cls} ungrounded"><summary><span class="lbl">${label}
+        &mdash; unsupported guess, hidden</span></summary>
+      <p class="guess">${esc(line)}</p>${ground(quotes, what)}</details>`;
+  };
   const grounded = !!(arc.throughline_evidence && arc.throughline_evidence.length);
 
   $("#out").innerHTML = `
-    <div class="shape${grounded?"":" ungrounded"}"><span class="lbl">Their story in one line</span>
-      <p>${esc(arc.throughline)}</p>${support}</div>
+    ${shape("", "Their story in one line", arc.throughline, arc.throughline_evidence, "reading")}
     <canvas id="arc"></canvas>
     <div class="arckey">
       <span class="k"><i style="background:#F1580A"></i>the person</span>
@@ -371,9 +382,7 @@ function renderArc(arc, raw, name){
       <div><span class="lbl">What they left</span><div id="deps"></div></div>
       <div><span class="lbl">What they are reaching for</span><div id="purs"></div></div>
     </div>
-    <div class="shape tension${(arc.tension_evidence||[]).length?"":" ungrounded"}">
-      <span class="lbl">The open question</span>
-      <p>${esc(arc.unresolved_tension)}</p>${tsupport}</div>`;
+    ${shape("tension", "The open question", arc.unresolved_tension, arc.tension_evidence, "question")}`;
   const beat=b=>`<div class="beat"><div class="bh"><b>${esc(b.description)}</b><span class="pill">${b.confidence}</span></div>
       <q>${esc(b.evidence)}</q></div>`;
   $("#deps").innerHTML = arc.departures.map(beat).join("") || `<p class="none">Nothing they left could be quoted.</p>`;
@@ -882,9 +891,12 @@ async function readAnyFile(file){
   return (await file.text()).trim();   // last resort: treat it as text
 }
 
+let LAST_FILE = null;                 // what a nameless record gets called after
+
 async function addFiles(files){
   const list = [...files];
   if(!list.length) return;
+  LAST_FILE = list.length === 1 ? list[0].name : `${list.length} files`;
   status(`Reading ${list.length} file${list.length>1?"s":""}…`);
   const got = [], read = [], failed = [];
   for(const f of list){
@@ -1139,18 +1151,30 @@ async function run(){
         [`only the first ${raw.length.toLocaleString()} characters were read — `
          + `${cut.toLocaleString()} more would not fit in one request`]);
     }
+    const who0 = name || guessName(raw, LAST_FILE);
     const who = onePerson(raw);
     if(!who.ok) failures = failures.concat(
       [`heads up — ${who.why} (${who.evidence.join("; ")})`]);
-    status("Reading the arc. This takes as long as your model takes.");
+    // Whatever is on screen belongs to whoever was analysed last, and leaving
+    // it there while a different profile is being read invites reading one
+    // person's conclusions as the other's.
+    $("#out").innerHTML = `<div class="shape pending"><span class="lbl">Reading</span>
+      <p>${esc(who0 || "this profile")}</p>
+      <span class="ground ok">nothing below is showing yet &mdash; the previous
+        result has been cleared so it cannot be mistaken for this one</span></div>`;
+    status(`Reading the arc for ${who0 || "this profile"}. This takes as long as your model takes.`);
     const data=extractJSON(await complete(
       (chron ? `CHRONOLOGY (earliest first — this is the real order, whatever order the document below is in). `
              + `This list was assembled from the dates below and is NOT part of the profile: never quote from it, `
              + `because a quote taken from here is not the person's own words and will be discarded.\n${chron}\n\n` : "")
       + `PROFILE TEXT (quote only from between these markers):\n---BEGIN PROFILE---\n${raw}\n---END PROFILE---`));
     processArc(data, raw, name);
-    remember(name || (raw.split("\n").find(l=>l.trim()) || "profile").trim().slice(0,46),
-             {arc: LAST_ARC, raw, name});
+    remember(who0 || `profile · ${new Date().toLocaleString()}`,
+             {arc: LAST_ARC, raw, name,
+              candidate_name: name || guessName(raw, "") || null,
+              source_filename: LAST_FILE || null,
+              created_at: new Date().toISOString(),
+              run_id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()))});
     status(statusFor(data, raw)
       + (failures.length ? `  ·  ${failures.join("; ")}` : ""));
   }catch(e){ status(friendly(e),1); }
@@ -1273,9 +1297,69 @@ function tick(){
 // ---- prior searches ---------------------------------------------------------
 // Kept OUT of the input boxes on purpose. Restoring the last run into the form
 // meant every new search started by deleting someone else's text.
+// A two-column résumé put the word PROFILE on the first extracted line and a
+// saved search was filed under it; another was filed under "I'm looking for...",
+// which was the search prompt. A record about a person is named after the
+// person, and when that cannot be found it says where it came from instead of
+// guessing.
+const HEADINGS = new Set(["contact","profile","summary","about","experience",
+  "education","skills","top skills","certifications","licenses","languages",
+  "honors","awards","publications","recommendations","volunteering","projects",
+  "interests","references","objective","work history","employment"]);
+
+// A LinkedIn export puts the person's name on line 21, underneath a sidebar of
+// contact details, skills and certifications - so "first line that looks like a
+// name" picks the first listed skill, and this shipped calling somebody
+// "Source Intelligence". A two-column résumé puts a section heading first and
+// the name second. No single position works, so every name-shaped line is a
+// candidate and the surroundings decide between them.
+const SIDEBAR = new Set(["top skills","skills","certifications","licenses",
+  "languages","honors","awards","publications","interests","volunteering"]);
+const LOOKS_LIKE_A_PLACE = /,\s*[A-Z][\p{L}]+(,|$)/u;
+
+function guessName(raw, fallbackFile){
+  const lines = String(raw||"").split("\n").map(l =>
+    l.replace(/^[\s·•\-–]+|[\s·•\-–]+$/g, ""));
+  let best = null, bestScore = -Infinity;
+  for(let i = 0; i < Math.min(lines.length, 40); i++){
+    const t = lines[i];
+    if(!t || t.length > 46) continue;
+    if(HEADINGS.has(t.toLowerCase().replace(/:$/, ""))) continue;
+    if(/\d|@|https?:|www\./.test(t)) continue;
+    const words = t.split(/\s+/);
+    if(words.length < 2 || words.length > 4) continue;
+    if(!words.every(w => /^[A-Z][\p{L}'’.-]*$/u.test(w))) continue;
+
+    let score = 0;
+    // The first entry under a list of skills or certifications is an entry in
+    // that list, not the person the document is about.
+    const prev = lines.slice(0, i).reverse().find(Boolean);
+    if(prev && SIDEBAR.has(prev.toLowerCase().replace(/:$/, ""))) score -= 3;
+    // A name is followed by the things that describe the person: a headline
+    // with pipes, a location, and then the body of the document.
+    const next = lines[i+1] || "";
+    if(next.includes("|")) score += 2;
+    if(LOOKS_LIKE_A_PLACE.test(next)) score += 2;
+    if(lines.slice(i+1, i+7).some(l => ["summary","about","experience"]
+        .includes(l.toLowerCase().replace(/:$/, "")))) score += 3;
+    if(i < 3) score += 1;                      // a plain résumé leads with it
+
+    if(score > bestScore){ bestScore = score; best = t; }
+  }
+  if(best) return best;
+  if(fallbackFile) return fallbackFile;
+  return "";
+}
+
 const HMAX = 8;
 function hist(){ try{ return JSON.parse(localStorage.getItem(HKEY)) || []; }catch{ return []; } }
+// Somebody reading candidates on a shared machine can turn the history off
+// entirely, and the footer says plainly that it exists - which it did not.
+const NOHIST = "ns.nohistory";
+const keepingHistory = () => localStorage.getItem(NOHIST) !== "1";
+
 function remember(label, payload){
+  if(!keepingHistory()) return;
   const h = hist().filter(e => e.label !== label);
   h.unshift({label, when: Date.now(), payload});
   try{ localStorage.setItem(HKEY, JSON.stringify(h.slice(0, HMAX))); }
@@ -1370,6 +1454,19 @@ window.addEventListener("DOMContentLoaded",()=>{
   $("#pick").onclick = e => { e.preventDefault(); $("#file").click(); };
   $("#file").onchange = e => { addFiles(e.target.files); e.target.value = ""; };
   drawRecent();
+
+  // Prior searches, off by choice. Turning it on clears what is already kept
+  // rather than merely stopping new entries, because the reason to turn it on
+  // is usually the ones that are already there.
+  const nh = document.getElementById("nohist");
+  if(nh){
+    nh.checked = !keepingHistory();
+    nh.onchange = () => {
+      if(nh.checked){ localStorage.setItem(NOHIST, "1"); localStorage.removeItem(HKEY);
+                      drawRecent(); status("Prior searches are off, and the kept ones are gone."); }
+      else { localStorage.removeItem(NOHIST); status("Prior searches will be kept in this browser."); }
+    };
+  }
   status("Ready. Give it a GitHub username, or paste a profile.");
   // A first-time visitor arrives with nothing to paste. Show them a real run
   // rather than an empty page - it needs no model and no waiting.

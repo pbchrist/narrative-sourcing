@@ -38,6 +38,15 @@ a.btn{display:inline-block;text-decoration:none;line-height:1}
 .shape.tension{border-left-color:var(--acc);margin-top:22px}
 .shape p{margin:6px 0 0;font-size:17.5px;line-height:1.45}
 .shape.ungrounded{border-left-color:var(--red);background:#1A0F0D}
+details.shape.ungrounded{padding:12px 16px}
+details.shape.ungrounded summary{cursor:pointer;list-style:none}
+details.shape.ungrounded summary::-webkit-details-marker{display:none}
+details.shape.ungrounded summary .lbl{margin:0;color:var(--red);display:inline}
+details.shape.ungrounded summary::before{content:"\25B8 ";color:var(--red)}
+details.shape.ungrounded[open] summary::before{content:"\25BE "}
+/* An unsupported line is not a headline. Same words, plainly less authority
+   than the claims underneath it that actually carry a quote. */
+.shape.ungrounded p.guess{font-size:15px;color:var(--ink2);font-style:italic;margin-top:10px}
 .ground{display:block;margin-top:12px;font:11px/1.5 "IBM Plex Mono",monospace;letter-spacing:.02em}
 .ground.ok{color:var(--ink3)}
 .ground.bad{color:var(--red)}
@@ -78,6 +87,19 @@ dialog::backdrop{background:rgba(0,0,0,.72)}
 dialog h2{margin:0 0 6px;font-size:19px}
 dialog .note{color:var(--ink3);font-size:13.5px;margin:0 0 18px}
 .presets{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.shape.pending{border-left-color:var(--ink3);opacity:.85}
+.shape.pending p{color:var(--ink2)}
+details.shape.ungrounded{padding:12px 16px}
+details.shape.ungrounded summary{cursor:pointer;list-style:none}
+details.shape.ungrounded summary::-webkit-details-marker{display:none}
+details.shape.ungrounded summary .lbl{margin:0;color:var(--red);display:inline}
+details.shape.ungrounded summary::before{content:"\25B8 ";color:var(--red)}
+details.shape.ungrounded[open] summary::before{content:"\25BE "}
+/* An unsupported line is not a headline. Same words, plainly less authority
+   than the claims underneath it that do carry a quote. */
+.shape.ungrounded p.guess{font-size:15px;color:var(--ink2);font-style:italic;margin-top:10px}
+footer label.keep{display:block;margin-top:10px;color:var(--ink2);font-size:13px;cursor:pointer}
+footer label.keep input{width:auto;margin-right:7px;vertical-align:-1px}
 
     .recent{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:16px 0 0}
     .recent .rlbl{font:600 10px/1 "IBM Plex Sans",sans-serif;letter-spacing:.14em;
@@ -152,7 +174,12 @@ It produces a brief for you to write from. It will not write the message.</p>
 
 <footer>
   Your key and endpoint stay in your browser and are sent only to the endpoint you chose.
-  No candidate data is stored anywhere. Nothing is scraped.
+  Nothing is scraped, and nothing reaches a server of ours &mdash; there isn't one.
+  <b>Prior searches are kept in this browser</b>, so on a shared machine the last few
+  profiles you read can be reopened by whoever sits down next. Clear them with
+  <b>Clear</b> beside the chips, or switch saving off here.
+  <label class="keep"><input type="checkbox" id="nohist"> Don&rsquo;t keep prior searches on this
+    browser (clears what is already there)</label>
   <a href="https://github.com/pbchrist/narrative-sourcing">Source</a> ·
   built by <a href="https://www.linkedin.com/in/becomeiconic">Patrick Christell</a>
 </footer>
