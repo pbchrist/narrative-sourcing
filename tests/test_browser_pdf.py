@@ -66,3 +66,23 @@ def test_refuses_a_subset_with_no_way_back_to_letters(tmp_path):
     assert verdict == "REFUSED"
     assert "not words" in text
     assert ".docx" in text
+
+
+def test_refuses_a_password_protected_pdf_for_the_right_reason(tmp_path):
+    # It already refused, but told the reader to run OCR - advice that cannot
+    # work on a file whose text is encrypted rather than absent. Refusing is
+    # only useful if it says which problem this is.
+    pytest.importorskip("pypdf")
+    import io
+
+    from pypdf import PdfWriter
+
+    w = PdfWriter(clone_from=io.BytesIO(minimal_pdf(LINKEDIN_EXPORT)))
+    w.encrypt("hunter2")
+    buf = io.BytesIO()
+    w.write(buf)
+
+    verdict, text = read(tmp_path, buf.getvalue())
+    assert verdict == "REFUSED"
+    assert "password" in text
+    assert "OCR" not in text

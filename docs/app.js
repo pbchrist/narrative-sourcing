@@ -745,6 +745,13 @@ function streamEnd(latin, dict, from, objAt){
 async function readPdf(bytes){
   const latin = new TextDecoder("latin1").decode(bytes);
 
+  // A locked file has no readable text for the same reason a scan has none,
+  // and it used to be told to run OCR - advice that cannot possibly work. The
+  // trailer says which problem this is, so say the right one.
+  if(/\/Encrypt\s+\d+\s+0\s+R/.test(latin))
+    throw new Error("that PDF is password-protected, so its text cannot be read. "
+                  + "Open it, save an unprotected copy, and drop that in instead");
+
   // Where each indirect object lives, so /ToUnicode 12 0 R can be followed.
   const objAt = new Map();
   const objRe = /(\d+)\s+0\s+obj\b/g;
