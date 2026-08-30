@@ -2,6 +2,23 @@
 
 ### → [Open the app](https://pbchrist.github.io/narrative-sourcing/)
 
+AI outreach doesn't work anymore. Recruiters use AI to write
+personalized messages at scale, candidates recognize them on sight and
+ignore them, so recruiters use more AI to make the personalization more
+convincing, and candidates get better at ignoring it. The loop is
+broken.
+
+But reading a profile deeply enough to write something real takes 20
+minutes a candidate, and you have 50 candidates. So the choice is
+between outreach that gets ignored and outreach you don't have time to
+write.
+
+This tool says: the reading is the part the machine can do. The writing
+has to stay human because that's the part that can't be faked. Give the
+recruiter a brief that's actually grounded in the person's history,
+sourced so it can't be invented, and the message they write from it will
+read like it came from someone who paid attention — because it did.
+
 No install. A GitHub username or a pasted profile in, the career arc out — with
 every claim quoting the source word for word, and a graph of the arc you can
 turn. Runs in your browser against a model you choose.
@@ -22,9 +39,7 @@ arc (what they've been reaching for, what they left, what tension their
 next move would resolve), score whether a given role genuinely continues
 that story, and hand a recruiter a brief to write a real message from.
 
-It does not send messages. It never will, on purpose. The evidence is
-clear that AI-personalized outreach is exactly what candidates have
-learned to tune out. The message has to stay human. This tool's job is
+It does not send messages. It never will, on purpose. This tool's job is
 insight, not sentences.
 
 See `docs/DESIGN.md` for the full spec and `docs/PRINCIPLES.md` for the
