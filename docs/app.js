@@ -104,7 +104,7 @@ function fitTo(text, room){
 // endpoint the person at the keyboard chose.
 function settings(){ let s={}; try{s=JSON.parse(localStorage.getItem(LS))||{};}catch{}
   return s; }
-const configured = () => !!settings().url;
+const configured = () => !!(settings().url || HOSTED.url);
 
 // ---- the verbatim check, same rule as the CLI -------------------------------
 const norm=t=>String(t||"").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/\s+/g," ").trim();
@@ -281,9 +281,8 @@ async function endpointFor(s, fallback){
 
 async function complete(prompt){
   const s=settings();
-  if(!s.url) throw new Error("No model is set up yet — click Settings and point this "
-    + "at one. The worked example needs nothing and shows what the rule does.");
   const url=await endpointFor(s, HOSTED.url);
+  if(!url) throw new Error("No model is set up — open Settings and point this at one.");
   if(!url) throw new Error("Point it at a model first — click Settings.");
   const anth=/anthropic\.com/.test(url);
   const h={"Content-Type":"application/json"}; let body;
@@ -357,7 +356,7 @@ function rejects(list){
       This is what it was not allowed to produce.</p>${rows}</details>`;
 }
 
-function renderArc(arc, raw, name){
+function renderArc(arc, raw, name, role){
   // The throughline and the tension are the two highest-value inferences in
   // the whole system and neither can be quote-checked directly - they are
   // syntheses, not citations. Left ungrounded, the app will happily render an
@@ -418,7 +417,9 @@ function renderArc(arc, raw, name){
       <div><span class="lbl">What they left</span><div id="deps"></div></div>
       <div><span class="lbl">What they are reaching for</span><div id="purs"></div></div>
     </div>
-    ${shape("tension", "The open question", arc.unresolved_tension, arc.tension_evidence, "question")}`;
+    ${shape("tension", "The open question", arc.unresolved_tension, arc.tension_evidence, "question")}
+    <div class="row copyrow"><button class="btn" type="button" id="copybtn" onclick="copyBrief()">Copy brief</button></div>
+    ${role ? renderFit(computeFit(raw, role), arc) : ""}`;
   const beat=b=>`<div class="beat"><div class="bh"><b>${esc(b.description)}</b><span class="pill">${b.confidence}</span></div>
       <q>${esc(b.evidence)}</q></div>`;
   $("#deps").innerHTML = arc.departures.map(beat).join("") || `<p class="none">Nothing they left could be quoted.</p>`;
@@ -430,6 +431,89 @@ function renderArc(arc, raw, name){
       &middot; confidence ${n.data.confidence}</span><p>${esc(n.data.description)}</p>
       <q>${esc(n.data.evidence)}</q>`;
   });
+}
+
+// ---- role fit (deterministic keyword overlap, no model call) ----------------
+const FIT_STOP = new Set(["and","the","for","with","you","our","are","was","were","has",
+  "have","had","not","but","this","that","they","them","their","who","what","when","will",
+  "would","can","could","should","from","into","out","end","own","all","any","new","role",
+  "work","working","team","teams","years","year","job","about","than","then","there","here",
+  "your","his","her","its","been","being","some","more","most","such","each","other","also",
+  "how","why"]);
+function fitTokens(text){
+  return new Set((String(text||"").toLowerCase().match(/[a-z][a-z+#.]{2,}/g)||[])
+    .filter(w => !FIT_STOP.has(w)));
+}
+function computeFit(profileText, roleText){
+  const roleTerms = fitTokens(roleText);
+  const profileTerms = fitTokens(profileText);
+  const matched = [...roleTerms].filter(t => profileTerms.has(t)).sort();
+  return { matched, ratio: roleTerms.size ? matched.length / roleTerms.size : 0,
+           roleTerms: roleTerms.size };
+}
+function renderFit(fit, arc){
+  if(!fit.roleTerms) return "";
+  const pct = Math.round(fit.ratio * 100);
+  const aligned = [...arc.pursuits, ...arc.departures].filter(b =>
+    fit.matched.some(t => b.description.toLowerCase().includes(t)
+                       || b.evidence.toLowerCase().includes(t)));
+  return `<div class="fitblock">
+    <span class="lbl">Role fit &mdash; keyword overlap (no model)</span>
+    <p style="margin:8px 0 0;font-size:15px">${pct}% of role terms appear in the
+      profile &mdash; ${fit.matched.length} of ${fit.roleTerms}. Deterministic:
+      no AI judgment, no scoring, just shared vocabulary.</p>
+    ${fit.matched.length ? `<div style="margin-top:12px"><span class="lbl">Shared terms</span>
+      <div style="margin-top:6px">${fit.matched.map(t=>`<span class="ftag">${esc(t)}</span>`).join("")}</div>
+    </div>` : ""}
+    ${aligned.length ? `<div style="margin-top:14px"><span class="lbl">Arc beats that name role terms</span>
+      ${aligned.map(b=>`<div class="beat" style="margin-top:8px"><div class="bh"><b>${esc(b.description)}</b></div><q>${esc(b.evidence)}</q></div>`).join("")}
+    </div>` : `<p style="margin:10px 0 0;font-size:14px;color:var(--ink3)">No arc beats explicitly name role terms &mdash; overlap is in the profile text but not in any surviving claim.</p>`}
+  </div>`;
+}
+
+// ---- copy brief as plain text -----------------------------------------------
+function briefText(arc, name){
+  const L = [];
+  if(name) L.push(name + "’s career arc", "");
+  L.push("THROUGHLINE", arc.throughline);
+  (arc.throughline_evidence||[]).forEach(q => L.push('  “' + q + '”'));
+  L.push("");
+  if(arc.departures.length){
+    L.push("WHAT THEY LEFT");
+    arc.departures.forEach(b => { L.push("— " + b.description); L.push('  “' + b.evidence + '”'); });
+    L.push("");
+  }
+  if(arc.pursuits.length){
+    L.push("WHAT THEY ARE REACHING FOR");
+    arc.pursuits.forEach(b => { L.push("— " + b.description); L.push('  “' + b.evidence + '”'); });
+    L.push("");
+  }
+  if(arc.unresolved_tension){
+    L.push("THE OPEN QUESTION", arc.unresolved_tension);
+    (arc.tension_evidence||[]).forEach(q => L.push('  “' + q + '”'));
+    L.push("");
+  }
+  const kept = arc.departures.length + arc.pursuits.length;
+  L.push("Confidence: " + arc.confidence + " · " + kept + " claim" + (kept===1?"":"s") + " survived verbatim check");
+  L.push("Generated by narrative-sourcing — https://pbchrist.github.io/narrative-sourcing/");
+  return L.join("\n");
+}
+function copyBrief(){
+  const arc = LAST_ARC; if(!arc) return;
+  const name = ($("#name")||{}).value||"";
+  const text = briefText(arc, name.trim());
+  const btn = $("#copybtn");
+  const done = () => { if(btn){ btn.textContent="Copied!"; setTimeout(()=>{ btn.textContent="Copy brief"; },2000); } };
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  else fallbackCopy(text, done);
+}
+function fallbackCopy(text, cb){
+  const ta = document.createElement("textarea");
+  ta.value=text; ta.style.cssText="position:fixed;opacity:0";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); cb(); }catch(e){}
+  document.body.removeChild(ta);
 }
 
 // ---- is this two profiles stacked together? --------------------------------
@@ -1234,7 +1318,7 @@ async function run(){
              + `This list was assembled from the dates below and is NOT part of the profile: never quote from it, `
              + `because a quote taken from here is not the person's own words and will be discarded.\n${chron}\n\n` : "")
       + `PROFILE TEXT (quote only from between these markers):\n---BEGIN PROFILE---\n${raw}\n---END PROFILE---`));
-    processArc(data, raw, name);
+    processArc(data, raw, name, ($("#role")||{value:""}).value.trim());
     remember(who0 || `profile · ${new Date().toLocaleString()}`,
              {arc: LAST_ARC, raw, name,
               candidate_name: name || guessName(raw, "") || null,
@@ -1316,10 +1400,10 @@ function buildArc(data, raw){
     return arc;
 }
 
-function processArc(data, raw, name){
+function processArc(data, raw, name, role){
   const arc = buildArc(data, raw);
   LAST_ARC = arc;
-  renderArc(arc, raw, name);
+  renderArc(arc, raw, name, role);
   return arc;
 }
 

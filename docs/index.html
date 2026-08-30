@@ -129,6 +129,12 @@ footer label.keep input{width:auto;margin-right:7px;vertical-align:-1px}
       margin-top:7px;text-transform:none;letter-spacing:0}
     .linky{background:none;border:0;padding:0;font:inherit;color:var(--teal);
       cursor:pointer;text-decoration:underline}
+    .fitblock{background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--ink3);
+      padding:16px 18px;border-radius:3px;margin:22px 0 18px}
+    .fitblock .lbl{color:var(--ink3)}
+    .ftag{font:11px/1.5 "IBM Plex Mono",monospace;background:var(--bg2);border:1px solid var(--rule);
+      padding:2px 6px;border-radius:2px;color:var(--teal);display:inline-block;margin:2px 2px 0}
+    .copyrow{margin:18px 0 4px}
     #droplabel.drag textarea{outline:2px dashed var(--teal);outline-offset:-2px;
       background:#10202A}
     details.more{margin:0 0 14px;border:1px solid var(--rule);border-radius:3px;
@@ -141,22 +147,25 @@ footer label.keep input{width:auto;margin-right:7px;vertical-align:-1px}
 </style>
 
 <div class="wrap">
-<span class="tag">No message is ever written for you</span>
+<span class="tag">Sourcing briefs from career profiles</span>
 <header>
   <h1>narrative&#8209;<span>sourcing</span></h1>
   <a class="btn" href="./evidence.html">Does the rule work?</a>
-  <button class="btn" id="gear" type="button">Settings</button>
+  <button class="btn" id="gear" type="button">Your model</button>
 </header>
-<p class="sub">A résumé is a plot with the connective tissue removed. This reads the arc back in:
-what someone left, what they are reaching for, what is still unresolved. <b>Every claim has to
-quote the source word for word</b> — anything the model cannot quote is deleted, not flagged.
-It produces a brief for you to write from. It will not write the message.</p>
+<p class="sub">Paste a résumé or LinkedIn profile. This reads the arc underneath it &mdash;
+what someone left, what they are reaching for, what is still unresolved &mdash; and gives you
+a brief to write from. <b>Every claim quotes the source word for word</b>: anything the model
+cannot quote is deleted before you see it, not flagged. The brief is raw material.
+The message stays human.</p>
 
-<p class="sub">There is no account, no server, and nothing here reads your candidates but you:
-the page runs in your browser against a model you point it at &mdash; your own, or a key you
-hold. <b>Start with <a href="#" id="jump">the worked example</a></b>, which needs no model at
-all, then <a href="./evidence.html">see whether the rule actually does anything</a> &mdash;
-including where that measurement is weak.</p>
+<p class="sub">Runs against a model I host on my own hardware &mdash; Qwen&nbsp;3.8&nbsp;27B
+on a local GPU, not a cloud API, so your candidates don&rsquo;t go to OpenAI or anywhere
+like it. Point it at your own endpoint in Settings if you prefer.
+<b>Start with <a href="#" id="jump">the worked example</a></b>, which needs nothing,
+then <a href="./evidence.html">see whether the rule actually does anything</a> &mdash;
+I measured it and published the result including the part where the numbers are weaker
+than I expected.</p>
 
 <label class="f" id="droplabel">
   <span>Their profile — paste it, or drop a file in</span>
@@ -174,6 +183,14 @@ including where that measurement is weak.</p>
       does, it will say so by name rather than failing quietly.</span>
   </label>
   <label class="f"><span>Name (optional)</span><input id="name" autocomplete="off"></label>
+</details>
+
+<details class="more">
+  <summary>Match against a role <em>(optional)</em></summary>
+  <label class="f" style="margin-top:12px">
+    <span>Job description</span>
+    <textarea id="role" style="min-height:100px" placeholder="Paste the job description. Overlap is computed deterministically — no extra model call, no scoring, just which terms from the role appear in the profile and which arc beats name them."></textarea>
+  </label>
 </details>
 
 <input type="file" id="file" accept=".pdf,.docx,.txt,.md,.markdown,text/plain" hidden multiple>
@@ -201,11 +218,12 @@ including where that measurement is weak.</p>
 
 <dialog id="settings">
   <h2>Point it at a model</h2>
-  <p class="note">Runs entirely in your browser against an endpoint you control. Nothing
-    is sent anywhere else, because there is nowhere else &mdash; this page has no server.
-    Any OpenAI-compatible endpoint works, including llama.cpp or Ollama on your own
-    machine &mdash; nothing here needs a hosted service.</p>
+  <p class="note">By default this runs against Qwen&nbsp;3.8&nbsp;27B on my own local GPU &mdash;
+    not a cloud API. Point it at your own endpoint instead if you prefer: any
+    OpenAI-compatible URL works, including a local llama.cpp or Ollama server.
+    Your key stays in this browser and is sent only to the endpoint you enter here.</p>
   <div class="presets">
+    <button class="btn" data-preset="hosted" type="button">Hosted (default)</button>
     <button class="btn" data-preset="openai" type="button">OpenAI</button>
     <button class="btn" data-preset="anthropic" type="button">Anthropic</button>
     <button class="btn" data-preset="local" type="button">Local (llama.cpp)</button>
