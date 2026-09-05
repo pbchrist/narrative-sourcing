@@ -1432,6 +1432,19 @@ function statusFor(data, raw){
   const un = arc._unsupported.length
     ? ` ${arc._unsupported.length} had a real quote that did not support the claim (${arc._unsupported[0].why})`
     : "";
+  // Refusing to invent an arc is the best thing this tool does, and a bare
+  // "0 of 0 claims survived" made it look broken instead. Two different empty
+  // results, and the reader needs to be told which one they got.
+  if(kept === 0){
+    if(arc._proposed === 0){
+      return "Nothing to build an arc from. This reads as description rather than " +
+             "specifics — no roles left, no moves made, nothing dated or named that " +
+             "a quote could point at. That is a finding about the profile, not an error.";
+    }
+    return `Every claim was deleted — ${arc._proposed} proposed, ${arc._proposed} thrown out, ` +
+           `because none of them could be traced to a line in the profile.${un} ` +
+           `That is the rule working, not a failure.`;
+  }
   return `${kept} of ${arc._proposed} claim${arc._proposed===1?"":"s"} survived. ${arc._proposed-kept} deleted.${un}`;
 }
 function status(m,bad,action){
