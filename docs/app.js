@@ -376,9 +376,20 @@ function renderArc(arc, raw, name, role){
       return `<span class="ground ok">anchored in the profile's own words
                 &middot; confidence ${arc.confidence}</span>${q}`;
     }
+    // Transitively grounded: no single line states it, but it rests on claims
+    // that each survived the verbatim check. Calling that a guess was wrong -
+    // it made the app hide the connective tissue it exists to find, on profiles
+    // where every claim underneath it had passed.
+    if (kept > 0){
+      return `<span class="ground derived">No single line in the profile states
+        this. It is a reading of the ${kept} claim${kept===1?"":"s"} below, each of
+        which quotes the profile word for word &middot; confidence
+        ${arc.confidence}</span>`;
+    }
     return `<span class="ground bad">Nothing in the profile could be quoted to
-      support this ${what}, so it is the model's guess and nothing more. It
-      carries no confidence score, because there is nothing to score.</span>`;
+      support this ${what}, and no claim underneath it survived either, so it is
+      the model's guess and nothing more. It carries no confidence score, because
+      there is nothing to score.</span>`;
   };
   // The whole block, not just its footnote: a supported line reads as a
   // finding, an unsupported one reads as a question somebody asked.
@@ -386,8 +397,16 @@ function renderArc(arc, raw, name, role){
     if (quotes && quotes.length)
       return `<div class="shape ${cls}"><span class="lbl">${label}</span>
         <p>${esc(line)}</p>${ground(quotes, what)}</div>`;
+    // A synthesis over verified claims is shown, and named as a reading. Only a
+    // synthesis over nothing is folded away. The old code collapsed both, which
+    // meant a profile with 8 of 8 claims surviving still had its throughline
+    // hidden behind the words "unsupported guess".
+    if (kept > 0)
+      return `<div class="shape ${cls} derived"><span class="lbl">${label}
+        &mdash; a reading, not a quote</span>
+        <p>${esc(line)}</p>${ground(quotes, what)}</div>`;
     return `<details class="shape ${cls} ungrounded"><summary><span class="lbl">${label}
-        &mdash; unsupported guess, hidden</span></summary>
+        &mdash; nothing survived to build it on, hidden</span></summary>
       <p class="guess">${esc(line)}</p>${ground(quotes, what)}</details>`;
   };
   const grounded = !!(arc.throughline_evidence && arc.throughline_evidence.length);

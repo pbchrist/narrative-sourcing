@@ -50,6 +50,12 @@ details.shape.ungrounded[open] summary::before{content:"\25BE "}
 .ground{display:block;margin-top:12px;font:11px/1.5 "IBM Plex Mono",monospace;letter-spacing:.02em}
 .ground.ok{color:var(--ink3)}
 .ground.bad{color:var(--red)}
+/* A reading built on verified claims is neither a citation nor a guess. It gets
+   its own weight: shown, but visibly standing on the claims rather than on a
+   quote of its own. */
+.shape.derived{border-left-color:var(--acc)}
+.shape.derived .lbl{color:var(--acc)}
+.ground.derived{color:var(--ink2)}
 .ground + q, .shape q{display:block;margin-top:8px;color:var(--teal);font-style:normal;
  font:11.5px/1.6 "IBM Plex Mono",monospace;border-left:2px solid var(--teal);padding-left:11px}
 .shape.tension q{color:var(--acc);border-left-color:var(--acc)}
