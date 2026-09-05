@@ -5,7 +5,11 @@ const LS="ns.settings.v1";
 // configure. Settings exists only for people who want their own model.
 // Not the tailnet hostname: on your own tailnet that resolves to a 100.x
 // address and Chrome refuses it from a public page. This is public for all.
-const HOSTED={url:"https://song-pattern-rice-graham.trycloudflare.com/v1/chat/completions",
+// Stable Tailscale Funnel hostname. This used to be a trycloudflare quick tunnel,
+// which gets a random name and dies on restart -- so this constant went stale
+// within days and became the dead fallback behind a stale endpoint.json. Both
+// have to point somewhere real, not just the JSON.
+const HOSTED={url:"https://patrick-beastmaster.tailf32530.ts.net/llm/v1/chat/completions",
               model:"",key:""};
 
 const PRESETS={
@@ -275,6 +279,10 @@ async function hostedURL(fallback){
 // saved one to a dead host forever, which breaks the app worst for the people
 // who opened Settings most.
 async function endpointFor(s, fallback){
+  // A saved endpoint wins, except when it pins a host that is known to rotate
+  // away. trycloudflare names are ephemeral; anyone who saved one in Settings
+  // is pinned to a dead host forever, which breaks the app worst for the people
+  // who opened Settings most.
   if(s.url && !/\.trycloudflare\.com/.test(s.url)) return s.url;
   return await hostedURL(fallback);
 }
