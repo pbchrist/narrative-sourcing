@@ -1,1 +1,1 @@
-{"url": "https://lift-should-wondering-batch.trycloudflare.com/v1/chat/completions", "updated": "2026-08-26T13:40:03Z"}
+{"url": "https://patrick-beastmaster.tailf32530.ts.net/llm/v1/chat/completions", "updated": "2026-09-05T04:09:57Z", "note": "Tailscale Funnel on a stable hostname. Replaces trycloudflare quick tunnels, which get a random hostname and die on restart -- that is why this file kept going stale."}
