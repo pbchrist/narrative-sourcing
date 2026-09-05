@@ -510,7 +510,14 @@ function renderFit(fit, arc){
 function briefText(arc, name){
   const L = [];
   if(name) L.push(name + "’s career arc", "");
-  L.push("THROUGHLINE", arc.throughline);
+  // A field the sendable-text guard struck says so here too. The page explains
+  // the withholding; without this the clipboard copy - the thing the recruiter
+  // actually keeps - carried a bare header and no account of it.
+  const w = arc._withheld || {};
+  L.push("THROUGHLINE", w.throughline
+    ? "[withheld — the model returned " + w.throughline + " here, not a note about "
+      + "the person. This tool does not write the message.]"
+    : arc.throughline);
   (arc.throughline_evidence||[]).forEach(q => L.push('  “' + q + '”'));
   L.push("");
   if(arc.departures.length){
@@ -523,8 +530,11 @@ function briefText(arc, name){
     arc.pursuits.forEach(b => { L.push("— " + b.description); L.push('  “' + b.evidence + '”'); });
     L.push("");
   }
-  if(arc.unresolved_tension){
-    L.push("THE OPEN QUESTION", arc.unresolved_tension);
+  if(arc.unresolved_tension || w.unresolved_tension){
+    L.push("THE OPEN QUESTION", w.unresolved_tension
+      ? "[withheld — the model returned " + w.unresolved_tension + " here, not a note "
+        + "about the person. This tool does not write the message.]"
+      : arc.unresolved_tension);
     (arc.tension_evidence||[]).forEach(q => L.push('  “' + q + '”'));
     L.push("");
   }
