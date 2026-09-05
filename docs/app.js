@@ -1311,6 +1311,21 @@ async function run(){
     }
     if(!parts.length) throw new Error("Nothing could be read. " + failures.join("; "));
     let raw = parts.join("\n\n");
+    // Strip LinkedIn page furniture BEFORE anything else touches the text.
+    // Every quote is verified back against `raw`, so the strip has to happen
+    // here or the model and the verifier would be looking at different
+    // documents -- and a colleague's post about the candidate would keep
+    // passing verification as the candidate's own words.
+    {
+      const li = stripLinkedInFurniture(raw, name || guessName(raw, LAST_FILE));
+      if(li.removed.length){
+        raw = li.text;
+        failures = failures.concat(
+          [`stripped ${li.removed.length} line${li.removed.length===1?"":"s"} of `
+           + `LinkedIn page furniture — nav, feed posts by other people, and the `
+           + `footer. Only the candidate's own words were kept.`]);
+      }
+    }
     let chron = timelineSummary(extractTimeline(raw));
     // One request has a size, and a LinkedIn export is bigger than people
     // expect. Trim `raw` itself rather than only the prompt: every quote is
@@ -1515,6 +1530,117 @@ const SIDEBAR = new Set(["top skills","skills","certifications","licenses",
   "languages","honors","awards","publications","interests","volunteering"]);
 const LOOKS_LIKE_A_PLACE = /,\s*[A-Z][\p{L}]+(,|$)/u;
 
+// ---------------------------------------------------------------------------
+// Stripping LinkedIn page furniture out of a pasted profile.
+//
+// src/intake/linkedin.py does this for PDF exports. The web app had no
+// equivalent, so a Cmd-A copy of a live profile page arrived raw: global nav,
+// the activity feed, "More profiles for you", the footer, and LinkedIn's
+// language list. Measured on a real paste, the damage was not the nav junk --
+// it was this line, cited as the candidate's own self-narrative:
+//
+//   "My brilliant VP of Engineering Joshua Leven is recruiting for a host of
+//    roles"
+//
+// That is his CEO writing about him. It passes the verbatim check because the
+// sentence really is in the text, which is exactly the failure the Python
+// module was written to prevent: a verifiable false attribution, where every
+// check downstream reports success.
+//
+// Two rules, matching the Python module's asymmetry. Lines are dropped
+// aggressively; sections are dropped only against a whitelist, because
+// over-stripping silently destroys the narrative signal the tool exists to find.
+// ---------------------------------------------------------------------------
+
+// Everything from here on is other people: recommended profiles, "people also
+// viewed", the footer. Nothing after these headings is about the candidate.
+const LI_CUT_FROM = [
+  /^more profiles for you$/i,
+  /^explore premium profiles$/i,
+  /^people also viewed$/i,
+  /^people you may know$/i,
+  /^others? viewed$/i,
+  /^promoted$/i,
+  /^linkedin corporation/i,
+  /^select language$/i,
+];
+
+// Chrome, nav, and interaction affordances. None of it is prose.
+const LI_LINE_JUNK = [
+  /^\s*\d*\s*notifications?\s*$/i,
+  /^skip to (search|main content|primary content|aside|footer)$/i,
+  /^(home|my network|jobs|messaging|notifications|me|for business|advertise|try premium.*)$/i,
+  /^(connect|message|follow|following|more|save|share|report|show all.*|see more|…more|\.\.\.more)$/i,
+  /^(posts|comments|activity|videos|images|documents|newsletters)$/i,
+  /^·+$/,
+  /^\s*·?\s*\d+(st|nd|rd|th)\s*$/i,           // "· 2nd" degree badge
+  /^\s*[\d,.]+\+?\s*(followers?|connections?)\s*$/i,
+  /^\s*(500\+|contact info)\s*$/i,
+  /^\s*(connections?|followers?)\s*$/i,
+  /^\s*\d+[dwmy]\s*•?\s*$/i,                   // "5d •" post age
+  /^\s*(edited\s*•?\s*)$/i,
+  /^\s*[\d,]+\s*(reactions?|comments?|reposts?|likes?)\s*$/i,
+  /^(like|comment|repost|send)$/i,
+  /^\s*\+\d+\s+skills?\s*$/i,
+  /^.{0,40}\bis a mutual connection\b.*$/i,
+  /^.{0,60}\band \d+ other mutual connections?\b.*$/i,
+  /^\s*(accessibility|talent solutions|community guidelines|careers|marketing solutions|privacy & terms|ad choices|advertising|sales solutions|mobile|small business|safety center|questions\?|visit our help center\.?|go to your settings\.?|manage your account and privacy|recommendation transparency|learn more about recommended content\.?)\s*$/i,
+  /^[؀-ۿऀ-ॿ฀-๿一-鿿가-힯Ѐ-ӿ].*\(.*\)$/,  // language picker rows
+  /^[A-Za-zÀ-ÿ\s]+\((Arabic|Bangla|Czech|Danish|German|Greek|English|Spanish|Persian|Finnish|French|Hindi|Hungarian|Indonesian|Italian|Hebrew|Japanese|Korean|Marathi|Malay|Dutch|Norwegian|Punjabi|Polish|Portuguese|Romanian|Russian|Swedish|Telugu|Thai|Tagalog|Turkish|Ukrainian|Vietnamese|Chinese.*)\)$/,
+];
+
+// A feed post written BY someone else, or a company page. Everything until the
+// next post boundary belongs to that other voice.
+const LI_OTHER_AUTHOR = /^(.{2,60}?)\s+(reposted this|commented on a post|likes this|shared this)$/i;
+
+function stripLinkedInFurniture(text, candidateName){
+  const src = String(text || "");
+  // Only touch text that actually looks like a LinkedIn page paste. A resume
+  // must pass through untouched.
+  const looksLikePage = /(^|\n)\s*(my network|skip to main content|\d+\s*notifications)\s*(\n|$)/i.test(src)
+    || /(^|\n)\s*(more profiles for you|explore premium profiles)\s*(\n|$)/i.test(src);
+  if(!looksLikePage) return { text: src, removed: [] };
+
+  const who = String(candidateName || "").trim().toLowerCase();
+  const lines = src.split("\n");
+  const kept = [], removed = [];
+  let droppingOtherVoice = false;
+
+  for(const raw of lines){
+    const line = raw.replace(/ /g, " ").trimEnd();
+    const flat = line.trim();
+
+    if(LI_CUT_FROM.some(rx => rx.test(flat))){
+      removed.push("[cut here to end: " + flat + "]");
+      break;                       // everything below is other people
+    }
+
+    // A post by another author, or a company page, opens a block that is not
+    // the candidate's voice. It closes at the next blank-line boundary that is
+    // followed by something that is not more of the same post.
+    const other = flat.match(LI_OTHER_AUTHOR);
+    if(other){
+      const author = other[1].trim().toLowerCase();
+      if(!who || author !== who){ droppingOtherVoice = true; removed.push(flat); continue; }
+    }
+    if(droppingOtherVoice){
+      // The candidate's own name on its own line ends the borrowed block.
+      if(who && flat.toLowerCase() === who){ droppingOtherVoice = false; }
+      else { if(flat) removed.push(flat); continue; }
+    }
+
+    if(!flat){ kept.push(""); continue; }
+    if(LI_LINE_JUNK.some(rx => rx.test(flat))){ removed.push(flat); continue; }
+    kept.push(line);
+  }
+
+  const out = kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  // Never hand back less than a profile: if stripping ate almost everything,
+  // the patterns were wrong for this page and the raw text is the safer input.
+  if(out.length < 200 && src.length > 400) return { text: src, removed: [] };
+  return { text: out, removed };
+}
+
 function guessName(raw, fallbackFile){
   const lines = String(raw||"").split("\n").map(l =>
     l.replace(/^[\s·•\-–]+|[\s·•\-–]+$/g, ""));
@@ -1529,6 +1655,21 @@ function guessName(raw, fallbackFile){
     if(!words.every(w => /^[A-Z][\p{L}'’.-]*$/u.test(w))) continue;
 
     let score = 0;
+    // On a LinkedIn page the candidate's name is the one short capitalised
+    // line that recurs -- in the header, above each of their own posts, and
+    // beside the activity block. A company or a job title appears once. Without
+    // this, a paste produced "Marketplace Accelerator" and "San Francisco Bay
+    // Area" as the person's name.
+    const seen = lines.filter(l => l === t).length;
+    if(seen > 1) score += Math.min(seen, 4);
+    // A company name sits at the top of a role block: a title and a date range
+    // follow it within a line or two. A person's name is followed by a headline
+    // and a location, never by "Feb 2023 - Mar 2024". Pasting only an experience
+    // list contains no name at all, and returning the first employer as the
+    // candidate is worse than returning nothing.
+    const ahead = lines.slice(i + 1, i + 4).join(" ");
+    if(/(?:[A-Za-z]{3,9}\s+)?(?:19|20)\d{2}\s*[-–—]\s*(?:(?:[A-Za-z]{3,9}\s+)?(?:19|20)\d{2}|present|current)/i.test(ahead)) score -= 6;
+    if(/^(experience|education|licenses|projects)$/i.test((lines.slice(0, i).reverse().find(Boolean) || "").trim())) score -= 4;
     // The first entry under a list of skills or certifications is an entry in
     // that list, not the person the document is about.
     const prev = lines.slice(0, i).reverse().find(Boolean);
@@ -1544,7 +1685,10 @@ function guessName(raw, fallbackFile){
 
     if(score > bestScore){ bestScore = score; best = t; }
   }
-  if(best) return best;
+  // A negative best means every candidate looked like a company, a job title
+  // or a location. Naming the wrong person is worse than naming nobody: the
+  // whole page then reads as being about an employer.
+  if(best && bestScore > 0) return best;
   if(fallbackFile) return fallbackFile;
   return "";
 }
