@@ -401,7 +401,15 @@ function renderArc(arc, raw, name, role){
   };
   // The whole block, not just its footnote: a supported line reads as a
   // finding, an unsupported one reads as a question somebody asked.
-  const shape = (cls, label, line, quotes, what) => {
+  const shape = (cls, label, line, quotes, what, withheld) => {
+    // A field the sendable-text guard struck says so plainly. Rendering the
+    // empty string would have left a blank box and no account of why.
+    if (withheld)
+      return `<div class="shape ${cls} withheld"><span class="lbl">${label}
+        &mdash; withheld</span>
+        <p>The model returned ${esc(withheld)} here rather than a note about the
+        person. It was thrown out: this tool does not write the message. See the
+        deleted claims below for its exact words.</p></div>`;
     if (quotes && quotes.length)
       return `<div class="shape ${cls}"><span class="lbl">${label}</span>
         <p>${esc(line)}</p>${ground(quotes, what)}</div>`;
@@ -420,7 +428,7 @@ function renderArc(arc, raw, name, role){
   const grounded = !!(arc.throughline_evidence && arc.throughline_evidence.length);
 
   $("#out").innerHTML = `
-    ${shape("", "Their story in one line", arc.throughline, arc.throughline_evidence, "reading")}
+    ${shape("", "Their story in one line", arc.throughline, arc.throughline_evidence, "reading", (arc._withheld||{}).throughline)}
     <canvas id="arc"></canvas>
     <div class="arckey">
       <span class="k"><i style="background:#F1580A"></i>the person</span>
@@ -444,7 +452,7 @@ function renderArc(arc, raw, name, role){
       <div><span class="lbl">What they left</span><div id="deps"></div></div>
       <div><span class="lbl">What they are reaching for</span><div id="purs"></div></div>
     </div>
-    ${shape("tension", "The open question", arc.unresolved_tension, arc.tension_evidence, "question")}
+    ${shape("tension", "The open question", arc.unresolved_tension, arc.tension_evidence, "question", (arc._withheld||{}).unresolved_tension)}
     <div class="row copyrow"><button class="btn" type="button" id="copybtn" onclick="copyBrief()">Copy brief</button></div>
     ${role ? renderFit(computeFit(raw, role), arc) : ""}`;
   const beat=b=>`<div class="beat"><div class="bh"><b>${esc(b.description)}</b><span class="pill">${b.confidence}</span></div>
@@ -1375,6 +1383,44 @@ async function run(){
 
 let LAST_ARC = null;
 
+// ---- the no-sendable-text guard ---------------------------------------------
+// Principle 3 is the thesis of this tool, and the homepage says it out loud:
+// "It is raw material for a recruiter. The message stays human." That promise
+// was enforced in src/brief/guard.py and nowhere in the app that actually
+// ships, so a model that got chatty could put "I'd love to connect about your
+// work at Acme" on the page and into the copied brief.
+//
+// Two scoping decisions carried over from guard.py, both load-bearing:
+//
+// Verbatim quotes are exempt. Every evidence span has already been checked
+// against the source, so it is the candidate's own writing. Plenty of people
+// write "I'd love to connect" in their own About section, and a guard that
+// struck a claim over that would be policing their prose instead of ours.
+//
+// Model output is quarantined, not fatal. Text the model produced tripping
+// this is untrusted input behaving badly: the field is withheld and the page
+// says so, reusing the deletion-with-reason surface the checks already use.
+const SENDABLE = [
+  [/\b(hi|hey|hello|dear)\b[ ,]+[A-Z][a-z]+/i, "a salutation"],
+  [/^\s*(hi|hey|hello|dear)\b/im, "a salutation"],
+  [/\b(best|regards|cheers|thanks|sincerely|warmly)\s*,\s*\n/i, "a sign-off"],
+  [/\b(best|kind) regards\b/i, "a sign-off"],
+  [/\bi(?:'d| would) love to (chat|talk|connect|hear)\b/i, "a pitch written at the candidate"],
+  [/\bwould you be (open|interested|available)\b/i, "a pitch written at the candidate"],
+  // First person on purpose: a caution telling the recruiter what to check
+  // "before reaching out" is analysis, not a message.
+  [/\bi(?:'m| am)?\s+reaching out\b/i, "an outreach opener"],
+  [/\bcame across your (profile|background|work)\b/i, "an outreach opener"],
+  [/\b(are|were) you (open|interested|looking)\b/i, "a pitch written at the candidate"],
+  [/\blet me know if you\b/i, "a pitch written at the candidate"],
+];
+function scanSendable(value, exempt){
+  let text = String(value || "");
+  for(const span of (exempt || [])) if(span) text = text.split(String(span)).join(" [quoted] ");
+  for(const [re, kind] of SENDABLE) if(re.test(text)) return kind;
+  return null;
+}
+
 function buildArc(data, raw){
     if(!data.throughline) throw new Error("No throughline came back.");
     const unsupported=[];
@@ -1437,6 +1483,26 @@ function buildArc(data, raw){
                throughline_evidence:keepQuotes(data.throughline_evidence, data.throughline),
                tension_evidence:keepQuotes(data.tension_evidence, data.unresolved_tension||""),
                departures:keep(data.departures),pursuits:keep(data.pursuits)};
+    // The guard runs last, on text that has already survived the quote checks.
+    arc._withheld = {};
+    for(const [field, ev] of [["throughline","throughline_evidence"],
+                              ["unresolved_tension","tension_evidence"]]){
+      const kind = scanSendable(arc[field], arc[ev]);
+      if(kind){
+        unsupported.push({d:arc[field], q:"", why:"Withheld: this is "+kind+
+          ", not a note about the person. This tool does not write the message."});
+        arc._withheld[field] = kind; arc[field] = "";
+      }
+    }
+    for(const list of ["departures","pursuits"]){
+      arc[list] = arc[list].filter(b => {
+        const kind = scanSendable(b.description, [b.evidence]);
+        if(!kind) return true;
+        unsupported.push({d:b.description, q:b.evidence, why:"Withheld: this is "+kind+
+          ", not a note about the person. This tool does not write the message."});
+        return false;
+      });
+    }
     arc.confidence=score([...arc.departures,...arc.pursuits]);
     arc._proposed = dropped; arc._unsupported = unsupported;
     return arc;
