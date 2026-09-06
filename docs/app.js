@@ -652,7 +652,8 @@ async function showExample(){
   banner.innerHTML = `<span class="lbl">Example &mdash; not your search</span>
     <p>This is <b>${who}&rsquo;s own LinkedIn profile</b>, exported as a PDF and run through
     the checks below, live, just now. Nothing here is precomputed. To read someone else,
-    drop their PDF in the box above.</p>`;
+    paste their profile into the box above &mdash; or drop their PDF, Word doc or text
+    file straight onto it.</p>`;
   const out = $("#out");
   out.insertBefore(banner, out.firstChild);
   status(statusFor(data, ex.profile) + "  ·  " + ex.caption);
