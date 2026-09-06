@@ -1071,6 +1071,7 @@ async function addFiles(files){
   LAST_FILE = list.length === 1 ? list[0].name : `${list.length} files`;
   status(`Reading ${list.length} file${list.length>1?"s":""}…`);
   const got = [], read = [], failed = [];
+  let replaced = false;
   for(const f of list){
     try{
       const text = await readAnyFile(f);
@@ -1078,17 +1079,42 @@ async function addFiles(files){
       else failed.push(`${f.name} (it was empty)`);
     }catch(e){ failed.push(`${f.name} — ${e.message}`); }
   }
+  // Files chosen together are one document: a résumé and its cover letter, a
+  // profile and a portfolio page. Files chosen in a *later* action are almost
+  // always the next candidate, and silently gluing them onto the last one
+  // produced the worst failure this tool can have. Reading twenty-two profiles
+  // in a row, one 396-character export came back with a throughline about
+  // somebody else's twenty-year career, because the previous person was still
+  // in the box. Nobody would have caught that from the output alone.
+  //
+  // So: replace, say plainly that it happened, and keep the old text one click
+  // away. Combining is still possible - drop both files at once, or undo and
+  // paste - but it is never what happens by accident.
   if(got.length){
     const box = $("#profile");
-    box.value = (box.value.trim() ? box.value.trim() + "\n\n" : "") + got.join("\n\n");
+    const had = box.value.trim();
+    const fresh = got.join("\n\n");
+    if(had){
+      STASH = {raw: box.value, name: $("#name").value, gh: $("#gh").value};
+      box.value = fresh;
+      $("#name").value = "";
+      $("#out").innerHTML = "";
+    } else {
+      box.value = fresh;
+    }
+    replaced = !!had;
   }
   // The character count is not decoration. A file that came out unreadable can
   // still look like almost nothing in the box while carrying twenty thousand
   // characters of it, and the number is the only thing that says so.
+  const swapped = replaced
+    ? " This replaced the profile that was in the box — two people's careers read as one person's, and the arc comes out wrong.  ·  "
+    : "";
   status(failed.length
-    ? `Read ${read.join("; ") || "nothing"}. Could not read: ${failed.join("; ")}`
-    : `Read ${read.join("; ")}. Have a look before you run it.`,
-    failed.length && !got.length ? 1 : 0);
+    ? `Read ${read.join("; ") || "nothing"}. Could not read: ${failed.join("; ")}${swapped}`
+    : `Read ${read.join("; ")}.${swapped || " Have a look before you run it."}`,
+    failed.length && !got.length ? 1 : 0,
+    replaced ? "Put the previous one back" : null);
 }
 
 // ---- several sources at once ------------------------------------------------
