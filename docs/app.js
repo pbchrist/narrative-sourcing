@@ -642,7 +642,20 @@ async function showExample(){
   const data = extractJSON(ex.content);
   // Straight through the real gates - nothing here is precomputed.
   processArc(data, ex.profile, ex.name || "");
-  status(statusFor(data, ex.profile) + "  ·  worked example, " + ex.caption);
+  // The result headings all say "their", and the only thing marking this as an
+  // example used to be two words at the tail of a long status line. A first-time
+  // visitor had no way to know whose career they were reading, or that it was a
+  // demonstration at all. Say it above the result, before they read a word of it.
+  const who = ex.name ? esc(ex.name) : "the author";
+  const banner = document.createElement("div");
+  banner.className = "examplemark";
+  banner.innerHTML = `<span class="lbl">Example &mdash; not your search</span>
+    <p>This is <b>${who}&rsquo;s own LinkedIn profile</b>, exported as a PDF and run through
+    the checks below, live, just now. Nothing here is precomputed. To read someone else,
+    drop their PDF in the box above.</p>`;
+  const out = $("#out");
+  out.insertBefore(banner, out.firstChild);
+  status(statusFor(data, ex.profile) + "  ·  " + ex.caption);
 }
 
 // ---- reading files people drop in -------------------------------------------
