@@ -33,7 +33,7 @@ Two consequences, both non-negotiable:
 
 ## Before pushing anything
 
-Run all three suites. They are fast and they are the only thing standing between
+Run all of them. They are fast and they are the only thing standing between
 a change and Patrick finding the bug in front of someone else.
 
 ```
@@ -41,6 +41,7 @@ a change and Patrick finding the bug in front of someone else.
 node tests/js/sendable_guard.test.js      # the no-sendable-text guard
 node tests/js/linkedin_paste.test.js      # third-party voice in a pasted page
 node tests/js/bench_lift.test.js          # the bench's string-sliced lift still resolves
+node tests/js/endpoint_guard.test.js      # a stale endpoint.json cannot take the app down
 ```
 
 System `python3` is 3.9 and has no pytest. `./.venv/bin/python` is 3.11 and does.

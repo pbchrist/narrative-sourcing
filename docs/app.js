@@ -253,11 +253,22 @@ function score(beats){
 }
 
 // ---- where the hosted model actually is -------------------------------------
-// The public address is a Cloudflare quick tunnel, and a quick tunnel gets a
-// brand-new random hostname every time cloudflared restarts. The server
-// publishes wherever it currently is to endpoint.json beside this file, and a
-// timer keeps that current. The constant above is only the fallback for when
-// that file is missing.
+// The public address is a Tailscale Funnel on a stable hostname, served under
+// /llm. It replaced a Cloudflare quick tunnel, whose hostname was gone the
+// moment cloudflared restarted -- which is why this file kept going stale.
+// The sister app, talent-market-map, sat pointed at a dead quick tunnel for
+// two weeks telling everybody the machine was asleep while the machine was
+// awake and serving this one.
+//
+// endpoint.json beside this file still wins, so the address can move without a
+// deploy. The constant above is the fallback for when that file is missing or
+// names a host that cannot be trusted to still exist.
+//
+// Any address on a quick tunnel is a snapshot with an expiry date, wherever it
+// arrived from. Nothing downstream gets to trust one -- not endpoint.json, not
+// a saved setting.
+const isEphemeralHost = u => /\.trycloudflare\.com/.test(u);
+
 let RESOLVED_URL = null;
 async function hostedURL(fallback){
   if(RESOLVED_URL) return RESOLVED_URL;
@@ -265,7 +276,10 @@ async function hostedURL(fallback){
     const r = await fetch("endpoint.json?t=" + Date.now(), {cache:"no-store"});
     if(r.ok){
       const d = await r.json();
-      if(d && typeof d.url === "string" && /^https:\/\//.test(d.url)){
+      // An ephemeral address here is worse than no address: it overrides the
+      // stable fallback below with a host that may already be NXDOMAIN.
+      if(d && typeof d.url === "string" && /^https:\/\//.test(d.url)
+         && !isEphemeralHost(d.url)){
         return (RESOLVED_URL = d.url);
       }
     }
@@ -283,7 +297,7 @@ async function endpointFor(s, fallback){
   // away. trycloudflare names are ephemeral; anyone who saved one in Settings
   // is pinned to a dead host forever, which breaks the app worst for the people
   // who opened Settings most.
-  if(s.url && !/\.trycloudflare\.com/.test(s.url)) return s.url;
+  if(s.url && !isEphemeralHost(s.url)) return s.url;
   return await hostedURL(fallback);
 }
 
